@@ -1,0 +1,7 @@
+*/.vs
+*/*.suo
+*/*.sdf
+*/*.vcxproj.filters
+*/*.vcxproj.user
+*/Debug
+*/Release
