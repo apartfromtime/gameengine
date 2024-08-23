@@ -3,6 +3,5 @@
 */*.sdf
 */*.vcxproj.filters
 */*.vcxproj.user
-*/Debug
-*/Release
+Win32/
 x64/
