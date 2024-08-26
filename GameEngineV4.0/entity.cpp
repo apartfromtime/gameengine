@@ -872,8 +872,8 @@ void Entity::gravityForce(Entity *ent, float frameTime)
     if (!active || !ent->getActive())
         return ;
 
-    rr = pow((ent->getCenterX() - getCenterX()),2) + 
-            pow((ent->getCenterY() - getCenterY()),2);
+    rr = powf((ent->getCenterX() - getCenterX()),2) + 
+            powf((ent->getCenterY() - getCenterY()),2);
     force = gravity * ent->getMass() * mass/rr;
 
     // --- Using vector math to create gravity vector ---

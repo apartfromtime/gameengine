@@ -47,6 +47,7 @@ namespace netNS
     const int NET_CONNECT_FAILED = 6;
     const int NET_ADDR_IN_USE = 7;
     const int NET_DOMAIN_NOT_FOUND = 8;
+    const int NET_INVALID_PARAMETER = 9;
 
     const int PACKETS_PER_SEC = 30;     // Number of packets to send per second
     const float NET_TIME = 1.0f/PACKETS_PER_SEC;    // time between net transmissions

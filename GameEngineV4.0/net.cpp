@@ -168,7 +168,8 @@ int Net::createClient(char *server, int port, int protocol)
         return status;
 
     // if server does not contain a dotted quad IP address nnn.nnn.nnn.nnn
-    if ((remoteAddr.sin_addr.s_addr = inet_addr(server)) == INADDR_NONE)
+    status = inet_pton(AF_INET, server, &remoteAddr.sin_addr.s_addr);
+    if (status == 0)            // invalid string
     {
         // setup host structure for use in getaddrinfo() function
         ZeroMemory(&host, sizeof(host));
@@ -185,12 +186,17 @@ int Net::createClient(char *server, int port, int protocol)
         }
         // get IP address of server
         remoteAddr.sin_addr = ((SOCKADDR_IN *) result->ai_addr)->sin_addr;
-        strncpy_s(server, IP_SIZE, inet_ntoa(remoteAddr.sin_addr), IP_SIZE);
+        strncpy_s(server, IP_SIZE, inet_ntop(AF_INET, &remoteAddr.sin_addr, NULL, 0), IP_SIZE);
+    }
+    else if (status == -1)          // invalid parameter
+    {
+        status = WSAGetLastError();
+        return (status << 16) + NET_INVALID_PARAMETER;
     }
 
     // set local IP address
     getLocalIP(localIP);          // get local IP
-    localAddr.sin_addr.s_addr = inet_addr(localIP);   // local IP
+    status = inet_pton(AF_INET, localIP, &localAddr.sin_addr.s_addr);   // local IP
 
     mode = CLIENT;
     return NET_OK;
@@ -218,7 +224,7 @@ int Net::sendData(const char *data, int &size, const char *remoteIP)
     size = 0;       // assume 0 bytes sent, changed if send successful
 
     if (mode == SERVER)
-        remoteAddr.sin_addr.s_addr = inet_addr(remoteIP);
+        status = inet_pton(AF_INET, remoteIP, &remoteAddr.sin_addr.s_addr);
 
     if(mode == CLIENT && type == UNCONNECTED_TCP) 
     {
@@ -275,7 +281,7 @@ int Net::sendData(const char *data, int &size, const char *remoteIP, const USHOR
 
     if (mode == SERVER)
     {
-        remoteAddr.sin_addr.s_addr = inet_addr(remoteIP);
+        status = inet_pton(AF_INET, remoteIP, &remoteAddr.sin_addr.s_addr);
         remoteAddr.sin_port = port;
     }
 
@@ -374,7 +380,7 @@ int Net::readData(char *data, int &size, char *senderIP)
             return ((REMOTE_DISCONNECT << 16) + NET_ERROR);
         if (ret)
             //IP of sender
-            strncpy_s(senderIP, IP_SIZE, inet_ntoa(remoteAddr.sin_addr), IP_SIZE);
+            strncpy_s(senderIP, IP_SIZE, inet_ntop(AF_INET, &remoteAddr.sin_addr, NULL, 0), IP_SIZE);
         size = ret;           // number of bytes read, may be 0
     }
     return NET_OK;
@@ -447,7 +453,7 @@ int Net::readData(char *data, int &size, char *senderIP, USHORT &port)
         if (ret)
         {
             //IP of sender
-            strncpy_s(senderIP, IP_SIZE, inet_ntoa(remoteAddr.sin_addr), IP_SIZE);
+            strncpy_s(senderIP, IP_SIZE, inet_ntop(AF_INET, &remoteAddr.sin_addr, NULL, 0), IP_SIZE);
             port = remoteAddr.sin_port;     //port number of sender
         }
         size = ret;           // number of bytes read, may be 0
@@ -517,7 +523,7 @@ int Net::getLocalIP(char *localIP)
 
     // get IP address of server
     IN_ADDR in_addr = ((SOCKADDR_IN *) result->ai_addr)->sin_addr;
-    strncpy_s(localIP, IP_SIZE, inet_ntoa(in_addr), IP_SIZE);
+    strncpy_s(localIP, IP_SIZE, inet_ntop(AF_INET, &in_addr, NULL, 0), IP_SIZE);
 
     return NET_OK;
 }

@@ -60,7 +60,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 game->run(hwnd);    // run the game loop
         }
         safeDelete(game);           // free memory before exit
-        return msg.wParam;
+        return 0;
     }
     catch(const GameError &err)
     {

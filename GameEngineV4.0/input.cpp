@@ -128,8 +128,8 @@ void Input::keyIn(WPARAM wParam)
     }
     else
     {
-        textIn += wParam;                   // add character to textIn
-        charIn = wParam;                    // save last char entered
+        textIn += (wParam & 0xFF);                   // add character to textIn
+        charIn = (wParam & 0xFF);                    // save last char entered
     }
 
     if ((char)wParam == '\r')               // if return    
