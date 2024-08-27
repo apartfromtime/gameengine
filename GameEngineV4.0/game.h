@@ -126,4 +126,17 @@ public:
     virtual void render() = 0;
 };
 
+class NullGame : public Game
+{
+public:
+    // Constructor
+    NullGame() {}
+    // Destructor
+    virtual ~NullGame() {}
+    void update() {}      // must override pure virtual from Game
+    void ai() {}          // "
+    void collisions() {}  // "
+    void render() {}      // "
+};
+
 #endif
