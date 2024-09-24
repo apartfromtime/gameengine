@@ -1,8 +1,3 @@
-// Programming 2D Games
-// Copyright (c) 2011 by: 
-// Charles Kelly
-// messageDialog.cpp v1.2
-
 #include "messageDialog.h"
 
 //=============================================================================
@@ -10,27 +5,32 @@
 //=============================================================================
 MessageDialog::MessageDialog()
 {
-    initialized = false;                // set true when successfully initialized
+    // System
     graphics = NULL;
-    visible = false;                    // not visible
+    input = NULL;
+    // View
+    viewport3d = Viewport();
+    // Dialog
+    initialized = false;
+    visible = false;
     fontColor = messageDialogNS::FONT_COLOR;
     borderColor = messageDialogNS::BORDER_COLOR;
     backColor = messageDialogNS::BACK_COLOR;
     buttonColor = messageDialogNS::BUTTON_COLOR;
     buttonFontColor = messageDialogNS::BUTTON_FONT_COLOR;
-    x = static_cast<float>(messageDialogNS::X); // starting position
-    y = static_cast<float>(messageDialogNS::Y);
-    height = messageDialogNS::HEIGHT;
-    width = messageDialogNS::WIDTH;
-    textRect.bottom = messageDialogNS::Y + messageDialogNS::HEIGHT - messageDialogNS::MARGIN;
-    textRect.left = messageDialogNS::X + messageDialogNS::MARGIN;
-    textRect.right = messageDialogNS::X + messageDialogNS::WIDTH - messageDialogNS::MARGIN;
-    textRect.top = messageDialogNS::Y + messageDialogNS::MARGIN;
-    dialogVerts = NULL;
-    borderVerts = NULL;
-    buttonVerts = NULL;
-    button2Verts = NULL;
+    offset.x = messageDialogNS::X;
+    offset.y = messageDialogNS::Y;
+    extent.x = messageDialogNS::H;
+    extent.y = messageDialogNS::W;
+    b = messageDialogNS::BORDER;
+    m = messageDialogNS::MARGIN;
+    SDL_memset(&textRect, 0, sizeof(rect_t));
+    SDL_memset(&dialogVerts,  0, 4 * sizeof(VERTEX));
+    SDL_memset(&borderVerts,  0, 4 * sizeof(VERTEX));
+    SDL_memset(&button1Verts, 0, 4 * sizeof(VERTEX));
+    SDL_memset(&button2Verts, 0, 4 * sizeof(VERTEX));
     buttonType = 0;     // OK/Cancel
+
 }
 
 //=============================================================================
@@ -38,29 +38,32 @@ MessageDialog::MessageDialog()
 //=============================================================================
 MessageDialog::~MessageDialog()
 {
-    onLostDevice();            // call onLostDevice() for every graphics item
+    font.deleteAll();
 }
 
 //=============================================================================
 // Initialize the MessageDialog
 //=============================================================================
-bool MessageDialog::initialize(Graphics *g, Input *in, HWND h)
+bool MessageDialog::initialize(Graphics* pGraphics, Input* pInput)
 {
-    try {
-        graphics = g;                   // the graphics object
-        input = in;                     // the input object
-        hwnd = h;
+    graphics = pGraphics;
+    input = pInput;
 
-        // initialize DirectX font
-        if(dxFont.initialize(graphics, messageDialogNS::FONT_HEIGHT, false, 
-                             false, messageDialogNS::FONT) == false)
-            return false;               // if failed
-        dxFont.setFontColor(fontColor);
-    } catch(...) {
+    // initialize SDL font
+    if (font.initialize(graphics, messageDialogNS::FONT_HEIGHT, false,
+        false, messageDialogNS::FONT) == false)
+    {
         return false;
     }
 
+    font.setFontColor(fontColor);
+
+    viewport3d = graphics->get3DViewport();
+    offset.x = ((viewport3d.w - viewport3d.x) / 2) - (float)(messageDialogNS::X);
+    offset.y = ((viewport3d.h - viewport3d.y) / 4) - (float)(messageDialogNS::Y);
+
     initialized = true;
+
     return true;
 }
 
@@ -69,138 +72,97 @@ bool MessageDialog::initialize(Graphics *g, Input *in, HWND h)
 //=============================================================================
 void MessageDialog::prepareVerts()
 {
-    safeRelease(dialogVerts);
-    safeRelease(borderVerts);
-    safeRelease(buttonVerts);
-    safeRelease(button2Verts);
-
     // border top left
-    vtx[0].x = x;
-    vtx[0].y = y;
-    vtx[0].z = 0.0f;
-    vtx[0].rhw = 1.0f;
-    vtx[0].color = borderColor;
+    borderVerts[0].position.x = offset.x;
+    borderVerts[0].position.y = offset.y;
+    borderVerts[0].color = borderColor;
 
     // border top right
-    vtx[1].x = x + width;
-    vtx[1].y = y;
-    vtx[1].z = 0.0f;
-    vtx[1].rhw = 1.0f;
-    vtx[1].color = borderColor;
+    borderVerts[1].position.x = offset.x + extent.x;
+    borderVerts[1].position.y = offset.y;
+    borderVerts[1].color = borderColor;
 
     // border bottom right
-    vtx[2].x = x + width;
-    vtx[2].y = y + height;
-    vtx[2].z = 0.0f;
-    vtx[2].rhw = 1.0f;
-    vtx[2].color = borderColor;
+    borderVerts[2].position.x = offset.x + extent.x;
+    borderVerts[2].position.y = offset.y + extent.y;
+    borderVerts[2].color = borderColor;
 
     // border bottom left
-    vtx[3].x = x;
-    vtx[3].y = y + height;
-    vtx[3].z = 0.0f;
-    vtx[3].rhw = 1.0f;
-    vtx[3].color = borderColor;
-
-    graphics->createVertexBuffer(vtx, sizeof vtx, borderVerts);
+    borderVerts[3].position.x = offset.x;
+    borderVerts[3].position.y = offset.y + extent.y;
+    borderVerts[3].color = borderColor;
 
     // background top left
-    vtx[0].x = x + messageDialogNS::BORDER;
-    vtx[0].y = y + messageDialogNS::BORDER;
-    vtx[0].z = 0.0f;
-    vtx[0].rhw = 1.0f;
-    vtx[0].color = backColor;
+    dialogVerts[0].position.x = offset.x + b;
+    dialogVerts[0].position.y = offset.y + b;
+    dialogVerts[0].color = backColor;
 
     // background top right
-    vtx[1].x = x + width - messageDialogNS::BORDER;
-    vtx[1].y = y + messageDialogNS::BORDER;
-    vtx[1].z = 0.0f;
-    vtx[1].rhw = 1.0f;
-    vtx[1].color = backColor;
+    dialogVerts[1].position.x = offset.x + extent.x - b;
+    dialogVerts[1].position.y = offset.y + b;
+    dialogVerts[1].color = backColor;
 
     // background bottom right
-    vtx[2].x = x + width - messageDialogNS::BORDER;
-    vtx[2].y = y + height - messageDialogNS::BORDER;
-    vtx[2].z = 0.0f;
-    vtx[2].rhw = 1.0f;
-    vtx[2].color = backColor;
+    dialogVerts[2].position.x = offset.x + extent.x - b;
+    dialogVerts[2].position.y = offset.y + extent.y - b;
+    dialogVerts[2].color = backColor;
 
     // background bottom left
-    vtx[3].x = x + messageDialogNS::BORDER;
-    vtx[3].y = y + height - messageDialogNS::BORDER;
-    vtx[3].z = 0.0f;
-    vtx[3].rhw = 1.0f;
-    vtx[3].color = backColor;
-
-    graphics->createVertexBuffer(vtx, sizeof vtx, dialogVerts);
+    dialogVerts[3].position.x = offset.x + b;
+    dialogVerts[3].position.y = offset.y + extent.y - b;
+    dialogVerts[3].color = backColor;
 
     // button top left
-    vtx[0].x = x + width/2.0f - messageDialogNS::BUTTON_WIDTH/2.0f;
-    vtx[0].y = y + height - messageDialogNS::BORDER - messageDialogNS::MARGIN - messageDialogNS::BUTTON_HEIGHT;
-    vtx[0].z = 0.0f;
-    vtx[0].rhw = 1.0f;
-    vtx[0].color = buttonColor;
+    button1Verts[0].position.x = offset.x + (extent.x / 2.0f) - (messageDialogNS::BUTTON_WIDTH / 2.0f) - m;
+    button1Verts[0].position.y = offset.y + extent.y - b - m - messageDialogNS::BUTTON_HEIGHT;
+    button1Verts[0].color = buttonColor;
 
     // button top right
-    vtx[1].x = x + width/2.0f + messageDialogNS::BUTTON_WIDTH/2.0f;
-    vtx[1].y = vtx[0].y;
-    vtx[1].z = 0.0f;
-    vtx[1].rhw = 1.0f;
-    vtx[1].color = buttonColor;
+    button1Verts[1].position.x = offset.x + (extent.x / 2.0f) + (messageDialogNS::BUTTON_WIDTH / 2.0f);
+    button1Verts[1].position.y = button1Verts[0].position.y;
+    button1Verts[1].color = buttonColor;
 
     // button bottom right
-    vtx[2].x =  vtx[1].x;
-    vtx[2].y = vtx[0].y + messageDialogNS::BUTTON_HEIGHT;
-    vtx[2].z = 0.0f;
-    vtx[2].rhw = 1.0f;
-    vtx[2].color = buttonColor;
+    button1Verts[2].position.x = button1Verts[1].position.x;
+    button1Verts[2].position.y = button1Verts[0].position.y + messageDialogNS::BUTTON_HEIGHT;
+    button1Verts[2].color = buttonColor;
 
     // button bottom left
-    vtx[3].x = vtx[0].x;
-    vtx[3].y = vtx[2].y;
-    vtx[3].z = 0.0f;
-    vtx[3].rhw = 1.0f;
-    vtx[3].color = buttonColor;
-
-    graphics->createVertexBuffer(vtx, sizeof vtx, buttonVerts);
+    button1Verts[3].position.x = button1Verts[0].position.x;
+    button1Verts[3].position.y = button1Verts[2].position.y;
+    button1Verts[3].color = buttonColor;
 
     // set buttonRect
-    buttonRect.left   = (long)vtx[0].x;
-    buttonRect.right  = (long)vtx[1].x;
-    buttonRect.top    = (long)vtx[0].y;
-    buttonRect.bottom = (long)vtx[2].y;
+    button1Rect.min[0] = (long)button1Verts[0].position.x;
+    button1Rect.max[0] = (long)button1Verts[2].position.x;
+    button1Rect.min[1] = (long)button1Verts[0].position.y;
+    button1Rect.max[1] = (long)button1Verts[2].position.y;
 
     // button2 top left
-    vtx[0].x = x + width - messageDialogNS::BUTTON_WIDTH*1.2f;
-    vtx[0].y = y + height - messageDialogNS::BORDER - messageDialogNS::MARGIN - messageDialogNS::BUTTON_HEIGHT;
-    vtx[0].z = 0.0f;
-    vtx[0].rhw = 1.0f;
-    vtx[0].color = buttonColor;
+    button2Verts[0].position.x = offset.x + extent.x - messageDialogNS::BUTTON_WIDTH * 1.2f;
+    button2Verts[0].position.y = offset.y + extent.y - b - m - messageDialogNS::BUTTON_HEIGHT;
+    button2Verts[0].color = buttonColor;
+
     // button2 top right
-    vtx[1].x = vtx[0].x + messageDialogNS::BUTTON_WIDTH;
-    vtx[1].y = vtx[0].y;
-    vtx[1].z = 0.0f;
-    vtx[1].rhw = 1.0f;
-    vtx[1].color = buttonColor;
+    button2Verts[1].position.x = button2Verts[0].position.x + messageDialogNS::BUTTON_WIDTH;
+    button2Verts[1].position.y = button2Verts[0].position.y;
+    button2Verts[1].color = buttonColor;
+
     // button2 bottom right
-    vtx[2].x =  vtx[1].x;
-    vtx[2].y = vtx[0].y + messageDialogNS::BUTTON_HEIGHT;
-    vtx[2].z = 0.0f;
-    vtx[2].rhw = 1.0f;
-    vtx[2].color = buttonColor;
+    button2Verts[2].position.x = button2Verts[1].position.x;
+    button2Verts[2].position.y = button2Verts[0].position.y + messageDialogNS::BUTTON_HEIGHT;
+    button2Verts[2].color = buttonColor;
+
     // button2 bottom left
-    vtx[3].x = vtx[0].x;
-    vtx[3].y = vtx[2].y;
-    vtx[3].z = 0.0f;
-    vtx[3].rhw = 1.0f;
-    vtx[3].color = buttonColor;
-    graphics->createVertexBuffer(vtx, sizeof vtx, button2Verts);
+    button2Verts[3].position.x = button2Verts[0].position.x;
+    button2Verts[3].position.y = button2Verts[2].position.y;
+    button2Verts[3].color = buttonColor;
 
     // set button2Rect
-    button2Rect.left   = (long)vtx[0].x;
-    button2Rect.right  = (long)vtx[1].x;
-    button2Rect.top    = (long)vtx[0].y;
-    button2Rect.bottom = (long)vtx[2].y;
+    button2Rect.min[0] = (long)button2Verts[0].position.x;
+    button2Rect.max[0] = (long)button2Verts[2].position.x;
+    button2Rect.min[1] = (long)button2Verts[0].position.y;
+    button2Rect.max[1] = (long)button2Verts[2].position.y;
 }
 
 //=============================================================================
@@ -209,29 +171,115 @@ void MessageDialog::prepareVerts()
 const void MessageDialog::draw()
 {
     if (!visible || graphics == NULL || !initialized)
+    {
         return;
+    }
 
-    graphics->drawQuad(borderVerts);        // draw border
-    graphics->drawQuad(dialogVerts);        // draw backdrop
-    graphics->drawQuad(buttonVerts);        // draw button
-    graphics->drawQuad(button2Verts);       // draw button2
+    graphics->drawQuad(borderVerts[0].position, borderVerts[1].position,
+        borderVerts[2].position, borderVerts[3].position, borderColor);         // draw border
+    graphics->drawQuad(dialogVerts[0].position, dialogVerts[1].position,
+        dialogVerts[2].position, dialogVerts[3].position, backColor);           // draw backdrop
+    graphics->drawQuad(button1Verts[0].position, button1Verts[1].position,
+        button1Verts[2].position, button1Verts[3].position, buttonColor);           // draw button1
+    graphics->drawQuad(button2Verts[0].position, button2Verts[1].position,
+        button2Verts[2].position, button2Verts[3].position, buttonColor);           // draw button2
 
-    graphics->spriteBegin();                // begin drawing sprites
+    graphics->spriteBegin();
 
-    if(text.size() == 0)
+    if (text.size() == 0)
+    {
         return;
+    }
+
     // display text on MessageDialog
-    dxFont.setFontColor(fontColor);
-    dxFont.print(text,textRect,DT_CENTER|DT_WORDBREAK);
+    font.setFontColor(fontColor);
+    font.print(text, textRect, format);
 
     // display text on buttons
-    dxFont.setFontColor(buttonFontColor);
-    dxFont.print(messageDialogNS::BUTTON1_TEXT[buttonType],buttonRect,
-                 DT_SINGLELINE|DT_CENTER|DT_VCENTER);
-    dxFont.print(messageDialogNS::BUTTON2_TEXT[buttonType],button2Rect,
-                 DT_SINGLELINE|DT_CENTER|DT_VCENTER);
+    font.setFontColor(buttonFontColor);
+    font.print(messageDialogNS::BUTTON1_TEXT[buttonType], button1Rect,
+        ALIGNMENT::SINGLELINE | ALIGNMENT::HCENTER | ALIGNMENT::VCENTER);
+    font.print(messageDialogNS::BUTTON2_TEXT[buttonType], button2Rect,
+        ALIGNMENT::SINGLELINE | ALIGNMENT::HCENTER | ALIGNMENT::VCENTER);
 
-    graphics->spriteEnd();                  // end drawing sprites
+    graphics->spriteEnd();
+}
+
+//=============================================================================
+// Return button clicked
+// 0 = no button clicked
+// 1 is left button, 2 is right button
+//=============================================================================
+int MessageDialog::getButtonClicked()
+{
+    return buttonClicked;
+}
+
+//=============================================================================
+// Return visible.
+//=============================================================================
+bool MessageDialog::getVisible()
+{
+    return visible;
+}
+
+//=============================================================================
+// Set font color
+//=============================================================================
+void MessageDialog::setFontColor(color_t fc)
+{
+    fontColor = fc;
+}
+
+//=============================================================================
+// Set border color
+//=============================================================================
+void MessageDialog::setBorderColor(color_t bc)
+{
+    borderColor = bc;
+}
+
+//=============================================================================
+// Set background color
+//=============================================================================
+void MessageDialog::setBackColor(color_t bc)
+{
+    backColor = bc;
+}
+
+//=============================================================================
+// Set button color
+//=============================================================================
+void MessageDialog::setButtonColor(color_t bc)
+{
+    buttonColor = bc;
+}
+
+//=============================================================================
+// Set buitton font color
+//=============================================================================
+void MessageDialog::setButtonFontColor(color_t bfc)
+{
+    buttonFontColor = bfc;
+}
+
+//=============================================================================
+// Set visible;
+//=============================================================================
+void MessageDialog::setVisible(bool v)
+{
+    visible = v;
+}
+
+//=============================================================================
+// Set button type 0 = OK/CANCEL, 1 = YES/NO
+//=============================================================================
+void MessageDialog::setButtonType(unsigned int t)
+{
+    if (t < messageDialogNS::MAX_TYPE)
+    {
+        buttonType = t;
+    }
 }
 
 //=============================================================================
@@ -240,30 +288,35 @@ const void MessageDialog::draw()
 void MessageDialog::update()
 {
     if (!initialized || !visible)
+    {
         return;
+    }
+
     if (input->wasKeyPressed(messageDialogNS::DIALOG_CLOSE_KEY))
     {
         visible = false;
-        buttonClicked = 1;              // button1 was clicked
+        buttonClicked = 1;          // button1 was clicked
+
         return;
     }
 
-    if (graphics->getFullscreen() == false) // if windowed
+    if (graphics->getFullscreen() == false)
     {
         // calculate screen ratios incase window was resized
-        RECT clientRect;
-        GetClientRect(hwnd, &clientRect);
-        screenRatioX = (float)GAME_WIDTH / clientRect.right;
-        screenRatioY = (float)GAME_HEIGHT / clientRect.bottom;
+        SDL_Rect clientRect = graphics->getWindowRect();
+        screenRatioX = (float)graphics->getWidth()  / clientRect.w;
+        screenRatioY = (float)graphics->getHeight() / clientRect.h;
+
     }
 
-    if (input->getMouseLButton())       // if mouse left button
+    // mouse
+    if (input->getMouseLButton() == true && input->wasMouseButtonPressed(MOUSE_L_BUTTON) == true)
     {
         // if mouse clicked inside button1 (OK)
-        if (input->getMouseX()*screenRatioX >= buttonRect.left &&
-            input->getMouseX()*screenRatioX <= buttonRect.right &&
-            input->getMouseY()*screenRatioY >= buttonRect.top &&
-            input->getMouseY()*screenRatioY <= buttonRect.bottom)
+        if (input->getMouseX() * screenRatioX >= button1Rect.min[0] &&
+            input->getMouseX() * screenRatioX <= button1Rect.max[0] &&
+            input->getMouseY() * screenRatioY >= button1Rect.min[1] &&
+            input->getMouseY() * screenRatioY <= button1Rect.max[1])
         {
             visible = false;            // hide message dialog
             buttonClicked = 1;          // button1 was clicked
@@ -271,64 +324,104 @@ void MessageDialog::update()
         }
 
         // if mouse clicked inside button2 (cancel)
-        if (input->getMouseX()*screenRatioX >= button2Rect.left &&
-            input->getMouseX()*screenRatioX <= button2Rect.right &&
-            input->getMouseY()*screenRatioY >= button2Rect.top &&
-            input->getMouseY()*screenRatioY <= button2Rect.bottom)
+        if (input->getMouseX() * screenRatioX >= button2Rect.min[0] &&
+            input->getMouseX() * screenRatioX <= button2Rect.max[0] &&
+            input->getMouseY() * screenRatioY >= button2Rect.min[1] &&
+            input->getMouseY() * screenRatioY <= button2Rect.max[1])
         {
             visible = false;            // hide message dialog
             buttonClicked = 2;          // button2 was clicked
         }
     }
+
+    // controller
+    for (unsigned int i = 0; i < MAX_CONTROLLERS; i++)
+    {
+        if (input->getGamepadA(i) == true)
+        {
+            visible = false;
+            buttonClicked = 1;
+
+            return;
+        }
+
+        if (input->getGamepadB(i) == true)
+        {
+            visible = false;
+            buttonClicked = 2;
+        }
+    }
 }
 
 //=============================================================================
-// Set text string, size dialog bottom to fit text and set visible = true
+// Set text string, rectangle and format, size dialog bottom to fit text and
+// set visible = true
 //=============================================================================
-void MessageDialog::print(const std::string &str)         
+void MessageDialog::print(const std::string& str, rect_t& rect, unsigned int format)
 {
-    if (!initialized || visible)    // if not initialized or already in use
+    if (!initialized || visible)
+    {
         return;
+    }
+
+    offset.x = (float)(rect.min[0]);
+    offset.y = (float)(rect.min[1]);
+    extent.x = (float)(rect.max[0] - rect.min[0]);
+    extent.y = (float)(rect.max[1] - rect.min[1]);
+
     text = str + "\n\n\n\n";        // leave some room for buttons
 
     // Set textRect to text area of dialog
-    textRect.left   = (long)(x + messageDialogNS::MARGIN);
-    textRect.right  = (long)(x + messageDialogNS::WIDTH - messageDialogNS::MARGIN);
-    textRect.top    = (long)(y + messageDialogNS::MARGIN);
-    textRect.bottom = (long)(y + messageDialogNS::HEIGHT - messageDialogNS::MARGIN);
+    textRect.min[0] = (long)(offset.x + m);
+    textRect.max[0] = (long)((offset.x + extent.x) - m);
+    textRect.min[1] = (long)(offset.y + m);
+    textRect.max[1] = (long)((offset.y + extent.y) - m);
 
-    // Set textRect.bottom to precise height required for text
-    // No text is printed with DT_CALDRECT option.
-    dxFont.print(text,textRect,DT_CENTER|DT_WORDBREAK|DT_CALCRECT);
-    height = textRect.bottom - (int)y + messageDialogNS::BORDER + messageDialogNS::MARGIN;
+    // set rect.min[1] to precise height required for text
+    // no text is printed with CALDRECT option.
+    this->format = format;
+    font.print(text, textRect, format | ALIGNMENT::CALCRECT);
+    extent.y = (textRect.max[1] - textRect.min[1]) - (float)(b + m);
 
-    prepareVerts();                 // prepare the vertex buffers
+    prepareVerts();
+
     buttonClicked = 0;              // clear buttonClicked
     visible = true;
 }
 
 //=============================================================================
-// Called when graphics device is lost
+// Set text string, x and y, size dialog bottom to fit text and
+// set visible = true
 //=============================================================================
-void MessageDialog::onLostDevice()
+void MessageDialog::print(const std::string& str, int x, int y)
 {
-    if (!initialized)
-        return;
-    dxFont.onLostDevice();
-    safeRelease(dialogVerts);
-    safeRelease(borderVerts);
-    safeRelease(buttonVerts);
-    safeRelease(button2Verts);
+    rect_t rect;            // text rectangle
+
+    rect.min[0] = (long)(x);
+    rect.max[0] = (long)(x + messageDialogNS::W);
+    rect.min[1] = (long)(y);
+    rect.max[1] = (long)(y + messageDialogNS::H);
+
+    MessageDialog::print(str, rect, ALIGNMENT::HCENTER | ALIGNMENT::WORDBOUNDS);
 }
 
 //=============================================================================
-// Called when graphics device is reset
+// Set text string, size dialog bottom to fit text and set visible = true
 //=============================================================================
-void MessageDialog::onResetDevice()
+void MessageDialog::print(const std::string& str)
 {
-    if (!initialized)
-        return;
-    prepareVerts();
-    dxFont.onResetDevice();
-}
+    rect_t rect;            // text rectangle
 
+    viewport3d = graphics->get3DViewport();
+
+    rect.min[0] = (long)(((viewport3d.w - viewport3d.x) / 2) -
+        (float)(messageDialogNS::X));
+    rect.max[0] = (long)(((viewport3d.w - viewport3d.x) / 2) -
+        (float)(messageDialogNS::X)+ messageDialogNS::W);
+    rect.min[1] = (long)(((viewport3d.h - viewport3d.y) / 4) -
+        (float)(messageDialogNS::Y));
+    rect.max[1] = (long)(((viewport3d.h - viewport3d.y) / 4) -
+        (float)(messageDialogNS::Y)+ messageDialogNS::H);
+
+    MessageDialog::print(str, rect, ALIGNMENT::HCENTER | ALIGNMENT::WORDBOUNDS);
+}

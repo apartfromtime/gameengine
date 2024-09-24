@@ -1,17 +1,6 @@
-// Programming 2D Games
-// Copyright (c) 2011 by: 
-// Charles Kelly
-// gameError.h v1.3
-// Error class thrown by game engine.
-
-#ifndef _GAMEERROR_H            // Prevent multiple definitions if this 
-#define _GAMEERROR_H            // file is included in more than one place
-#define WIN32_LEAN_AND_MEAN
-
-class GameError;
-
+#pragma once
+#include <SDL3\SDL.h>
 #include <string>
-#include <exception>
 
 namespace gameErrorNS
 {
@@ -23,34 +12,24 @@ namespace gameErrorNS
 }
 
 // Game Error class. Thrown when an error is detected by the game engine.
-// Inherits from std::exception
-class GameError : public std::exception
+inline void GameError(int code, const char* format, ...)
 {
-private:
-    int     errorCode;
-    std::string message;
-public:
-    // default constructor
-    GameError() :errorCode(gameErrorNS::FATAL_ERROR), message("Undefined Error in game.") {}
-    // copy constructor
-    GameError(const GameError& e) :std::exception(e), errorCode(e.errorCode), message(e.message) {}
-    // constructor with args
-    GameError(int code, const std::string &s) :errorCode(code), message(s) {}
-    // assignment operator
-    GameError& operator= (const GameError& rhs) 
+    va_list argptr;
+    char text[256];
+
+    va_start(argptr, format);
+    vsnprintf(text, sizeof(text), format, argptr);
+    va_end(argptr);
+
+    switch (code)
     {
-        std::exception::operator=(rhs);
-        this->errorCode = rhs.errorCode;
-        this->message = rhs.message;
+    case gameErrorNS::FATAL_ERROR:
+    {
+        SDL_LogError(SDL_LOG_PRIORITY_ERROR, text);
+    } break;
+    case gameErrorNS::WARNING:
+    {
+        SDL_LogWarn(SDL_LOG_PRIORITY_WARN, text);
+    } break;
     }
-    // destructor
-    virtual ~GameError() {};
-
-    // override what from base class
-    virtual const char* what() const { return this->getMessage(); }
-
-    const char* getMessage() const { return message.c_str(); }
-    int getErrorCode() const { return errorCode; }
-};
-
-#endif
+}

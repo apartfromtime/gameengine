@@ -1,18 +1,10 @@
-// Programming 2D Games
-// Copyright (c) 2011 by: 
-// Charles Kelly
-// createThisClass.h
-
-#ifndef _CREATETHIS_H           // Prevent multiple definitions if this 
-#define _CREATETHIS_H           // file is included in more than one place
-#define WIN32_LEAN_AND_MEAN
-
+#pragma once
 #include <string>
 #include <sstream>
 #include "game.h"
 #include "textureManager.h"
 #include "image.h"
-#include "textDX.h"
+#include "textSDL.h"
 
 //=============================================================================
 // This class is the core of the game
@@ -22,9 +14,9 @@ class CreateThis : public Game
 private:
     // game items
     TextureManager menuTexture, backgroundTexture; // textures
-    Image   menu;               // menu image
-    Image   background;         // background image
-    TextDX  *dxFont;            // DirectX font
+    Image       menu;               // menu image
+    Image       background;         // background image
+    TextSDL*    sdlFont;            // DirectX font
     std::string  message;
     float messageY;
 
@@ -33,8 +25,10 @@ public:
     CreateThis();
     // Destructor
     virtual ~CreateThis();
-    // Initialize the game
-    void initialize(HWND hwnd);
+    // Start up game
+    bool init();
+    // Shutdown game
+    void destroy() {};
     void update();      // must override pure virtual from Game
     void ai();          // "
     void collisions();  // "
@@ -43,4 +37,3 @@ public:
     void resetAll();
 };
 
-#endif

@@ -1,24 +1,20 @@
-// Programming 2D Games
-// Copyright (c) 2011 by: 
-// Charles Kelly
-// net.cpp v1.0
-
 #include "net.h"
-using namespace netNS;
 
 //=============================================================================
 // Constructor
 //=============================================================================
 Net::Net()
 {
-    bufLength = BUFFER_LENGTH;     // Length of send and receive buffers
-    sock = NULL;
-    ret = 0;
-    remoteAddrSize = 0;
+    datagramSocket = NULL;
+    streamSocket = NULL;
+    serverSocket = NULL;
+    remoteAddr = NULL;
+    localAddr = NULL;
+
     netInitialized = false;
     bound = false;
-    mode = UNINITIALIZED;
-    type = UNCONNECTED;
+    mode = netNS::UNINITIALIZED;
+    type = netNS::UNCONNECTED;
 }
 
 //=============================================================================
@@ -26,506 +22,573 @@ Net::Net()
 //=============================================================================
 Net::~Net()
 {
-    closeSocket();                  // close connection, release memory
+    closeSocket();          // close connection, release memory
 }
 
 //=============================================================================
 // Initialize network
-// protocol = UDP or TCP
-// Called by netCreateServer and netCreatClient
-// Pre:
-//   port = Port number.
-//   protocol = UDP or TCP.
-// Post:
-//   Returns two part int code on error.
-//     The low 16 bits contains Status code as defined in net.h.
-//     The high 16 bits contains "Windows Socket Error Code".
 //=============================================================================
-int Net::initialize(int port, int protocol)
+int Net::initialize(int mode, int port, int protocol)
 {
-    unsigned long ul = 1;
-    int           nRet;
     int status;
 
-    if(netInitialized)              // if network currently initialized
-        closeSocket();              // close current network and start over
+    if (netInitialized)
+    {
+        // close current network and start over
+        closeSocket();
+    }
 
-    mode = UNINITIALIZED;
-
-    status = WSAStartup(0x0202, &wsd);  // initiate the use of winsock 2.2
+    status = SDLNet_Init();         // initiate the use of SDLNet
     if (status != 0)
-        return ( (status << 16) + NET_INIT_FAILED);
+    {
+        status = netNS::NET_INIT_FAILED;
+        return status;
+    }
+
+    if (mode == netNS::CLIENT)
+    {
+        remoteAddr = SDLNet_ResolveHostname(serverIP);
+
+        if (remoteAddr != NULL)
+        {
+            if (SDLNet_WaitUntilResolved(remoteAddr, -1) < 0)
+            {
+                SDLNet_UnrefAddress(remoteAddr);
+                remoteAddr = NULL;
+            }
+        }
+    }
 
     switch (protocol)
     {
-    case UDP:     // UDP
+    case netNS::UDP:            // UDP
+    {
         // Create UDP socket and bind it to a local interface and port
-        sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-        if (sock == INVALID_SOCKET) {
-            WSACleanup();
-            status = WSAGetLastError();         // get detailed error
-            return ( (status << 16) + NET_INVALID_SOCKET);
+        datagramSocket = SDLNet_CreateDatagramSocket(remoteAddr, port);
+        if (datagramSocket == NULL)
+        {
+            SDLNet_Quit();
+            status = netNS::NET_INVALID_SOCKET;
+            return status;
         }
-        type = UDP;
-        break;
-    case TCP:     // TCP
+        type = netNS::UDP;
+    } break;
+    case netNS::TCP:            // TCP
+    {
         // Create TCP socket and bind it to a local interface and port
-        sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if (sock == INVALID_SOCKET) {
-            WSACleanup();
-            status = WSAGetLastError();         // get detailed error
-            return ( (status << 16) + NET_INVALID_SOCKET);
+        if (mode == netNS::CLIENT)
+        {
+            streamSocket = SDLNet_CreateClient(remoteAddr, port);
+
+            if (streamSocket == NULL)
+            {
+                SDLNet_Quit();
+                status = netNS::NET_INVALID_SOCKET;
+                return status;
+            }
         }
-        type = UNCONNECTED_TCP;
-        break;
-    default:    // Invalid type
-        return (NET_INIT_FAILED);
+        if (mode == netNS::SERVER)
+        {
+            serverSocket = SDLNet_CreateServer(NULL, port);
+
+            if (serverSocket == NULL)
+            {
+                SDLNet_Quit();
+                status = netNS::NET_INVALID_SOCKET;
+                return status;
+            }
+        }
+        type = netNS::UNCONNECTED_TCP;
+    } break;
+    default:            // Invalid type
+        return (netNS::NET_INIT_FAILED);
     }
-
-    // put socket in non-blocking mode
-    nRet = ioctlsocket(sock, FIONBIO, (unsigned long *) &ul);
-    if (nRet == SOCKET_ERROR) {
-        WSACleanup();
-        status = WSAGetLastError();             // get detailed error
-        return ( (status << 16) + NET_INVALID_SOCKET);
-    }
-
-    // set local family and port
-    localAddr.sin_family = AF_INET;
-    localAddr.sin_port = htons((u_short)port);    // port number
-
-    // set remote family and port
-    remoteAddr.sin_family = AF_INET;
-    remoteAddr.sin_port = htons((u_short)port);   // port number
 
     netInitialized = true;
-    return NET_OK;
+
+    return netNS::NET_OK;
 }
 
 //=============================================================================
 // Setup network for use as server
-// May not be configured as Server and Client at the same time.
-// Pre: 
-//   port = Port number to listen on.
-//     Port numbers 0-1023 are used for well-known services.
-//     Port numbers 1024-65535 may be freely used.
-//   protocol = UDP or TCP
-// Post:
-//   Returns NET_OK on success
-//   Returns two part int code on error.
-//     The low 16 bits contains Status code as defined in net.h.
-//     The high 16 bits contains "Windows Socket Error Code".
 //=============================================================================
-int Net::createServer(int port, int protocol) 
+int Net::createServer(int port, int protocol)
 {
     int status;
 
     // ----- Initialize network stuff -----
-    status = initialize(port, protocol);
-    if (status != NET_OK)
-        return status;
-
-    localAddr.sin_addr.s_addr = htonl(INADDR_ANY);    // listen on all addresses
-
-    // bind socket
-    if (bind(sock, (SOCKADDR *)&localAddr, sizeof(localAddr)) == SOCKET_ERROR)
+    status = initialize(netNS::SERVER, port, protocol);
+    if (status != netNS::NET_OK)
     {
-        status = WSAGetLastError();          // get detailed error
-        return ((status << 16) + NET_BIND_FAILED);
+        return status;
     }
-    bound = true;
-    mode = SERVER;
 
-    return NET_OK;
+    bound = true;
+    mode = netNS::SERVER;
+
+    return status;
 }
 
 //=============================================================================
 // Setup network for use as a Client
-// Pre: 
-//   *server = IP address of server to connect to as null terminated
-//     string (e.g. "192.168.1.100") or null terminated hostname
-//     (e.g. "www.programming2dgames.com").
-//   port = Port number. Port numbers 0-1023 are used for well-known services.
-//     Port numbers 1024-65535 may be freely used.
-//   protocol = UDP or TCP
-// Post:
-//   Returns NET_OK on success
-//   Returns two part int code on error.
-//     The low 16 bits contains Status code as defined in net.h.
-//     The high 16 bits contains "Windows Socket Error Code".
-//   *server = IP address connected to as null terminated string.
 //=============================================================================
-int Net::createClient(char *server, int port, int protocol) 
+int Net::createClient(char* server, int port, int protocol)
 {
+    char localIP[netNS::IP_SIZE * 2] = { 0 };          // IP as string (e.g. "192.168.1.100");
     int status;
-    char localIP[IP_SIZE];  // IP as string (e.g. "192.168.1.100");
-    ADDRINFOA host;
-    ADDRINFOA *result = NULL;
+
+    strncpy_s(serverIP, netNS::IP_SIZE, server, netNS::IP_SIZE);
 
     // ----- Initialize network stuff -----
-    status = initialize(port, protocol);
-    if (status != NET_OK)
+    status = initialize(netNS::CLIENT, port, protocol);
+    if (status != netNS::NET_OK)
+    {
         return status;
-
-    // if server does not contain a dotted quad IP address nnn.nnn.nnn.nnn
-    status = inet_pton(AF_INET, server, &remoteAddr.sin_addr.s_addr);
-    if (status == 0)            // invalid string
-    {
-        // setup host structure for use in getaddrinfo() function
-        ZeroMemory(&host, sizeof(host));
-        host.ai_family = AF_INET;
-        host.ai_socktype = SOCK_STREAM;
-        host.ai_protocol = IPPROTO_TCP;
-
-        // get address information
-        status = getaddrinfo(server,NULL,&host,&result);
-        if(status != 0)                 // if getaddrinfo failed
-        {
-            status = WSAGetLastError();
-            return ((status << 16) + NET_DOMAIN_NOT_FOUND);
-        }
-        // get IP address of server
-        remoteAddr.sin_addr = ((SOCKADDR_IN *) result->ai_addr)->sin_addr;
-        strncpy_s(server, IP_SIZE, inet_ntop(AF_INET, &remoteAddr.sin_addr, NULL, 0), IP_SIZE);
-    }
-    else if (status == -1)          // invalid parameter
-    {
-        status = WSAGetLastError();
-        return (status << 16) + NET_INVALID_PARAMETER;
     }
 
     // set local IP address
-    getLocalIP(localIP);          // get local IP
-    status = inet_pton(AF_INET, localIP, &localAddr.sin_addr.s_addr);   // local IP
+    getLocalIP(localIP);            // get local IP
+    localAddr = SDLNet_ResolveHostname(localIP);            // local IP
 
-    mode = CLIENT;
-    return NET_OK;
+    if (localAddr != NULL)
+    {
+        if (SDLNet_WaitUntilResolved(localAddr, -1) < 0)
+        {
+            SDLNet_UnrefAddress(localAddr);
+            localAddr = NULL;
+        }
+    }
+
+    mode = netNS::CLIENT;
+
+    return status;
 }
 
 //=============================================================================
 // Send data to remote IP on current port
-// Pre:
-//   *data = Data to send
-//   size = Number of bytes to send
-//   if SERVER
-//     *remoteIP = Destination IP address as null terminated char array
-// Post: 
-//   Returns NET_OK on success. Success does not indicate data was sent.
-//   Returns two part int code on error.
-//     The low 16 bits contains Status code as defined in net.h.
-//     The high 16 bits contains "Windows Socket Error Code".
-//   size = Number of bytes sent, 0 if no data sent.
 //=============================================================================
-int Net::sendData(const char *data, int &size, const char *remoteIP) 
+int Net::sendData(const char* data, int& size, const char* remoteIP)
 {
+    int ret = 0;
     int status;
     int sendSize = size;
 
-    size = 0;       // assume 0 bytes sent, changed if send successful
+    size = 0;           // assume 0 bytes sent, changed if send successful
 
-    if (mode == SERVER)
-        status = inet_pton(AF_INET, remoteIP, &remoteAddr.sin_addr.s_addr);
-
-    if(mode == CLIENT && type == UNCONNECTED_TCP) 
+    if (mode == netNS::SERVER)
     {
-        ret = connect(sock,(SOCKADDR*)(&remoteAddr),sizeof(remoteAddr));
-        if (ret == SOCKET_ERROR) {
-            status = WSAGetLastError();
-            if (status == WSAEISCONN)   // if connected
+        remoteAddr = SDLNet_ResolveHostname(remoteIP);
+        status = SDLNet_WaitUntilResolved(remoteAddr, -1);
+    }
+
+    if (type == netNS::UDP)
+    {
+        void* buf = (void*)SDL_malloc(sendSize * sizeof(char));
+        SDL_memcpy(buf, data, sendSize * sizeof(char));
+        ret = SDLNet_SendDatagram(datagramSocket, remoteAddr, 0, buf,
+            sendSize);
+
+        SDL_free(buf);
+
+        if (ret < 0)
+        {
+            return netNS::NET_ERROR;
+        }
+    }
+
+    if (mode == netNS::CLIENT && type == netNS::UNCONNECTED_TCP)
+    {
+        ret = SDLNet_GetConnectionStatus(streamSocket);
+
+        if (ret == 1)
+        {
+            ret = 0;
+            type = netNS::CONNECTED_TCP;
+        }
+        else
+        {
+            if (ret == 0)
             {
-                ret = 0;          // clear SOCKET_ERROR
-                type = CONNECTED_TCP;
-            } 
-            else 
+                return netNS::NET_OK;          // no connection yet
+            }
+            else
             {
-                if ( status == WSAEWOULDBLOCK || status == WSAEALREADY) 
-                    return NET_OK;  // no connection yet
-                else 
-                    return ((status << 16) + NET_ERROR);
+                return netNS::NET_CONNECT_FAILED;
             }
         }
     }
 
-    ret = sendto(sock, data, sendSize, 0, (SOCKADDR *)&remoteAddr, sizeof(remoteAddr));
-    if (ret == SOCKET_ERROR) 
+    if (type == netNS::CONNECTED_TCP)
     {
-        status = WSAGetLastError();
-        return ((status << 16) + NET_ERROR);
+        if (streamSocket != NULL)
+        {
+            ret = SDLNet_WriteToStreamSocket(streamSocket, data, sendSize);
+
+            if (ret < 0)
+            {
+                type = netNS::UNCONNECTED_TCP;
+
+                return netNS::NET_ERROR;
+            }
+        }
     }
-    bound = true;         // automatic binding by sendto if unbound
-    size = ret;           // number of bytes sent, may be 0
-    return NET_OK;
+
+    bound = true;
+    size = sendSize;
+
+    return netNS::NET_OK;
 }
 
 //=============================================================================
 // Send data to remoteIP and port
-// Pre:
-//   *data = Data to send
-//   size = Number of bytes to send
-//   if SERVER
-//     *remoteIP = Destination IP address as null terminated char array
-//     port = Destination port number.
-// Post: 
-//   Returns NET_OK on success. Success does not indicate data was sent.
-//   Returns two part int code on error.
-//     The low 16 bits contains Status code as defined in net.h.
-//     The high 16 bits contains "Windows Socket Error Code".
-//   size = Number of bytes sent, 0 if no data sent.
 //=============================================================================
-int Net::sendData(const char *data, int &size, const char *remoteIP, const USHORT port) 
+int Net::sendData(const char* data, int& size, const char* remoteIP,
+    const unsigned short port)
 {
+    int ret = 0;
     int status;
     int sendSize = size;
 
-    size = 0;       // assume 0 bytes sent, changed if send successful
+    size = 0;           // assume 0 bytes sent, changed if send successful
 
-    if (mode == SERVER)
+    if (mode == netNS::SERVER)
     {
-        status = inet_pton(AF_INET, remoteIP, &remoteAddr.sin_addr.s_addr);
-        remoteAddr.sin_port = port;
+        remoteAddr = SDLNet_ResolveHostname(remoteIP);
+        status = SDLNet_WaitUntilResolved(remoteAddr, -1);
     }
 
-    if(mode == CLIENT && type == UNCONNECTED_TCP) 
+    if (type == netNS::UDP)
     {
-        ret = connect(sock,(SOCKADDR*)(&remoteAddr),sizeof(remoteAddr));
-        if (ret == SOCKET_ERROR) {
-            status = WSAGetLastError();
-            if (status == WSAEISCONN)   // if connected
+        void* buf = (void*)SDL_malloc(sendSize * sizeof(char));
+        SDL_memcpy(buf, data, sendSize * sizeof(char));
+        ret = SDLNet_SendDatagram(datagramSocket, remoteAddr, port, buf,
+            sendSize);
+
+        SDL_free(buf);
+
+        if (ret < 0)
+        {
+            return netNS::NET_ERROR;
+        }
+    }
+
+    if (mode == netNS::CLIENT && type == netNS::UNCONNECTED_TCP)
+    {
+        ret = SDLNet_GetConnectionStatus(streamSocket);
+
+        if (ret == 1)
+        {
+            ret = 0;
+            type = netNS::CONNECTED_TCP;
+        }
+        else
+        {
+            if (ret == 0)
             {
-                ret = 0;          // clear SOCKET_ERROR
-                type = CONNECTED_TCP;
-            } 
-            else 
+                return netNS::NET_OK;          // no connection yet
+            }
+            else
             {
-                if ( status == WSAEWOULDBLOCK || status == WSAEALREADY) 
-                    return NET_OK;  // no connection yet
-                else 
-                    return ((status << 16) + NET_ERROR);
+                return netNS::NET_CONNECT_FAILED;
             }
         }
     }
 
-    ret = sendto(sock, data, sendSize, 0, (SOCKADDR *)&remoteAddr, sizeof(remoteAddr));
-    if (ret == SOCKET_ERROR) 
+    if (type == netNS::CONNECTED_TCP)
     {
-        status = WSAGetLastError();
-        return ((status << 16) + NET_ERROR);
+        if (streamSocket != 0)
+        {
+            ret = SDLNet_WriteToStreamSocket(streamSocket, data, sendSize);
+
+            if (ret < 0)
+            {
+                type = netNS::UNCONNECTED_TCP;
+
+                return netNS::NET_ERROR;
+            }
+        }
     }
-    bound = true;         // automatic binding by sendto if unbound
-    size = ret;           // number of bytes sent, may be 0
-    return NET_OK;
+
+    bound = true;
+    size = sendSize;
+
+    return netNS::NET_OK;
 }
 
 //=============================================================================
 // Read data, return sender's IP
-// Pre:
-//   *data = Buffer for received data.
-//   size = Number of bytes to receive.
-//   *senderIP = NULL
-// Post: 
-//   Returns NET_OK on success.
-//   Returns two part int code on error.
-//     The low 16 bits contains Status code as defined in net.h.
-//     The high 16 bits contains "Windows Socket Error Code".
-//   size = Number of bytes received, may be 0.
-//   *senderIP = IP address of sender as null terminated string.
 //=============================================================================
-int Net::readData(char *data, int &size, char *senderIP) 
+int Net::readData(char* data, int& size, char* senderIP)
 {
-    int status;
+    char* remoteIP = NULL;
+    int ret = 0;
     int readSize = size;
 
     size = 0;           // assume 0 bytes read, changed if read successful
-    if(bound == false)  // no receive from unbound socket
-        return NET_OK;
-
-    if(mode == SERVER && type == UNCONNECTED_TCP) 
+    if (bound == false)         // no receive from unbound socket
     {
-        ret = listen(sock,1);
-        if (ret == SOCKET_ERROR) 
-        {
-            status = WSAGetLastError();
-            return ((status << 16) + NET_ERROR);
-        }
-        SOCKET tempSock;
-        tempSock = accept(sock,NULL,NULL);
-        if (tempSock == INVALID_SOCKET) 
-        {
-            status = WSAGetLastError();
-            if ( status != WSAEWOULDBLOCK)  // don't report WOULDBLOCK error
-                return ((status << 16) + NET_ERROR);
-            return NET_OK;      // no connection yet
-        }
-        closesocket(sock);      // don't need old socket
-        sock = tempSock;        // TCP client connected
-        type = CONNECTED_TCP;
+        return netNS::NET_OK;
     }
 
-    if(mode == CLIENT && type == UNCONNECTED_TCP) 
-        return NET_OK;  // no connection yet
-
-    if(sock != NULL)
+    if (mode == netNS::SERVER && type == netNS::UNCONNECTED_TCP)
     {
-        remoteAddrSize = sizeof(remoteAddr);
-        ret = recvfrom(sock, data, readSize, 0, (SOCKADDR *)&remoteAddr,
-                       &remoteAddrSize);
-        if (ret == SOCKET_ERROR) {
-            status = WSAGetLastError();
-            if ( status != WSAEWOULDBLOCK)  // don't report WOULDBLOCK error
-                return ((status << 16) + NET_ERROR);
-            ret = 0;            // clear SOCKET_ERROR
-        // if TCP connection did graceful close
-        } else if(ret == 0 && type == CONNECTED_TCP)
-            // return Remote Disconnect error
-            return ((REMOTE_DISCONNECT << 16) + NET_ERROR);
-        if (ret)
-            //IP of sender
-            strncpy_s(senderIP, IP_SIZE, inet_ntop(AF_INET, &remoteAddr.sin_addr, NULL, 0), IP_SIZE);
-        size = ret;           // number of bytes read, may be 0
+        if (serverSocket != NULL)
+        {
+            SDLNet_StreamSocket* tempSocket = 0;
+
+            ret = SDLNet_AcceptClient(serverSocket, &tempSocket);
+
+            if (ret == 0 && tempSocket == 0)
+            {
+                return netNS::NET_OK;          // no connection yet
+            }
+
+            SDLNet_DestroyStreamSocket(streamSocket);
+            streamSocket = tempSocket;          // TCP client connected
+            remoteAddr = SDLNet_GetStreamSocketAddress(streamSocket);
+
+            type = netNS::CONNECTED_TCP;
+        }
     }
-    return NET_OK;
+
+    if (mode == netNS::CLIENT && type == netNS::UNCONNECTED_TCP)
+    {
+        return netNS::NET_OK;           // no connection yet
+    }
+
+    if (datagramSocket != NULL)
+    {
+        SDLNet_Datagram* dgram = NULL;
+
+        while (((ret = SDLNet_ReceiveDatagram(datagramSocket, &dgram)) == 0) &&
+            (dgram != NULL))
+        {
+            if (mode == netNS::CLIENT)
+            {
+                if (SDLNet_CompareAddresses(dgram->addr, remoteAddr) != 0)
+                {
+                    // packet from non-server address.
+                    SDLNet_DestroyDatagram(dgram);
+                    dgram = NULL;
+
+                    continue;
+                }
+            }
+
+            remoteAddr = dgram->addr;
+            remoteIP = (char*)SDLNet_GetAddressString(remoteAddr);
+
+            if (remoteIP != NULL)
+            {
+                SDL_memcpy(senderIP, remoteIP, netNS::IP_SIZE);
+            }
+
+            if (dgram->buflen < readSize)
+            {
+                readSize = dgram->buflen;
+            }
+
+            SDL_memcpy(data, dgram->buf, readSize);
+            size = readSize;
+
+            SDLNet_DestroyDatagram(dgram);
+            dgram = NULL;
+        }
+    }
+
+    if (streamSocket != NULL)
+    {
+        ret = SDLNet_ReadFromStreamSocket(streamSocket, data, readSize);
+
+        if (ret < 0)
+        {
+            return netNS::NET_ERROR;
+        }
+
+        remoteIP = (char*)SDLNet_GetAddressString(remoteAddr);
+        if (remoteIP != NULL)
+        {
+            SDL_memcpy(senderIP, remoteIP, netNS::IP_SIZE);
+        }
+
+        size = ret;
+    }
+
+    return netNS::NET_OK;
 }
 
 //=============================================================================
 // Read data, return sender's IP and port
-// Pre:
-//   *data = Buffer for received data.
-//   size = Number of bytes to receive.
-//   *senderIP = NULL
-//   port = undefined
-// Post: 
-//   Returns NET_OK on success.
-//   Returns two part int code on error.
-//     The low 16 bits contains Status code as defined in net.h.
-//     The high 16 bits contains "Windows Socket Error Code".
-//   size = Number of bytes received, may be 0.
-//   *senderIP = IP address of sender as null terminated string.
-//   port = port number of sender.
 //=============================================================================
-int Net::readData(char *data, int &size, char *senderIP, USHORT &port) 
+int Net::readData(char* data, int& size, char* senderIP, unsigned short& port)
 {
-    int status;
+    char* remoteIP = NULL;
+    int ret = 0;
     int readSize = size;
 
     size = 0;           // assume 0 bytes read, changed if read successful
-    if(bound == false)  // no receive from unbound socket
-        return NET_OK;
-
-    if(mode == SERVER && type == UNCONNECTED_TCP) 
+    if (bound == false)         // no receive from unbound socket
     {
-        ret = listen(sock,1);
-        if (ret == SOCKET_ERROR) 
-        {
-            status = WSAGetLastError();
-            return ((status << 16) + NET_ERROR);
-        }
-        SOCKET tempSock;
-        tempSock = accept(sock,NULL,NULL);
-        if (tempSock == INVALID_SOCKET) 
-        {
-            status = WSAGetLastError();
-            if ( status != WSAEWOULDBLOCK)  // don't report WOULDBLOCK error
-                return ((status << 16) + NET_ERROR);
-            return NET_OK;      // no connection yet
-        }
-        closesocket(sock);      // don't need old socket
-        sock = tempSock;        // TCP client connected
-        type = CONNECTED_TCP;
+        return netNS::NET_OK;
     }
 
-    if(mode == CLIENT && type == UNCONNECTED_TCP) 
-        return NET_OK;  // no connection yet
-
-    if(sock != NULL)
+    if (mode == netNS::SERVER && type == netNS::UNCONNECTED_TCP)
     {
-        remoteAddrSize = sizeof(remoteAddr);
-        ret = recvfrom(sock, data, readSize, 0, (SOCKADDR *)&remoteAddr,
-                       &remoteAddrSize);
-        if (ret == SOCKET_ERROR) {
-            status = WSAGetLastError();
-            if ( status != WSAEWOULDBLOCK)  // don't report WOULDBLOCK error
-                return ((status << 16) + NET_ERROR);
-            ret = 0;            // clear SOCKET_ERROR
-        // if TCP connection did graceful close
-        } else if(ret == 0 && type == CONNECTED_TCP)
-            // return Remote Disconnect error
-            return ((REMOTE_DISCONNECT << 16) + NET_ERROR);
-        if (ret)
+        if (serverSocket != NULL)
         {
-            //IP of sender
-            strncpy_s(senderIP, IP_SIZE, inet_ntop(AF_INET, &remoteAddr.sin_addr, NULL, 0), IP_SIZE);
-            port = remoteAddr.sin_port;     //port number of sender
+            SDLNet_StreamSocket* tempSocket = 0;
+
+            ret = SDLNet_AcceptClient(serverSocket, &tempSocket);
+
+            if (ret == 0 && tempSocket == 0)
+            {
+                return netNS::NET_OK;          // no connection yet
+            }
+
+            SDLNet_DestroyStreamSocket(streamSocket);
+            streamSocket = tempSocket;          // TCP client connected
+            remoteAddr = SDLNet_GetStreamSocketAddress(streamSocket);
+
+            type = netNS::CONNECTED_TCP;
         }
-        size = ret;           // number of bytes read, may be 0
     }
-    return NET_OK;
+
+    if (mode == netNS::CLIENT && type == netNS::UNCONNECTED_TCP)
+    {
+        return netNS::NET_OK;           // no connection yet
+    }
+
+    if (datagramSocket != NULL)
+    {
+        SDLNet_Datagram* dgram = NULL;
+
+        while (((ret = SDLNet_ReceiveDatagram(datagramSocket, &dgram)) == 0) &&
+            (dgram != NULL))
+        {
+            if (mode == netNS::CLIENT)
+            {
+                if (SDLNet_CompareAddresses(dgram->addr, remoteAddr) != 0)
+                {
+                    // packet from non-server address.
+                    SDLNet_DestroyDatagram(dgram);
+                    dgram = NULL;
+
+                    continue;
+                }
+            }
+
+            remoteAddr = dgram->addr;
+            remoteIP = (char*)SDLNet_GetAddressString(remoteAddr);
+
+            if (remoteIP != NULL)
+            {
+                SDL_memcpy(senderIP, remoteIP, netNS::IP_SIZE);
+            }
+
+            if (dgram->buflen < readSize)
+            {
+                readSize = dgram->buflen;
+            }
+
+            SDL_memcpy(data, dgram->buf, readSize);
+            size = readSize;
+            port = dgram->port;
+
+            SDLNet_DestroyDatagram(dgram);
+            dgram = NULL;
+        }
+    }
+
+    if (streamSocket != NULL)
+    {
+        ret = SDLNet_ReadFromStreamSocket(streamSocket, data, readSize);
+
+        if (ret < 0)
+        {
+            return netNS::NET_ERROR;
+        }
+
+        remoteIP = (char*)SDLNet_GetAddressString(remoteAddr);
+        if (remoteIP != NULL)
+        {
+            SDL_memcpy(senderIP, remoteIP, netNS::IP_SIZE);
+        }
+
+        size = ret;
+    }
+
+    return netNS::NET_OK;
 }
 
 //=============================================================================
 // Close socket and free resources.
-// Post:
-//   Socket is closed
-//   Returns two part int code on error.
-//     The low 16 bits contains Status code as defined in net.h.
-//     The high 16 bits contains "Windows Socket Error Code".
 //=============================================================================
-int Net::closeSocket() 
+int Net::closeSocket()
 {
-    int status;
-
-    type = UNCONNECTED;
+    type = netNS::UNCONNECTED;
     bound = false;
     netInitialized = false;
 
-    // closesocket() implicitly causes a shutdown sequence to occur
-    if (closesocket(sock) == SOCKET_ERROR) 
-    {
-        status = WSAGetLastError();
-        if ( status != WSAEWOULDBLOCK)  // don't report WOULDBLOCK error
-            return ((status << 16) + NET_ERROR);
-    }
+    SDLNet_DestroyDatagramSocket(datagramSocket);
+    SDLNet_DestroyStreamSocket(streamSocket);
+    SDLNet_DestroyServer(serverSocket);
+    SDLNet_Quit();
 
-    if (WSACleanup())
-        return NET_ERROR;
-    return NET_OK;
+    return netNS::NET_OK;
 }
+
+#ifndef _WIN32
+#include <unistd.h>
+#else
+#include <winsock2.h>
+#pragma comment(lib,"Ws2_32.lib")
+#endif
 
 //=============================================================================
 // Get the IP address of this computer as a string
-// Post:
-//   *localIP = IP address of local computer as null terminated string on success.
-//   Returns two part int code on error.
-//     The low 16 bits contains Status code as defined in net.h.
-//     The high 16 bits contains "Windows Socket Error Code".
 //=============================================================================
-int Net::getLocalIP(char *localIP) 
+int Net::getLocalIP(char* localIP)
 {
-    char hostName[40];
-    ADDRINFOA host;
-    ADDRINFOA *result = NULL;
+    char hostName[netNS::IP_SIZE * 4] = { 0 };
+    SDLNet_Address* host;
+    const char* result = NULL;
     int status;
 
-    gethostname (hostName,40);
-
-    // setup host structure for use in getaddrinfo() function
-    ZeroMemory(&host, sizeof(host));
-    host.ai_family = AF_INET;
-    host.ai_socktype = SOCK_STREAM;
-    host.ai_protocol = IPPROTO_TCP;
-
-    // get address information
-    status = getaddrinfo(hostName,NULL,&host,&result);
-    if(status != 0)                 // if getaddrinfo failed
+    if (localIP == NULL)
     {
-        status = WSAGetLastError();         // get detailed error
-        return ( (status << 16) + NET_ERROR);
+        return netNS::NET_ERROR;
     }
 
-    // get IP address of server
-    IN_ADDR in_addr = ((SOCKADDR_IN *) result->ai_addr)->sin_addr;
-    strncpy_s(localIP, IP_SIZE, inet_ntop(AF_INET, &in_addr, NULL, 0), IP_SIZE);
+    gethostname(hostName, (netNS::IP_SIZE * 4));
 
-    return NET_OK;
+    host = SDLNet_ResolveHostname(hostName);
+
+    if (host != NULL)
+    {
+        status = SDLNet_WaitUntilResolved(host, -1);
+        if (status < 0)
+        {
+            SDLNet_UnrefAddress(host);
+            host = NULL;
+        }
+    }
+
+    result = SDLNet_GetAddressString(host);
+
+    if (result != NULL)
+    {
+        SDL_memcpy(localIP, result, SDL_strlen(result));
+    }
+
+    return netNS::NET_OK;
+}
+
+//=============================================================================
+// Return mode
+//=============================================================================
+char Net::getMode()
+{
+    return mode;
 }
 
 //=============================================================================
@@ -533,20 +596,18 @@ int Net::getLocalIP(char *localIP)
 //=============================================================================
 std::string Net::getError(int error)
 {
-    int sockErr = error >> 16;  // upper 16 bits is sockErr
     std::string errorStr;
 
-    error &= STATUS_MASK;       // remove extended error code
-    if(error > ERROR_CODES-2)   // if unknown error code
-        error = ERROR_CODES-1;
-    errorStr = codes[error];
-    for (int i=0; i< SOCK_CODES; i++)
+    if (error < 0 || error > netNS::NET_ERROR_CODES)
     {
-        if(errorCodes[i].sockErr == sockErr)
-        {
-            errorStr += errorCodes[i].message;
-            break;
-        }
+        error = netNS::NET_UNKNOWN_NETWORK_ERROR;
     }
+
+    errorStr += mode == netNS::CLIENT ? "CLIENT" : "SERVER";
+    errorStr += ':';
+    errorStr += ' ';
+    errorStr += netNS::codes[error];
+    errorStr += SDL_GetError();
+
     return errorStr;
 }

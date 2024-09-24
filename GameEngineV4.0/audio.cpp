@@ -1,27 +1,18 @@
-// Programming 2D Games
-// Copyright (c) 2011 by: 
-// Charles Kelly
-// audio.cpp v1.2
-
 #include "audio.h"
+
+typedef uint16_t FACTCATEGORY;
+typedef uint16_t FACTINDEX;
 
 //=============================================================================
 // default constructor
 //=============================================================================
 Audio::Audio()
 {
-    xactEngine = NULL;
+    audioEngine = NULL;
     waveBank = NULL;
     soundBank = NULL;
-    cueI = 0;
-    mapWaveBank = NULL;         // Call UnmapViewOfFile() to release file
+    mapWaveBank = NULL;
     soundBankData = NULL;
-
-    HRESULT hr = CoInitializeEx( NULL, COINIT_MULTITHREADED );
-    if( SUCCEEDED( hr ) )
-        coInitialized = true;
-    else
-        coInitialized = false;
 }
 
 //=============================================================================
@@ -29,142 +20,91 @@ Audio::Audio()
 //=============================================================================
 Audio::~Audio()
 {
-    // Shutdown XACT
-    if( xactEngine )
+    // Shutdown FACT
+    if (audioEngine)
     {
-        xactEngine->ShutDown(); // shut down XACT engine and free resources
-        xactEngine->Release();
+        FACTAudioEngine_ShutDown(audioEngine);          // shut down FACT engine and free resources
+        FACTAudioEngine_Release(audioEngine);
+        audioEngine = NULL;
     }
 
-    if ( soundBankData )
-        delete[] soundBankData;
-    soundBankData = NULL;
-
-    // After xactEngine->ShutDown() returns, release memory mapped files
-    if( mapWaveBank )
-        UnmapViewOfFile( mapWaveBank );
-    mapWaveBank = NULL;
-
-    if( coInitialized )        // if CoInitializeEx succeeded
-        CoUninitialize();
+    // After FACTAudioEngine_ShutDown() returns, release memory mapped files
+    SAFE_DELETE_ARRAY(soundBankData);
+    SAFE_DELETE_ARRAY(mapWaveBank);
 }
 
 //=============================================================================
 // initialize
-// This function does the following:
-//      1. Initialize XACT by calling xactEngine->Initialize 
-//      2. Create the XACT wave bank(s) you want to use
-//      3. Create the XACT sound bank(s) you want to use
-//      4. Store indices to the XACT cue(s) your game uses
 //=============================================================================
-HRESULT Audio::initialize()
+bool Audio::initialize(const char* globalSettingsFile)
 {
-    HRESULT result = E_FAIL;
-    HANDLE hFile;
-    DWORD fileSize;
-    DWORD bytesRead;
-    HANDLE hMapFile;
+    SDL_IOStream* hFile = 0;
+    uint32_t fileSize = 0;
+    uint32_t result = 0;
 
-    result = CoInitializeEx( NULL, COINIT_MULTITHREADED );
-    if( SUCCEEDED(result) )
-        result = XACT3CreateEngine( 0, &xactEngine );
+    result = FACTCreateEngine(0, &audioEngine);
 
-    if( FAILED( result ) || xactEngine == NULL )
-        return E_FAIL;
+    if (result != 0 || audioEngine == NULL)
+    {
+        GameError(gameErrorNS::WARNING, SDL_GetError());
+        return false;
+    }
 
-    result = XACT3CreateEngine( 0, &xactEngine );
-    if( FAILED( result ) || xactEngine == NULL )
-        return E_FAIL;
-
-    // Load the global settings file and pass it into XACTInitialize
-    VOID* pGlobalSettingsData = NULL;
-    DWORD dwGlobalSettingsFileSize = 0;
+    // Load the global settings file and pass it into FACTInitialize
+    void* pGlobalSettingsData = 0;
     bool bSuccess = false;
 
-    hFile = CreateFile( XGS_FILE, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
-    if( hFile )
+    hFile = SDL_IOFromFile(globalSettingsFile, "rb");
+
+    if (hFile)
     {
-        dwGlobalSettingsFileSize = GetFileSize( hFile, NULL );
-        if( dwGlobalSettingsFileSize != INVALID_FILE_SIZE )
+        fileSize = (uint32_t)SDL_GetIOSize(hFile);
+
+        if (fileSize != -1)
         {
-            pGlobalSettingsData = CoTaskMemAlloc( dwGlobalSettingsFileSize );
-            if( pGlobalSettingsData )
+            pGlobalSettingsData = new uint8_t[fileSize];
+
+            if (pGlobalSettingsData)
             {
-                if( 0 != ReadFile( hFile, pGlobalSettingsData, dwGlobalSettingsFileSize, &bytesRead, NULL ) )
+                if (SDL_ReadIO(hFile, pGlobalSettingsData, fileSize) != -1)
                 {
                     bSuccess = true;
                 }
             }
         }
-        CloseHandle( hFile );
+
+        SDL_CloseIO(hFile);
     }
-    if( !bSuccess )
+
+    if (!bSuccess)
     {
-        if( pGlobalSettingsData )
-            CoTaskMemFree( pGlobalSettingsData );
-        pGlobalSettingsData = NULL;
-        dwGlobalSettingsFileSize = 0;
+        if (pGlobalSettingsData)
+        {
+            safeDeleteArray(pGlobalSettingsData);
+        }
+
+        pGlobalSettingsData = 0;
+        fileSize = 0;
     }
 
+    // Initialize & create the FACT runtime 
+    FACTRuntimeParameters factParams = { 0 };
+    factParams.pGlobalSettingsBuffer = pGlobalSettingsData;
+    factParams.globalSettingsBufferSize = fileSize;
 
-    // Initialize & create the XACT runtime 
-    XACT_RUNTIME_PARAMETERS xactParams = {0};
-    xactParams.pGlobalSettingsBuffer = pGlobalSettingsData;
-    xactParams.globalSettingsBufferSize = dwGlobalSettingsFileSize;
     // delete the buffer when not needed
-    xactParams.globalSettingsFlags = XACT_FLAG_GLOBAL_SETTINGS_MANAGEDATA;
-    // Set the look agead time to default
-    xactParams.lookAheadTime = XACT_ENGINE_LOOKAHEAD_DEFAULT;
-    // Initialize the XACT engine
-    result = xactEngine->Initialize( &xactParams );
-    if( FAILED( result ) )
-        return result;
+    factParams.globalSettingsFlags = FACT_FLAG_MANAGEDATA;
+    factParams.lookAheadTime = FACT_ENGINE_LOOKAHEAD_DEFAULT;
+    result = FACTAudioEngine_Initialize(audioEngine, &factParams);
 
-    // Create an "in memory" XACT wave bank file using memory mapped file IO
-    result = E_FAIL; // default to failure code, replaced on success
-    hFile = CreateFile( WAVE_BANK, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
-    if( hFile != INVALID_HANDLE_VALUE )
+    if (result != 0)
     {
-        fileSize = GetFileSize( hFile, NULL );
-        if( fileSize != -1 )
-        {
-            hMapFile = CreateFileMapping( hFile, NULL, PAGE_READONLY, 0, fileSize, NULL );
-            if( hMapFile )
-            {
-                mapWaveBank = MapViewOfFile( hMapFile, FILE_MAP_READ, 0, 0, 0 );
-                if( mapWaveBank )
-                    result = xactEngine->CreateInMemoryWaveBank( mapWaveBank, fileSize, 0, 0, &waveBank );
+        GameError(gameErrorNS::WARNING, "Couldn't intialise audio engine.\n");
 
-                CloseHandle( hMapFile );    // mapWaveBank maintains a handle on the file so close this unneeded handle
-            }
-        }
-        CloseHandle( hFile );    // mapWaveBank maintains a handle on the file so close this unneeded handle
+        return false;
     }
-    if( FAILED( result ) )
-        return HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND );
 
-    // Read and register the sound bank file with XACT.
-    result = E_FAIL;    // default to failure code, replaced on success
-    hFile = CreateFile( SOUND_BANK, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
-    if( hFile != INVALID_HANDLE_VALUE )
-    {
-        fileSize = GetFileSize( hFile, NULL );
-        if( fileSize != -1 )
-        {
-            soundBankData = new BYTE[fileSize];    // reserve memory for sound bank
-            if( soundBankData )
-            {
-                if( 0 != ReadFile( hFile, soundBankData, fileSize, &bytesRead, NULL ) )
-                    result = xactEngine->CreateSoundBank( soundBankData, fileSize, 0, 0, &soundBank );
-            }
-        }
-        CloseHandle( hFile );
-    }
-    if( FAILED( result ) )
-        return HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND );
-
-    return S_OK;
-
+    return true;
 }
 
 //=============================================================================
@@ -172,56 +112,170 @@ HRESULT Audio::initialize()
 //=============================================================================
 void Audio::run()
 {
-    if (xactEngine == NULL)
+    if (audioEngine == NULL)
+    {
         return;
-    xactEngine->DoWork();
+    }
+
+    FACTAudioEngine_DoWork(audioEngine);
 }
 
 //=============================================================================
 // play sound specified by cue from sound bank
-// if cue does not exist no error occurs, there is simply no sound played
 //=============================================================================
 void Audio::playCue(const char cue[])
 {
     if (soundBank == NULL)
+    {
         return;
-    cueI = soundBank->GetCueIndex( cue );       // get cue index from sound bank
-    soundBank->Play( cueI, 0, 0, NULL );
+    }
+
+    FACTINDEX cueI = FACTSoundBank_GetCueIndex(soundBank, cue);
+    FACTSoundBank_Play(soundBank, cueI, 0, 0, NULL);
 }
 
 //=============================================================================
 // stop a playing sound specified by cue from sound bank
-// if cue does not exist no error occurs
 //=============================================================================
 void Audio::stopCue(const char cue[])
 {
     if (soundBank == NULL)
+    {
         return;
-    cueI = soundBank->GetCueIndex( cue );        // get cue index from sound bank
-    soundBank->Stop( cueI, XACT_FLAG_SOUNDBANK_STOP_IMMEDIATE);
+    }
+
+    FACTINDEX cueI = FACTSoundBank_GetCueIndex(soundBank, cue);
+    FACTSoundBank_Stop(soundBank, cueI, FACT_FLAG_STOP_IMMEDIATE);
 }
 
 //=============================================================================
 // Pause sound specified by category.
-// If the category does not exist no error occurs.
 //=============================================================================
 void Audio::pauseCategory(const char category[])
 {
     if (soundBank == NULL)
+    {
         return;
-    XACTCATEGORY iCategory = xactEngine->GetCategory(category);
-    xactEngine->Pause(iCategory,true);
+    }
+
+    FACTCATEGORY iCategory = FACTAudioEngine_GetCategory(audioEngine, category);
+    FACTAudioEngine_Pause(audioEngine, iCategory, true);
 }
 
 //=============================================================================
 // Resume playback of paused sound specified by category.
-// If cue does not exist no error occurs.
 //=============================================================================
 void Audio::resumeCategory(const char category[])
 {
     if (soundBank == NULL)
+    {
         return;
-    XACTCATEGORY iCategory = xactEngine->GetCategory(category);
-    xactEngine->Pause(iCategory,false);
+    }
+
+    FACTCATEGORY iCategory = FACTAudioEngine_GetCategory(audioEngine, category);
+    FACTAudioEngine_Pause(audioEngine, iCategory, false);
 }
 
+//=============================================================================
+// WAVE_BANK must be location of .xwb file.
+//=============================================================================
+bool Audio::loadWaveBank(const char* waveBankFile)
+{
+    SDL_IOStream* hFile = NULL;
+    uint32_t fileSize = 0;
+    uint32_t result = 0;
+
+    if (audioEngine == 0)
+    {
+        return false;
+    }
+
+    if (mapWaveBank)
+    {
+        SAFE_DELETE_ARRAY(mapWaveBank);
+    }
+
+    // Create an "in memory" wave bank file using memory mapped file IO
+    result = 0;         // default to failure code, replaced on success
+    hFile = SDL_IOFromFile(waveBankFile, "rb");
+
+    if (hFile != 0)
+    {
+        fileSize = (uint32_t)SDL_GetIOSize(hFile);
+
+        if (fileSize != -1)
+        {
+            mapWaveBank = new uint8_t[fileSize];
+
+            if (mapWaveBank)
+            {
+                if (SDL_ReadIO(hFile, mapWaveBank, fileSize) != -1)
+                {
+                    result = FACTAudioEngine_CreateInMemoryWaveBank(audioEngine, mapWaveBank,
+                        fileSize, 0, 0, &waveBank);
+                }
+            }
+        }
+
+        SDL_CloseIO(hFile);         // mapWaveBank maintains a handle on the file so close this unneeded handle
+    }
+
+    if (result != 0)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+//=============================================================================
+// SOUND_BANK must be location of .xsb file.
+//=============================================================================
+bool Audio::loadSoundBank(const char* soundBankFile)
+{
+    SDL_IOStream* hFile = NULL;
+    uint32_t fileSize = 0;
+    uint32_t result = 0;
+
+    if (audioEngine == 0)
+    {
+        return false;
+    }
+
+    if (soundBankData)
+    {
+        SAFE_DELETE_ARRAY(soundBankData);
+    }
+
+    // Read and register the sound bank file.
+    result = 0;         // default to failure code, replaced on success
+    hFile = SDL_IOFromFile(soundBankFile, "rb");
+
+    if (hFile != 0)
+    {
+        fileSize = (uint32_t)SDL_GetIOSize(hFile);
+
+        if (fileSize != -1)
+        {
+            soundBankData = new uint8_t[fileSize];
+
+            if (soundBankData)
+            {
+                if (SDL_ReadIO(hFile, soundBankData, fileSize) != -1)
+                {
+                    result = FACTAudioEngine_CreateSoundBank(audioEngine, soundBankData,
+                        fileSize, 0, 0, &soundBank);
+                }
+            }
+        }
+
+        SDL_CloseIO(hFile);
+    }
+
+    if (result != 0)
+    {
+        return false;
+    }
+
+    return true;
+}

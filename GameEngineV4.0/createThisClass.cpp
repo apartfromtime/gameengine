@@ -1,17 +1,14 @@
-// Programming 2D Games
-// Copyright (c) 2011 by: 
-// Charles Kelly
-// createThisClass.cpp v1.1
-// This class is the core of the game
-
 #include "createThisClass.h"
+
+const char MENU_IMAGE[] = "pictures\\menu.png";      // menu texture
+const char BACKGROUND_IMAGE[] = "pictures\\background.png";  // background
 
 //=============================================================================
 // Constructor
 //=============================================================================
 CreateThis::CreateThis() : Game()
 {
-    dxFont = new TextDX();  // DirectX font
+    sdlFont = new TextSDL();  // DirectX font
     messageY = 0;
 }
 
@@ -21,37 +18,50 @@ CreateThis::CreateThis() : Game()
 CreateThis::~CreateThis()
 {
     releaseAll();           // call onLostDevice() for every graphics item
-    safeDelete(dxFont);
+    safeDelete(sdlFont);
 }
 
 //=============================================================================
 // Initializes the game
 // Throws GameError on error
 //=============================================================================
-void CreateThis::initialize(HWND hwnd)
+bool CreateThis::init()
 {
-    Game::initialize(hwnd); // throws GameError
-
     // background texture
     if (!backgroundTexture.initialize(graphics, BACKGROUND_IMAGE))
-        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing background texture"));
+    {
+        GameError(gameErrorNS::FATAL_ERROR, "Error initializing background texture");
+        return false;
+    }
 
     // menu texture
-    if (!menuTexture.initialize(graphics,MENU_IMAGE))
-        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing menu texture"));
+    if (!menuTexture.initialize(graphics, MENU_IMAGE))
+    {
+        GameError(gameErrorNS::FATAL_ERROR, "Error initializing menu texture");
+        return false;
+    }
 
     // background image
-    if (!background.initialize(graphics, 0, 0, 0, &backgroundTexture))
-        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing background"));
+    if (!background.initialize(graphics, 0, 0, 0, 0, &backgroundTexture))
+    {
+        GameError(gameErrorNS::FATAL_ERROR, "Error initializing background");
+        return false;
+    }
 
     // menu image
-    if (!menu.initialize(graphics,0,0,0,&menuTexture))
-        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing menu"));
+    if (!menu.initialize(graphics, 0, 0, 0, 0, &menuTexture))
+    {
+        GameError(gameErrorNS::FATAL_ERROR, "Error initializing menu");
+        return false;
+    }
 
     // initialize DirectX font
     // 18 pixel high Arial
-    if(dxFont->initialize(graphics, 18, true, false, "Arial") == false)
-        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing DirectX font"));
+    if (sdlFont->initialize(graphics, 15, true, false, "arial.ttf") == false)
+    {
+        GameError(gameErrorNS::FATAL_ERROR, "Error initializing DirectX font");
+        return false;
+    }
 
     menu.setDegrees(300);
     menu.setScale(0.002861f);
@@ -71,7 +81,7 @@ void CreateThis::initialize(HWND hwnd)
     message += "TCP/IP and UDP/IP Network Support\n\n";
     messageY = GAME_HEIGHT;
 
-    return;
+    return true;
 }
 
 //=============================================================================
@@ -82,7 +92,7 @@ void CreateThis::update()
     static float delay = 0;
     delay += frameTime;
 
-    if(menu.getDegrees() > 0)
+    if (menu.getDegrees() > 0)
     {
         menu.setDegrees(menu.getDegrees() - frameTime * 120);
         menu.setScale(menu.getScale() + frameTime * 0.4f);
@@ -90,7 +100,7 @@ void CreateThis::update()
     else
         menu.setDegrees(0);
 
-    if(delay > 15)           // start over
+    if (delay > 15)           // start over
     {
         menu.setDegrees(300);
         menu.setScale(0.002861f);
@@ -98,7 +108,7 @@ void CreateThis::update()
         delay = 0;
         messageY = GAME_HEIGHT;
     }
-    else if(delay > 5)
+    else if (delay > 5)
     {
         menu.setY(menu.getY() - frameTime * 300);
         if (messageY > 10)
@@ -127,8 +137,8 @@ void CreateThis::render()
 
     background.draw(graphicsNS::ALPHA50);
     menu.draw();
-    dxFont->setFontColor(graphicsNS::ORANGE);
-    dxFont->print(message,20,(int)messageY);
+    sdlFont->setFontColor(graphicsNS::ORANGE);
+    sdlFont->print(message, 20, (int)messageY);
 
     graphics->spriteEnd();                  // end drawing sprites
 }
@@ -139,7 +149,6 @@ void CreateThis::render()
 //=============================================================================
 void CreateThis::releaseAll()
 {
-    dxFont->onLostDevice();
     menuTexture.onLostDevice();
     Game::releaseAll();
     return;
@@ -152,7 +161,6 @@ void CreateThis::releaseAll()
 void CreateThis::resetAll()
 {
     menuTexture.onResetDevice();
-    dxFont->onResetDevice();
     Game::resetAll();
     return;
 }

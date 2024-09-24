@@ -1,28 +1,20 @@
-// Programming 2D Games
-// Copyright (c) 2011 by: 
-// Charles Kelly
-// net.h v1.2
+#pragma once
+#include <SDL3\SDL_net.h>
+#include "constants.h"
+#include "gameError.h"
 
-#ifndef _NET_H                  // Prevent multiple definitions if this 
-#define _NET_H                  // file is included in more than one place
-#define WIN32_LEAN_AND_MEAN
-
-class Net;
-
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <stdio.h>
-#include <string>
-#pragma comment(lib,"Ws2_32.lib")
-
-// Network I/O
+//-----------------------------------------------------------------------------
+//
+// NETWORK
+//
+//-----------------------------------------------------------------------------
 
 namespace netNS
 {
-    const USHORT DEFAULT_PORT = 48161;
+    const unsigned short DEFAULT_PORT = 48161;
     const int MIN_PORT = 1024;
     const int BUFFER_LENGTH = 4096;
-    const int IP_SIZE = 16;     // size of "nnn.nnn.nnn.nnn"
+    const int IP_SIZE = 16;         // size of "nnn.nnn.nnn.nnn"
 
     // Mode
     const int UNINITIALIZED = 0;
@@ -37,32 +29,24 @@ namespace netNS
     const int CONNECTED_TCP = 3;
 
     // Status codes
-    const int STATUS_MASK = 0X0FFFF;    // AND with return to reveal Status code
-    const int NET_OK = 0;
-    const int NET_ERROR = 1;
-    const int NET_INIT_FAILED = 2;
-    const int NET_INVALID_SOCKET = 3;
-    const int NET_GET_HOST_BY_NAME_FAILED = 4;
-    const int NET_BIND_FAILED = 5;
-    const int NET_CONNECT_FAILED = 6;
-    const int NET_ADDR_IN_USE = 7;
-    const int NET_DOMAIN_NOT_FOUND = 8;
-    const int NET_INVALID_PARAMETER = 9;
+    enum
+    {
+        NET_OK = 0,
+        NET_ERROR = 1,
+        NET_INIT_FAILED = 2,
+        NET_INVALID_SOCKET = 3,
+        NET_GET_HOST_BY_NAME_FAILED = 4,
+        NET_BIND_FAILED = 5,
+        NET_CONNECT_FAILED = 6,
+        NET_ADDR_IN_USE = 7,
+        NET_DOMAIN_NOT_FOUND = 8,
+        NET_REMOTE_DISCONNECT = 9,
+        NET_UNKNOWN_NETWORK_ERROR = 10,
+        NET_ERROR_CODES
+    };
 
-    const int PACKETS_PER_SEC = 30;     // Number of packets to send per second
-    const float NET_TIME = 1.0f/PACKETS_PER_SEC;    // time between net transmissions
-    const int MAX_ERRORS = PACKETS_PER_SEC*30;  // Packets/Sec * 30 Sec
-    const int MAX_COMM_WARNINGS = 10;       // max packets out of sync before time reset
-
-    // Connection response messages, ===== MUST BE SAME SIZE =====
-    const int RESPONSE_SIZE = 12;
-    const char CLIENT_ID[RESPONSE_SIZE]   = "Client v1.0";  // client ID
-    const char SERVER_ID[RESPONSE_SIZE]   = "Server v1.1";  // server ID
-    const char SERVER_FULL[RESPONSE_SIZE] = "Server Full";  // server full
-
-    const int ERROR_CODES = 10;
     // Network error codes
-    static const char *codes[ERROR_CODES] = {
+    static const char* codes[NET_ERROR_CODES] = {
         "No errors reported",
         "General network error: ",
         "Network init failed: ",
@@ -72,192 +56,134 @@ namespace netNS
         "Connect failed: ",
         "Port already in use: ",
         "Domain not found: ",
+        "Remote Disconnect: "
         "Unknown network error: "
     };
 
-    struct ErrorCode
-    {
-        int sockErr;        // Windows Socket Error Code
-        char *message;
-    };
+    const int PACKETS_PER_SEC = 30;         // Number of packets to send per second
+    const float NET_TIME = 1.0f / PACKETS_PER_SEC;          // time between net transmissions
+    const int MAX_ERRORS = PACKETS_PER_SEC * 30;            // Packets/Sec * 30 Sec
+    const int MAX_COMM_WARNINGS = 10;           // max packets out of sync before time reset
 
+    // Connection response messages, ===== MUST BE SAME SIZE =====
+    const int RESPONSE_SIZE = 12;
+    const char CLIENT_ID[RESPONSE_SIZE] = "Client v1.0";            // client ID
+    const char SERVER_ID[RESPONSE_SIZE] = "Server v1.1";            // server ID
+    const char SERVER_FULL[RESPONSE_SIZE] = "Server Full";          // server full
     const int REMOTE_DISCONNECT = 0x2775;
-
-    const int SOCK_CODES = 29;
-    // Windows Socket Error Codes
-    static const ErrorCode errorCodes[SOCK_CODES] = {
-        {0x2714, "A blocking operation was interrupted"},
-        {0x271D, "Socket access permission violation"},
-        {0x2726, "Invalid argument"},
-        {0x2728, "Too many open sockets"},
-        {0x2735, "Operation in progress"},
-        {0x2736, "Operation on non-socket"},
-        {0x2737, "Address missing"},
-        {0x2738, "Message bigger than buffer"},
-        {0x273F, "Address incompatible with protocol"},
-        {0x2740, "Address is already in use"},
-        {0x2741, "Address not valid in current context"},
-        {0x2742, "Network is down"},
-        {0x2743, "Network unreachable"},
-        {0x2744, "Connection broken during operation"},
-        {0x2745, "Connection aborted by host software"},
-        {0x2746, "Connection reset by remote host"},
-        {0x2747, "Insufficient buffer space"},
-        {0x2748, "Connect request on already connected socket"},
-        {0x2749, "Socket not connected or address not specified"},
-        {0x274A, "Socket already shut down"},
-        {0x274C, "Operation timed out"},
-        {0x274D, "Connection refused by target"},
-        {0x274E, "Cannot translate name"},
-        {0x274F, "Name too long"},
-        {0x2750, "Destination host down"},
-        {0x2751, "Host unreachable"},
-        {0x276B, "Network cannot initialize, system unavailable"},
-        {0x276D, "Network has not been initialized"},
-        {0x2775, "Remote has disconnected"},
-    };
-
 }
 
-class Net 
+class Net
 {
 private:
-    // Network Variables
-    UINT         bufLength;     // Length of send and receive buffers
-    WSADATA      wsd;
-    SOCKET       sock;
-    int          ret;
-    int          remoteAddrSize;
-    SOCKADDR_IN  remoteAddr, localAddr;
-    bool         netInitialized;
-    bool         bound;
-    char         mode;
-    int          type;
+    SDLNet_DatagramSocket* datagramSocket;          // UDP\DATAGRAM socket client\server
+    SDLNet_StreamSocket* streamSocket;          // TCP\STREAM socket client\server
+    SDLNet_Server* serverSocket;
+    SDLNet_Address* remoteAddr;         // remote address
+    SDLNet_Address* localAddr;          // local address
+
+    // net properties
+    char    serverIP[netNS::IP_SIZE];           // IP as string (e.g. "192.168.1.100");
+    int     type;
+    char    mode;
+    bool    netInitialized;
+    bool    bound;
 
     //=============================================================================
     // Initialize network (for class use only)
-    // protocol = UDP or TCP
-    // Called by netCreateServer and netCreatClient
-    // Pre:
+    // Called by createServer and creatClient
     //   port = Port number.
     //   protocol = UDP or TCP.
-    // Post:
-    //   Returns two part int code on error.
-    //     The low 16 bits contains Status code as defined in net.h.
-    //     The high 16 bits contains "Windows Socket Error Code".
+    // 
+    //   Returns int code on error.
     //=============================================================================
-    int initialize(int port, int protocol);    
+    int initialize(int mode, int port, int protocol);
 
 public:
-    // Constructor
     Net();
-    // Destructor
-    virtual ~Net();
+    ~Net();
 
     //=============================================================================
     // Setup network for use as server
-    // May not be configured as Server and Client at the same time.
-    // Pre: 
+    // May not be configured as Server and Client at the same time. 
     //   port = Port number to listen on.
     //     Port numbers 0-1023 are used for well-known services.
     //     Port numbers 1024-65535 may be freely used.
     //   protocol = UDP or TCP
-    // Post:
+    // 
     //   Returns NET_OK on success
-    //   Returns two part int code on error.
-    //     The low 16 bits contains Status code as defined in net.h.
-    //     The high 16 bits contains "Windows Socket Error Code".
-    //   *server = IP address connected to as null terminated string.
+    //   Returns int code on error.
     //=============================================================================
     int createServer(int port, int protocol);
 
-    //=============================================================================
+	//=============================================================================
     // Setup network for use as a Client
-    // Pre: 
     //   *server = IP address of server to connect to as null terminated
     //     string (e.g. "192.168.1.100") or null terminated hostname
     //     (e.g. "www.programming2dgames.com").
     //   port = Port number. Port numbers 0-1023 are used for well-known services.
     //     Port numbers 1024-65535 may be freely used.
     //   protocol = UDP or TCP
-    // Post:
+    // 
     //   Returns NET_OK on success
-    //   Returns two part int code on error.
-    //     The low 16 bits contains Status code as defined in net.h.
-    //     The high 16 bits contains "Windows Socket Error Code".
-    //   *server = IP address connected to as null terminated string.
+    //   Returns int code on error.
     //=============================================================================
-    int createClient(char *server, int port, int protocol);
+    int createClient(char* server, int port, int protocol);
 
     //=============================================================================
     // Send data
-    // Pre:
+    // 
     //   *data = Data to send
-    //   size = Number of bytes to send
+    //   size = Number of bytes to send, 0 if no data sent
     //   *remoteIP = Destination IP address as null terminated char array
     //   port = Destination port number.
-    // Post: 
+    // 
     //   Returns NET_OK on success. Success does not indicate data was sent.
-    //   Returns two part int code on error.
-    //     The low 16 bits contains Status code as defined in net.h.
-    //     The high 16 bits contains "Windows Socket Error Code".
-    //   size = Number of bytes sent, 0 if no data sent, unchanged on error.
+    //   Returns int code on error.
     //=============================================================================
-    int sendData(const char *data, int &size, const char *remoteIP);
-    int sendData(const char *data, int &size, const char *remoteIP, const USHORT port);
+    int sendData(const char* data, int& size, const char* remoteIP);
+    int sendData(const char* data, int& size, const char* remoteIP,
+        const unsigned short port);
 
     //=============================================================================
     // Read data
-    // Pre:
+    // 
     //   *data = Buffer for received data.
-    //   size = Number of bytes to receive.
+    //   size = Number of bytes to receive. may be 0.
     //   *senderIP = NULL
-    //   port = undefined
-    // Post: 
+    //   port = port number of sender
+    // 
     //   Returns NET_OK on success.
-    //   Returns two part int code on error.
-    //     The low 16 bits contains Status code as defined in net.h.
-    //     The high 16 bits contains "Windows Socket Error Code".
-    //   size = Number of bytes received, may be 0. Unchanged on error.
-    //   *senderIP = IP address of sender as null terminated string.
-    //   port = port number of sender.
+    //   Returns int code on error.
     //=============================================================================
-    int readData(char *data, int &size, char *senderIP);
-    int readData(char *data, int &size, char *senderIP, USHORT &port);
+    int readData(char* data, int& size, char* senderIP);
+    int readData(char* data, int& size, char* senderIP, unsigned short& port);
 
     //=============================================================================
     // Close socket and free resources
-    // Post:
+    // 
     //   Socket is closed and buffer memory is released.
-    //   Returns two part int code on error.
-    //     The low 16 bits contains Status code as defined in net.h.
-    //     The high 16 bits contains "Windows Socket Error Code".
+    //   Returns int code on error.
     //=============================================================================
     int closeSocket();
 
     //=============================================================================
     // Get the IP address of this computer as a string
-    // Post:
+    // 
     //   *localIP = IP address of local computer as null terminated string on success.
-    //   Returns two part int code on error.
-    //     The low 16 bits contains Status code as defined in net.h.
-    //     The high 16 bits contains "Windows Socket Error Code".
+    // 
+    //   Returns int code on error.
     //=============================================================================
-    int getLocalIP(char *localIP);
+    int getLocalIP(char* localIP);
 
     //=============================================================================
     // Return mode
     // Valid modes are: UNINITIALIZED, SERVER, CLIENT
     //=============================================================================
-    char getMode()      {return mode;}
+    char getMode();
 
     //=============================================================================
-    // Returns detailed error message from two part error code
+    // Returns detailed error message from error code
     //=============================================================================
     std::string getError(int error);
 };
-
-#endif
-
-
-

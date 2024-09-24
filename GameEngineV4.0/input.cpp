@@ -1,9 +1,3 @@
-// Programming 2D Games
-// Copyright (c) 2011 by: 
-// Charles Kelly
-// input.cpp v1.6
-// Last modified Feb-7-2013
-
 #include "input.h"
 
 //=============================================================================
@@ -11,35 +5,38 @@
 //=============================================================================
 Input::Input()
 {
-    // clear key down array
+    // Keyboard
     for (size_t i = 0; i < inputNS::KEYS_ARRAY_LEN; i++)
         keysDown[i] = false;
-    // clear key pressed array
+
     for (size_t i = 0; i < inputNS::KEYS_ARRAY_LEN; i++)
         keysPressed[i] = false;
-    newLine = true;                     // start new line
-    textIn = "";                        // clear textIn
-    charIn = 0;                         // clear charIn
 
-    // mouse data
-    mouseX = 0;                         // screen X
-    mouseY = 0;                         // screen Y
-    mouseRawX = 0;                      // high-definition X
-    mouseRawY = 0;                      // high-definition Y
-    mouseWheel = 0;                     // mouse wheel position
-    mouseLButton = false;               // true if left mouse button is down
-    mouseMButton = false;               // true if middle mouse button is down
-    mouseRButton = false;               // true if right mouse button is down
-    mouseX1Button = false;              // true if X1 mouse button is down
-    mouseX2Button = false;              // true if X2 mouse button is down
+    newLine = true;
+    textIn.clear();
+    charIn = 0;
 
-    for(int i=0; i<MAX_CONTROLLERS; i++)
-    {
-        controllers[i].vibrateTimeLeft = 0;
-        controllers[i].vibrateTimeRight = 0;
-    }
-    thumbstickDeadzone = GAMEPAD_THUMBSTICK_DEADZONE;    // default
-    triggerDeadzone = GAMEPAD_TRIGGER_DEADZONE;          // default
+    // Mouse
+    mouseX = 0;
+    mouseY = 0;
+    mouseRawX = 0;
+    mouseRawY = 0;
+    mouseLButtonPressed = false;
+    mouseMButtonPressed = false;
+    mouseRButtonPressed = false;
+    mouse4ButtonPressed = false;
+    mouse5ButtonPressed = false;
+    mouseLButton = false;
+    mouseMButton = false;
+    mouseRButton = false;
+    mouse4Button = false;
+    mouse5Button = false;
+
+    // Controller
+    SDL_memset(controllers, 0, sizeof(ControllerState) * MAX_CONTROLLERS);
+
+    thumbstickDeadzone = GAMEPAD_THUMBSTICK_DEADZONE;
+    triggerDeadzone = GAMEPAD_TRIGGER_DEADZONE;
 }
 
 //=============================================================================
@@ -47,99 +44,119 @@ Input::Input()
 //=============================================================================
 Input::~Input()
 {
-    if(mouseCaptured)
-        ReleaseCapture();               // release mouse
+    // Mouse
+    if (mouseCaptured)
+    {
+        SDL_CaptureMouse(SDL_FALSE);
+    }
+
+    // Controller
+    for (int i = 0; i < MAX_CONTROLLERS; i++)
+    {
+        if (controllers[i].controller != 0)
+        {
+            SDL_CloseGamepad(controllers[i].controller);
+        }
+    }
+
+    SDL_QuitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD);
 }
 
 //=============================================================================
 // Initialize mouse and controller input
 // Set capture=true to capture mouse
-// Throws GameError
 //=============================================================================
-void Input::initialize(HWND hwnd, bool capture)
+bool Input::initialize(SDL_Window* hwnd, bool capture)
 {
-    try{
-        mouseCaptured = capture;
-
-        // register high-definition mouse
-        Rid[0].usUsagePage = HID_USAGE_PAGE_GENERIC; 
-        Rid[0].usUsage = HID_USAGE_GENERIC_MOUSE; 
-        Rid[0].dwFlags = RIDEV_INPUTSINK;   
-        Rid[0].hwndTarget = hwnd;
-        RegisterRawInputDevices(Rid, 1, sizeof(Rid[0]));
-
-        if(mouseCaptured)
-            SetCapture(hwnd);           // capture mouse
-
-        // Clear controllers state
-        ZeroMemory( controllers, sizeof(ControllerState) * MAX_CONTROLLERS );
-
-        checkControllers();             // check for connected controllers
-    }
-    catch(...)
+    if (SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD) != SDL_TRUE)
     {
-        throw(GameError(gameErrorNS::FATAL_ERROR, "Error initializing input system"));
+        throw(std::runtime_error(SDL_GetError()));
+        return false;
     }
+
+    // Mouse
+    mouseCaptured = capture;
+
+    if (mouseCaptured)
+    {
+        SDL_CaptureMouse(SDL_TRUE);
+    }
+
+    // Controller
+    SDL_memset(controllers, 0, sizeof(ControllerState) * MAX_CONTROLLERS);
+
+    SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt");
+
+    checkControllers();
+
+    return true;
 }
 
 //=============================================================================
 // Set true in the keysDown and keysPessed array for this key
-// Pre: wParam contains the virtual key code (0--255)
 //=============================================================================
-void Input::keyDown(WPARAM wParam)
+void Input::keyDown(unsigned int key)
 {
-    // make sure key code is within buffer range
-    if (wParam < inputNS::KEYS_ARRAY_LEN)
+    if (key < inputNS::KEYS_ARRAY_LEN)
     {
-        keysDown[wParam] = true;    // update keysDown array
-        // key has been "pressed, erased by clear()
-        keysPressed[wParam] = true; // update keysPressed array
+        keysDown[key] = true;
+        keysPressed[key] = true;
     }
 }
 
 //=============================================================================
 // Set false in the keysDown array for this key
-// Pre: wParam contains the virtual key code (0--255)
 //=============================================================================
-void Input::keyUp(WPARAM wParam)
+void Input::keyUp(unsigned int key)
 {
-    // make sure key code is within buffer range
-    if (wParam < inputNS::KEYS_ARRAY_LEN)
-        // update state table
-        keysDown[wParam] = false;
+    if (key < inputNS::KEYS_ARRAY_LEN)
+        keysDown[key] = false;
 }
 
 //=============================================================================
 // Save the char just entered in textIn string
-// Pre: wParam contains the char
 //=============================================================================
-void Input::keyIn(WPARAM wParam)
+void Input::keyIn(unsigned int key)
 {
-    if (newLine)                            // if start of new line
+    if (newLine)            // if start of new line
     {
         textIn.clear();
         newLine = false;
     }
 
-    if (wParam == '\b')                     // if backspace
+    if (key == '\b')            // backspace
     {
-        if(textIn.length() > 0)             // if characters exist
-            textIn.erase(textIn.size()-1);  // erase last character entered
+        if (textIn.length() > 0)
+        {
+            textIn.erase(textIn.size() - 1);
+        }
     }
     else
     {
-        textIn += (wParam & 0xFF);                   // add character to textIn
-        charIn = (wParam & 0xFF);                    // save last char entered
+        // don't process console key
+        if (key == '`')
+        {
+            return;
+        }
+
+        if (textIn.length() + 1 < 256)
+        {
+            textIn.insert(textIn.length(), 1, (key & 0xFF));
+        }
+
+        charIn = (key & 0xFF);
     }
 
-    if ((char)wParam == '\r')               // if return    
-        newLine = true;                     // start new line
+    if (key == '\r')            // return
+    {
+        newLine = true;
+    }
 }
 
 //=============================================================================
 // Returns true if the specified VIRTUAL KEY is down, otherwise false.
 //=============================================================================
-bool Input::isKeyDown(UCHAR vkey) const
+bool Input::isKeyDown(unsigned char vkey) const
 {
     if (vkey < inputNS::KEYS_ARRAY_LEN)
         return keysDown[vkey];
@@ -149,9 +166,9 @@ bool Input::isKeyDown(UCHAR vkey) const
 
 //=============================================================================
 // Return true if the specified VIRTUAL KEY has been pressed in the most recent
-// frame. Key presses are erased at the end of each frame.
+// frame.
 //=============================================================================
-bool Input::wasKeyPressed(UCHAR vkey) const
+bool Input::wasKeyPressed(unsigned char vkey) const
 {
     if (vkey < inputNS::KEYS_ARRAY_LEN)
         return keysPressed[vkey];
@@ -161,12 +178,11 @@ bool Input::wasKeyPressed(UCHAR vkey) const
 
 //=============================================================================
 // Return true if any key was pressed in the most recent frame.
-// Key presses are erased at the end of each frame.
 //=============================================================================
 bool Input::anyKeyPressed() const
 {
     for (size_t i = 0; i < inputNS::KEYS_ARRAY_LEN; i++)
-        if(keysPressed[i] == true)
+        if (keysPressed[i] == true)
             return true;
     return false;
 }
@@ -174,7 +190,7 @@ bool Input::anyKeyPressed() const
 //=============================================================================
 // Clear the specified key press
 //=============================================================================
-void Input::clearKeyPress(UCHAR vkey)
+void Input::clearKeyPress(unsigned char vkey)
 {
     if (vkey < inputNS::KEYS_ARRAY_LEN)
         keysPressed[vkey] = false;
@@ -182,88 +198,332 @@ void Input::clearKeyPress(UCHAR vkey)
 
 //=============================================================================
 // Clear specified input buffers
-// See input.h for what values
 //=============================================================================
-void Input::clear(UCHAR what)
+void Input::clear(unsigned char what)
 {
-    if(what & inputNS::KEYS_DOWN)       // if clear keys down
+    if (what & inputNS::KEYS_DOWN)
     {
         for (size_t i = 0; i < inputNS::KEYS_ARRAY_LEN; i++)
             keysDown[i] = false;
     }
-    if(what & inputNS::KEYS_PRESSED)    // if clear keys pressed
+
+    if (what & inputNS::KEYS_PRESSED)
     {
         for (size_t i = 0; i < inputNS::KEYS_ARRAY_LEN; i++)
             keysPressed[i] = false;
     }
-    if(what & inputNS::MOUSE)           // if clear mouse
+
+    if (what & inputNS::MOUSE_BUTTONS_PRESSED)
     {
-        mouseX = 0;
-        mouseY = 0;
+        mouseLButtonPressed = false;
+        mouseMButtonPressed = false;
+        mouseRButtonPressed = false;
+        mouse4ButtonPressed = false;
+        mouse5ButtonPressed = false;
+    }
+
+    if (what & inputNS::MOUSE)
+    {
         mouseRawX = 0;
         mouseRawY = 0;
-        mouseWheel = 0;
+        mouseX = 0;
+        mouseY = 0;
     }
-    if(what & inputNS::TEXT_IN)
+
+    if (what & inputNS::TEXT_IN)
     {
         clearTextIn();
-        clearCharIn();
+    }
+
+    if (what & inputNS::GAMEPAD)
+    {
+        for (int i = 0; i < MAX_CONTROLLERS; i++)
+        {
+            if (controllers[i].controller != 0)
+            {
+                controllers[i].vibrateMotorSpeedLeft = 0;
+                controllers[i].vibrateMotorSpeedRight = 0;
+                controllers[i].vibrateTimeLeft = 0.0f;
+                controllers[i].vibrateTimeRight = 0.0f;
+            }
+        }
     }
 }
+
+//=============================================================================
+// Clears key, mouse and text input data
+//=============================================================================
+void Input::clearAll()
+{
+    clear(inputNS::KEYS_MOUSE_TEXT_GAMEPAD);
+}
+
+//=============================================================================
+// Clear text input buffer
+//=============================================================================
+void Input::clearTextIn()
+{
+    textIn.clear();
+}
+
+//=============================================================================
+// Clear last character entered
+//=============================================================================
+void Input::clearCharIn()
+{
+    charIn = 0;
+}
+
+//=============================================================================
+// Return text input as a string
+//=============================================================================
+std::string Input::getTextIn()
+{
+    return textIn;
+}
+
+//=============================================================================
+// Set text input string
+//=============================================================================
+void Input::setTextIn(std::string str)
+{
+    textIn = str;
+}
+
+//=============================================================================
+// Return last character entered
+//=============================================================================
+char Input::getCharIn()
+{
+    return charIn;
+}
+
+
+//-----------------------------------------------------------------------------
+//
+// MOUSE
+//
+//-----------------------------------------------------------------------------
+
 
 //=============================================================================
 // Reads mouse screen position into mouseX, mouseY
 //=============================================================================
-void Input::mouseIn(LPARAM lParam)
+void Input::mouseIn(int x, int y)
 {
-    mouseX = GET_X_LPARAM(lParam); 
-    mouseY = GET_Y_LPARAM(lParam);
+    mouseX = x;
+    mouseY = y;
 }
 
 //=============================================================================
 // Reads raw mouse data into mouseRawX, mouseRawY
-// This routine is compatible with a high-definition mouse
 //=============================================================================
-void Input::mouseRawIn(LPARAM lParam)
+void Input::mouseRawIn(int x, int y)
 {
-    UINT dwSize = 40;
-    static BYTE lpb[40];
-    
-    GetRawInputData((HRAWINPUT)lParam, RID_INPUT, 
-                    lpb, &dwSize, sizeof(RAWINPUTHEADER));
-    
-    RAWINPUT* raw = (RAWINPUT*)lpb;
-    
-    if (raw->header.dwType == RIM_TYPEMOUSE) 
-    {
-        mouseRawX = raw->data.mouse.lLastX;
-        mouseRawY = raw->data.mouse.lLastY;
-    } 
+    mouseRawX = x;
+    mouseRawY = y;
 }
 
 //=============================================================================
 // Reads mouse wheel movement expressed in multiples of WHEEL_DELTA, which
-// is 120. A positive value indicates that the wheel was rotated away from the
-// user, a negative value indicates that the wheel was rotated toward the user.
+// is 120.
 //=============================================================================
-void Input::mouseWheelIn(WPARAM wParam)
+void Input::mouseWheelIn(int w)
 {
-    mouseWheel = GET_WHEEL_DELTA_WPARAM(wParam);
+    mouseWheel = w;
 }
+
+//=============================================================================
+// Return true if the specified VIRTUAL BUTTON has been pressed in the most
+// recent frame.
+//=============================================================================
+bool Input::wasMouseButtonPressed(unsigned char vbutton)
+{
+    bool result = false;
+
+    switch (vbutton)
+    {
+    case MOUSE_L_BUTTON:
+    {
+        result = mouseLButtonPressed;
+    } break;
+    case MOUSE_M_BUTTON:
+    {
+        result = mouseMButtonPressed;
+    } break;
+    case MOUSE_R_BUTTON:
+    {
+        result = mouseRButtonPressed;
+    } break;
+    case MOUSE_4_BUTTON:
+    {
+        result = mouse4ButtonPressed;
+    } break;
+    case MOUSE_5_BUTTON:
+    {
+        result = mouse5ButtonPressed;
+    } break;
+    }
+
+    return result;
+}
+
+//=============================================================================
+// Save state of mouse button
+//=============================================================================
+void Input::setMouseLButton(bool b)
+{
+    mouseLButtonPressed = true;
+    mouseLButton = b;
+}
+
+//=============================================================================
+// Save state of mouse button
+//=============================================================================
+void Input::setMouseMButton(bool b)
+{
+    mouseMButtonPressed = true;
+    mouseMButton = b;
+}
+
+//=============================================================================
+// Save state of mouse button
+//=============================================================================
+void Input::setMouseRButton(bool b)
+{
+    mouseRButtonPressed = true;
+    mouseRButton = b;
+}
+
+//=============================================================================
+// Save state of mouse button
+//=============================================================================
+void Input::setMouse4Button(bool b)
+{
+    mouse4ButtonPressed = true;
+    mouse4Button = b;
+}
+
+//=============================================================================
+// Save state of mouse button
+//=============================================================================
+void Input::setMouse5Button(bool b)
+{
+    mouse5ButtonPressed = true;
+    mouse5Button = b;
+}
+
+//=============================================================================
+// Return mouse X position
+//=============================================================================
+int Input::getMouseX() const
+{
+    return mouseX;
+}
+
+//=============================================================================
+// Return mouse Y position
+//=============================================================================
+int Input::getMouseY() const
+{
+    return mouseY;
+}
+
+//=============================================================================
+// Return raw mouse X movement. Left is <0, Right is >0
+//=============================================================================
+int Input::getMouseRawX()
+{
+    int rawX = mouseRawX;
+    mouseRawX = 0;
+
+    return rawX;
+}
+
+//=============================================================================
+// Return raw mouse Y movement. Up is <0, Down is >0
+//=============================================================================
+int Input::getMouseRawY()
+{
+    int rawY = mouseRawY;
+    mouseRawY = 0;
+
+    return rawY;
+}
+
+//=============================================================================
+// Return state of left mouse button.
+//=============================================================================
+bool Input::getMouseLButton() const
+{
+    return mouseLButton;
+}
+
+//=============================================================================
+// Return state of middle mouse button.
+//=============================================================================
+bool Input::getMouseMButton() const
+{
+    return mouseMButton;
+}
+
+//=============================================================================
+// Return state of right mouse button.
+//=============================================================================
+bool Input::getMouseRButton() const
+{
+    return mouseRButton;
+}
+
+//=============================================================================
+// Return state of X1 mouse button.
+//=============================================================================
+bool Input::getMouse4Button() const
+{
+    return mouse4Button;
+}
+
+//=============================================================================
+// Return state of X2 mouse button.
+//=============================================================================
+bool Input::getMouse5Button() const
+{
+    return mouse5Button;
+}
+
+
+//-----------------------------------------------------------------------------
+//
+// CONTROLLER
+//
+//-----------------------------------------------------------------------------
+
 
 //=============================================================================
 // Check for connected controllers
 //=============================================================================
 void Input::checkControllers()
 {
-    DWORD result;
-    for( DWORD i = 0; i <MAX_CONTROLLERS; i++)
+    int joystickCount = 0;
+    SDL_JoystickID* joysticks = SDL_GetJoysticks(&joystickCount);
+
+    for (int i = 0, n = 0; i < joystickCount; ++i)
     {
-        result = XInputGetState(i, &controllers[i].state);
-        if(result == ERROR_SUCCESS)
-            controllers[i].connected = true;
-        else
-            controllers[i].connected = false;
+        if (SDL_IsGamepad(joysticks[i]) == SDL_TRUE && n < MAX_CONTROLLERS)
+        {
+            SDL_Gamepad* controller = SDL_OpenGamepad(joysticks[i]);
+
+            if (controller != NULL)
+            {
+                SDL_PropertiesID properties = SDL_GetGamepadProperties(controller);
+                SDL_bool hasRumble = SDL_GetBooleanProperty(properties,
+                    SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN, SDL_FALSE);
+                controllers[n].controller = controller;
+                controllers[n].hasRumble = hasRumble;
+                controllers[n].connected = true;
+                n++;
+            }
+        }
     }
 }
 
@@ -272,134 +532,436 @@ void Input::checkControllers()
 //=============================================================================
 void Input::readControllers()
 {
-    DWORD result;
-    for( DWORD i = 0; i <MAX_CONTROLLERS; i++)
+    SDL_UpdateGamepads();
+
+    for (size_t i = 0; i < MAX_CONTROLLERS; i++)
     {
-        if(controllers[i].connected)
+        if (controllers[i].connected == true)
         {
-            result = XInputGetState(i, &controllers[i].state);
-            if(result == ERROR_DEVICE_NOT_CONNECTED)    // if controller disconnected
-                controllers[i].connected = false;
+            // bitmask of the buttons
+            controllers[i].gamepadButtons = 0;
+
+            for (size_t button = 0; button < SDL_GAMEPAD_BUTTON_COUNT; button++)
+            {
+                controllers[i].gamepadButtons |=
+                    SDL_GetGamepadButton(controllers[i].controller,
+                        (SDL_GamepadButton)button) << button;
+            }
         }
     }
 }
 
 //=============================================================================
-// Return value of controller n Left Trigger (0 through 255).
-// Trigger movement less than triggerDeadzone returns 0.
-// Return value is scaled to 0 through 255
+// Set thumbstick deadzone
 //=============================================================================
-BYTE Input::getGamepadLeftTrigger(UINT n) 
+void Input::setThumbstickDeadzone(short dz)
 {
-    BYTE value = getGamepadLeftTriggerUndead(n);
-    if(value > triggerDeadzone)             // if > dead zone
-        //adjust magnitude relative to the end of the dead zone
-        value = (value-triggerDeadzone)*255/
-        (255-triggerDeadzone);
-    else                                    // else, < dead zone
+    thumbstickDeadzone = abs(dz);
+}
+
+//=============================================================================
+// Set trigger deadzone
+//=============================================================================
+void Input::setTriggerDeadzone(unsigned char dz)
+{
+    triggerDeadzone = dz;
+}
+
+//=============================================================================
+// Get thumbstick deadzone
+//=============================================================================
+short Input::getThumbstickDeadzone()
+{
+    return thumbstickDeadzone;
+}
+
+//=============================================================================
+// Get trigger deadzone
+//=============================================================================
+unsigned char Input::getTriggerDeadzone()
+{
+    return static_cast<unsigned char>(triggerDeadzone);
+}
+
+//=============================================================================
+// Return state of specified game controller.
+//=============================================================================
+const ControllerState* Input::getControllerState(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return &controllers[n];
+}
+
+//=============================================================================
+// Return connection state of specified game controller
+//=============================================================================
+bool Input::getGamepadConnected(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return controllers[n].connected;
+}
+
+//=============================================================================
+// Return state of controller n buttons.
+//=============================================================================
+const unsigned short Input::getGamepadButtons(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return controllers[n].gamepadButtons;
+}
+
+//=============================================================================
+// Return state of controller n D-pad Up
+//=============================================================================
+bool Input::getGamepadDPadUp(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadButton(controllers[n].controller,
+        SDL_GAMEPAD_BUTTON_DPAD_UP);
+}
+
+//=============================================================================
+// Return state of controller n D-pad Down.
+//=============================================================================
+bool Input::getGamepadDPadDown(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadButton(controllers[n].controller,
+        SDL_GAMEPAD_BUTTON_DPAD_DOWN);
+}
+
+//=============================================================================
+// Return state of controller n D-pad Left.
+//=============================================================================
+bool Input::getGamepadDPadLeft(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadButton(controllers[n].controller,
+        SDL_GAMEPAD_BUTTON_DPAD_LEFT);
+}
+
+//=============================================================================
+// Return state of controller n D-pad Right.
+//=============================================================================
+bool Input::getGamepadDPadRight(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadButton(controllers[n].controller,
+        SDL_GAMEPAD_BUTTON_DPAD_RIGHT);
+}
+
+//=============================================================================
+// Return state of controller n Start button.
+//=============================================================================
+bool Input::getGamepadStart(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadButton(controllers[n].controller,
+        SDL_GAMEPAD_BUTTON_START);
+}
+
+//=============================================================================
+// Return state of controller n Back button.
+//=============================================================================
+bool Input::getGamepadBack(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadButton(controllers[n].controller,
+        SDL_GAMEPAD_BUTTON_BACK);
+}
+
+//=============================================================================
+// Return state of controller n Left Thumb button.
+//=============================================================================
+bool Input::getGamepadLeftThumb(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadButton(controllers[n].controller,
+        SDL_GAMEPAD_BUTTON_LEFT_STICK);
+}
+
+//=============================================================================
+// Return state of controller n Right Thumb button.
+//=============================================================================
+bool Input::getGamepadRightThumb(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadButton(controllers[n].controller,
+        SDL_GAMEPAD_BUTTON_RIGHT_STICK);
+}
+
+//=============================================================================
+// Return state of controller n Left Shoulder button.
+//=============================================================================
+bool Input::getGamepadLeftShoulder(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadButton(controllers[n].controller,
+        SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
+}
+
+//=============================================================================
+// Return state of controller n Right Shoulder button.
+//=============================================================================
+bool Input::getGamepadRightShoulder(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadButton(controllers[n].controller,
+        SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
+}
+
+//=============================================================================
+// Return state of controller n A button.
+//=============================================================================
+bool Input::getGamepadA(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadButton(controllers[n].controller,
+        SDL_GAMEPAD_BUTTON_SOUTH);
+}
+
+//=============================================================================
+// Return state of controller n B button.
+//=============================================================================
+bool Input::getGamepadB(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadButton(controllers[n].controller,
+        SDL_GAMEPAD_BUTTON_EAST);
+}
+
+//=============================================================================
+// Return state of controller n X button.
+//=============================================================================
+bool Input::getGamepadX(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadButton(controllers[n].controller,
+        SDL_GAMEPAD_BUTTON_WEST);
+}
+
+//=============================================================================
+// Return state of controller n Y button.
+//=============================================================================
+bool Input::getGamepadY(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadButton(controllers[n].controller,
+        SDL_GAMEPAD_BUTTON_NORTH);
+}
+
+//=============================================================================
+// Return value of controller n Left Trigger.
+// Deadzone is not applied.
+//=============================================================================
+int Input::getGamepadLeftTriggerUndead(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadAxis(controllers[n].controller,
+        SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
+}
+
+//=============================================================================
+// Return value of controller n Left Trigger (0 through 32767).
+//=============================================================================
+int Input::getGamepadLeftTrigger(unsigned int n)
+{
+    int value = getGamepadLeftTriggerUndead(n);
+    if (value > triggerDeadzone)
+        // adjust magnitude relative to the end of the dead zone
+        value = (value - triggerDeadzone) * 32767 /
+        (32767 - triggerDeadzone);
+    else
         value = 0;
     return value;
 }
 
 //=============================================================================
-// Return value of controller n Right Trigger (0 through 255).
-// Trigger movement less than triggerDeadzone returns 0.
-// Return value is scaled to 0 through 255
+// Return value of controller n Right Trigger.
 //=============================================================================
-BYTE Input::getGamepadRightTrigger(UINT n) 
+int Input::getGamepadRightTriggerUndead(unsigned int n)
 {
-    BYTE value = getGamepadRightTriggerUndead(n);
-    if(value > triggerDeadzone)    // if > dead zone
-        //adjust magnitude relative to the end of the dead zone
-        value = (value-triggerDeadzone)*255/
-        (255-triggerDeadzone);
-    else                                    // else, < dead zone
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadAxis(controllers[n].controller,
+        SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
+}
+
+//=============================================================================
+// Return value of controller n Right Trigger (0 through 32767).
+// Trigger movement less than triggerDeadzone returns 0.
+// Return value is scaled to 0 through 32767
+//=============================================================================
+int Input::getGamepadRightTrigger(unsigned int n)
+{
+    int value = getGamepadRightTriggerUndead(n);
+    if (value > triggerDeadzone)
+        // adjust magnitude relative to the end of the dead zone
+        value = (value - triggerDeadzone) * 32767 /
+        (32767 - triggerDeadzone);
+    else
         value = 0;
     return value;
+}
+
+//=============================================================================
+// Return value of controller n Left Thumbstick X.
+//=============================================================================
+int Input::getGamepadThumbLXUndead(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadAxis(controllers[n].controller,
+        SDL_GAMEPAD_AXIS_LEFTX);
 }
 
 //=============================================================================
 // Return value of controller n Left Thumbstick X (-32767 through 32767).
-// Stick movement less than thumbstickDeadzone returns 0.
-// Return value is scaled to -32768 through 32767
 //=============================================================================
-SHORT Input::getGamepadThumbLX(UINT n) 
+int Input::getGamepadThumbLX(unsigned int n)
 {
     int x = getGamepadThumbLXUndead(n);
-    if(x > thumbstickDeadzone) // if +x outside dead zone
-        //adjust x relative to the deadzone and scale to 0 through 32767
-        x = (x-thumbstickDeadzone)*32767/
-        (32767-thumbstickDeadzone);
-    else if(x < -thumbstickDeadzone)   // if -x outside dead zone
-        //adjust y relative to the deadzone and scale to 0 through -32767
-        x = (x+thumbstickDeadzone)*32767/
-        (32767-thumbstickDeadzone);
-    else        // else, x inside dead zone
-        x = 0;  // return 0
-    return static_cast<SHORT>(x);
+    if (x > thumbstickDeadzone)
+        // adjust x relative to the deadzone and scale to 0 through 32767
+        x = (x - thumbstickDeadzone) * 32767 /
+        (32767 - thumbstickDeadzone);
+    else if (x < -thumbstickDeadzone)
+        // adjust y relative to the deadzone and scale to 0 through -32767
+        x = (x + thumbstickDeadzone) * 32767 /
+        (32767 - thumbstickDeadzone);
+    else
+        x = 0;
+    return x;
+}
+
+//=============================================================================
+// Return value of controller n Left Thumbstick Y.
+//=============================================================================
+int Input::getGamepadThumbLYUndead(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadAxis(controllers[n].controller,
+        SDL_GAMEPAD_AXIS_LEFTY);
 }
 
 //=============================================================================
 // Return value of controller n Left Thumbstick Y (-32768 through 32767).
-// Stick movement less than thumbstickDeadzone returns 0.
-// Return value is scaled to -32768 through 32767
 //=============================================================================
-SHORT Input::getGamepadThumbLY(UINT n) 
+int Input::getGamepadThumbLY(unsigned int n)
 {
     int y = getGamepadThumbLYUndead(n);
-    if(y > thumbstickDeadzone) // if +y outside dead zone
-        //adjust magnitude relative to the end of the dead zone
-        y = (y-thumbstickDeadzone)*32767/
-        (32767-thumbstickDeadzone);
-    else if(y < -thumbstickDeadzone)   // if -y outside dead zone
-        //adjust magnitude relative to the end of the dead zone
-        y = (y+thumbstickDeadzone)*32767/
-        (32767-thumbstickDeadzone);
-    else        // else, y inside dead zone
-        y = 0;  // return 0
-    return static_cast<SHORT>(y);
+    if (y > thumbstickDeadzone)
+        // adjust magnitude relative to the end of the dead zone
+        y = (y - thumbstickDeadzone) * 32767 /
+        (32767 - thumbstickDeadzone);
+    else if (y < -thumbstickDeadzone)
+        // adjust magnitude relative to the end of the dead zone
+        y = (y + thumbstickDeadzone) * 32767 /
+        (32767 - thumbstickDeadzone);
+    else
+        y = 0;
+    return y;
+}
+
+//=============================================================================
+// Return value of controller n Right Thumbstick X.
+//=============================================================================
+int Input::getGamepadThumbRXUndead(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadAxis(controllers[n].controller,
+        SDL_GAMEPAD_AXIS_RIGHTX);
 }
 
 //=============================================================================
 // Return value of controller n Right Thumbstick X (-32768 through 32767).
-// Stick movement less than thumbstickDeadzone returns 0.
-// Return value is scaled to -32768 through 32767
 //=============================================================================
-SHORT Input::getGamepadThumbRX(UINT n) 
+int Input::getGamepadThumbRX(unsigned int n)
 {
     int x = getGamepadThumbRXUndead(n);
-    if(x > thumbstickDeadzone) // if +x outside dead zone
-        //adjust magnitude relative to the end of the dead zone
-        x = (x-thumbstickDeadzone)*32767/
-        (32767-thumbstickDeadzone);
-    else if(x < -thumbstickDeadzone)   // if -x outside dead zone
-        //adjust magnitude relative to the end of the dead zone
-        x = (x+thumbstickDeadzone)*32767/
-        (32767-thumbstickDeadzone);
-    else        // else, x inside dead zone
-        x = 0;  // return 0
-    return static_cast<SHORT>(x);
+    if (x > thumbstickDeadzone)
+        // adjust magnitude relative to the end of the dead zone
+        x = (x - thumbstickDeadzone) * 32767 /
+        (32767 - thumbstickDeadzone);
+    else if (x < -thumbstickDeadzone)
+        // adjust magnitude relative to the end of the dead zone
+        x = (x + thumbstickDeadzone) * 32767 /
+        (32767 - thumbstickDeadzone);
+    else
+        x = 0;
+    return x;
+}
+
+//=============================================================================
+// Return value of controller n Right Thumbstick Y.
+//=============================================================================
+int Input::getGamepadThumbRYUndead(unsigned int n)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    return SDL_GetGamepadAxis(controllers[n].controller,
+        SDL_GAMEPAD_AXIS_RIGHTY);
 }
 
 //=============================================================================
 // Return value of controller n Right Thumbstick Y (-32768 through 32767).
-// Stick movement less than thumbstickDeadzone returns 0.
-// Return value is scaled to -32768 through 32767
 //=============================================================================
-SHORT Input::getGamepadThumbRY(UINT n) 
+int Input::getGamepadThumbRY(unsigned int n)
 {
     int y = getGamepadThumbRYUndead(n);
-    if(y > thumbstickDeadzone) // if +y outside dead zone
-        //adjust magnitude relative to the end of the dead zone
-        y = (y-thumbstickDeadzone)*32767/
-        (32767-thumbstickDeadzone);
-    else if(y < -thumbstickDeadzone)   // if -y outside dead zone
-        //adjust magnitude relative to the end of the dead zone
-        y = (y+thumbstickDeadzone)*32767/
-        (32767-thumbstickDeadzone);
-    else        // else, y inside dead zone
-        y = 0;  // return 0
-    return static_cast<SHORT>(y);
+    if (y > thumbstickDeadzone)
+        // adjust magnitude relative to the end of the dead zone
+        y = (y - thumbstickDeadzone) * 32767 /
+        (32767 - thumbstickDeadzone);
+    else if (y < -thumbstickDeadzone)
+        // adjust magnitude relative to the end of the dead zone
+        y = (y + thumbstickDeadzone) * 32767 /
+        (32767 - thumbstickDeadzone);
+    else
+        y = 0;
+    return y;
+}
+
+//=============================================================================
+// Vibrate controller n left motor.
+//=============================================================================
+void Input::gamePadVibrateLeft(unsigned int n, unsigned short speed, float sec)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    controllers[n].vibrateMotorSpeedLeft = speed;
+    controllers[n].vibrateTimeLeft = sec;
+}
+
+//=============================================================================
+// Vibrate controller n right motor.
+//=============================================================================
+void Input::gamePadVibrateRight(unsigned int n, unsigned short speed, float sec)
+{
+    if (n > MAX_CONTROLLERS - 1)
+        n = MAX_CONTROLLERS - 1;
+    controllers[n].vibrateMotorSpeedRight = speed;
+    controllers[n].vibrateTimeRight = sec;
 }
 
 //=============================================================================
@@ -407,24 +969,32 @@ SHORT Input::getGamepadThumbRY(UINT n)
 //=============================================================================
 void Input::vibrateControllers(float frameTime)
 {
-    for(int i=0; i < MAX_CONTROLLERS; i++)
+    for (int i = 0; i < MAX_CONTROLLERS; i++)
     {
-        if(controllers[i].connected)
+
+        if (controllers[i].connected && controllers[i].hasRumble)
         {
             controllers[i].vibrateTimeLeft -= frameTime;
-            if(controllers[i].vibrateTimeLeft < 0)
+
+            if (controllers[i].vibrateTimeLeft < 0)
             {
                 controllers[i].vibrateTimeLeft = 0;
-                controllers[i].vibration.wLeftMotorSpeed = 0;
+                controllers[i].vibrateMotorSpeedLeft = 0;
             }
+
             controllers[i].vibrateTimeRight -= frameTime;
-            if(controllers[i].vibrateTimeRight < 0)
+
+            if (controllers[i].vibrateTimeRight < 0)
             {
                 controllers[i].vibrateTimeRight = 0;
-                controllers[i].vibration.wRightMotorSpeed = 0;
+                controllers[i].vibrateMotorSpeedRight = 0;
             }
-            XInputSetState(i, &controllers[i].vibration);
+
+            // FIXME: SDL doesn't allow independant motor rumble
+            SDL_RumbleGamepad(controllers[i].controller,
+                controllers[i].vibrateMotorSpeedLeft,
+                controllers[i].vibrateMotorSpeedRight,
+                (uint32_t)(controllers[i].vibrateTimeRight * 1000));
         }
     }
 }
-

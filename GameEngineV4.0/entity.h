@@ -1,301 +1,228 @@
-// Programming 2D Games
-// Copyright (c) 2011 by: 
-// Charles Kelly
-// entity.h v3.3
-// Last modification: Mar-1-2015
-
-#ifndef _ENTITY_H               // Prevent multiple definitions if this 
-#define _ENTITY_H               // file is included in more than one place
-#define WIN32_LEAN_AND_MEAN
-
-class Entity;
-
-#include "image.h"
-#include "input.h"
-#include "game.h"
+#pragma once
+#include <GEUL\g_math.h>
 
 namespace entityNS
 {
-    enum COLLISION_TYPE {NONE, CIRCLE, BOX, ROTATED_BOX, PIXEL_PERFECT};
+    const float W = 16.0f;          // x-size
+    const float H = 16.0f;          // y-size
+    const float D = 2.0f;           // z-size
+    const float X = W / 2.0f;           // origin
+    const float Y = H / 2.0f;
+    const float Z = D / 2.0f;
+    enum COLLISION_TYPE { NONE, CIRCLE, BOX, ROTATED_BOX, PIXEL_PERFECT };
+    const float COLLISION_RADIUS = W / 2.0f;            // for circular collision
     const float GRAVITY = 6.67428e-11f;         // gravitational constant
+    const float ROTATION_RATE = (float)M_PI / 3;            // radians per second
+    const float SPEED = 100.0f;         // 100 pixels per second
+    const float MASS = 1.0f;            // mass
 }
 
-class Entity : public Image
+class Entity
 {
     // Entity properties
-  protected:
-    entityNS::COLLISION_TYPE collisionType;
-    VECTOR2 center;         // center of entity
-    float   oldX, oldY;     // the location of the entity in the previous frame
+private:
+    // Collision
+    vector2_t corners[4];           // for ROTATED_BOX collision detection
+    vector2_t collisionCenter;          // center of collision
+    float   minOverlap;         // projection overlaps
     float   radius;         // radius of collision circle
-    VECTOR2 distSquared;    // used for calculating circle collision
-    float   sumRadiiSquared;
     // edge specifies the collision box relative to the center of the entity.
     // left and top are typically negative numbers
-    RECT    edge;           // for BOX and ROTATED_BOX collision detection
-    VECTOR2 corners[4];     // for ROTATED_BOX collision detection
-    VECTOR2 edge01,edge03;  // edges used for projection
-    // min and max projections for this entity
-    float   entA01min, entA01max, entA03min, entA03max;
-    // min and max projections for other entity
-    float   entB01min, entB01max, entB03min, entB03max;
-    // projection overlaps 
-    float overlap01, overlap03, minOverlap;
-    VECTOR2 velocity;       // velocity
-    VECTOR2 deltaV;         // added to velocity during next call to update()
-    float   rotationRate;   // current rotation rate (radians/second)
-    float   mass;           // Mass of entity
-    float   health;         // health 0 to 100
-    float   rr;             // Radius squared variable
-    float   force;          // Force of gravity
-    float   gravity;        // gravitational constant of the game universe
-    Input   *input;         // pointer to the input system
-    Audio   *audio;         // pointer to audio system
-    HRESULT hr;             // standard return type
-    bool    active;         // only active entities may collide
-    bool    rotatedBoxReady;    // true when rotated collision box is ready
-    bool    intersecting;   // true when this entity is intersecting another entity
+    rect_t edge;            // for BOX and ROTATED_BOX collision detection
+    entityNS::COLLISION_TYPE collisionType;
+    bool    rotatedBoxReady;            // true when rotated collision box is ready
+    bool    intersecting;           // true when this entity is intersecting another entity
+    bool    collision;          // true when ship is colliding
     // The bounce function will perform an extra move of the entity when embedded is true.
-    bool    embedded;       // true when this entity is completely contained within the collision area of another entity.
-    float   bounciness;     // how bouncy is this entity 0 (none) through 1 (max)
-    bool    noBounce;       // true indicates this entity does not move as a result of a collision
-    DWORD   pixelsColliding;    // number of pixels colliding in pixel perfect collision
+    bool    embedded;           // true when this entity is completely contained within the collision area of another entity.
+    unsigned long pixelsColliding;          // number of pixels colliding in pixel perfect collision
+    bool    noBounce;           // true indicates this entity does not move as a result of a collision
+    // Physics
+    vector2_t velocity;         // velocity
+    vector2_t deltaV;           // added to velocity during next call to update()
+    vector2_t center;           // center of entity
+    float   curX, curY, curZ, curAngle, curScale;           // the location of the entity in the current frame
+    float   oldX, oldY, oldZ, oldAngle, oldScale;           // the location of the entity in the previous frame
+    float   rotation;           // current rotation rate (radians/second)
+    float   speed;          // pixels per second
+    float   mass;           // mass of entity
+    float   bounciness;         // how bouncy is this entity 0 (none) through 1 (max)
+    bool    active;         // only active entities may collide
 
-    //=============================================================================
-    // --- The following functions are protected because they are not intended to be
-    // --- called from outside the class.
+public:
 
-    // Circular collision detection method.
-    // Called by collision(), default collision detection method.
-    // Pre:  &ent = The other Entity.
-    //       &collisionVector = Set by this function.
-    // Post: Returns true if collision, false otherwise.
-    //       Sets collisionVector if collision. The collisionVector points in the
-    //         direction of force that would be applied to this entity as a result
-    //         of the collision. The magnitude of the collision vector is the
-    //         distance the entities are overlapping.
-    virtual bool collideCircle(Entity &ent, VECTOR2 &collisionVector);
-
-    // Axis aligned bounding box collision detection method
-    // Called by collision()
-    // Pre:  &ent = The other Entity.
-    //       &collisionVector = Set by this function.
-    // Post: Returns true if collision, false otherwise.
-    //       Sets collisionVector if collision. The collisionVector points in the
-    //         direction of force that would be applied to this entity as a result
-    //         of the collision. The magnitude of the collision vector is the
-    //         distance the entities are overlapping.
-    virtual bool collideBox(Entity &ent, VECTOR2 &collisionVector);
-
-    // Rotated Box collision detection method
-    // Called by collision()
-    // Uses Separating Axis Test to detect collision. 
-    // The separating axis test:
-    //   Two boxes are not colliding if their projections onto a line do not overlap.
-    // The current entity is A the other entity is B
-    // Post: returns true if collision, false otherwise
-    //       Sets collisionVector if collision. The collisionVector points in the
-    //         direction of force that would be applied to this entity as a result
-    //         of the collision. The magnitude of the collision vector is the
-    //         distance the entities are overlapping.
-    virtual bool collideRotatedBox(Entity &ent, VECTOR2 &collisionVector);
-
-    // Rotated Box and Circle collision detection method
-    // Called by collision()
-    // Uses separating axis test on edges of box and radius of circle.
-    // If the circle center is outside the lines extended from the collision box
-    // edges (also known as the Voronoi region) then the nearest box corner is checked
-    // for collision using a distance check.
-    // The nearest corner is determined from the overlap tests.
-    //
-    //   Voronoi0 |   | Voronoi1
-    //         ---0---1---
-    //            |   |
-    //         ---3---2---
-    //   Voronoi3 |   | Voronoi2
-    //
-    // Pre: This entity (entA) must be rotated box and other entity (entB) must be circle.
-    // Post: Returns true if collision, false otherwise.
-    //       Sets collisionVector if collision. The collisionVector points in the
-    //         direction of force that would be applied to this entity as a result
-    //         of the collision. The magnitude of the collision vector is the
-    //         distance the entities are overlapping.
-    virtual bool collideRotatedBoxCircle(Entity &ent, VECTOR2 &collisionVector);
-
-    // Separating axis collision detection helper functions
-    void computeRotatedBox();
-
-    // Projects other box onto this edge01 and edge03.
-    // Called by collideRotatedBox()
-    // The current entity is A the other entity is B
-    // Post: returns true if projections overlap, false otherwise
-    bool projectionsOverlap(Entity &ent, VECTOR2 &collisionVector);
-
-    // The box corner is checked for collision with circle using a distance check.
-    // Called by collideRotatedBoxCircle()
-    // Post: returns true if collision, false otherwise
-    //       Sets collisionVector if collision. The collisionVector points in the
-    //         direction of force that would be applied to this entity as a result
-    //         of the collision. The magnitude of the collision vector is the
-    //         distance the entities are overlapping.
-    bool collideCornerCircle(VECTOR2 corner, Entity &ent, VECTOR2 &collisionVector);
-
-    // Pixel Perfect collision detection method
-    // Called by collision()
-    // If the graphics card does not support a stencil buffer then CIRCLE
-    // collision is used.
-    // This function waits for the graphics card to render the last frame and return
-    // the collision query pixel count. To avoid slowing down your game, use a
-    // simple collison test first to eliminate entities that are not colliding.
-    // Post: Returns true if collision, false otherwise.
-    //       Uses collideCircle to set the collision vector.  Be sure to set the
-    //       collision radius of each entity.
-    virtual bool collidePixelPerfect(Entity &ent, VECTOR2 &collisionVector);
-
-  public:
     // Constructor
     Entity();
     // Destructor
-    virtual ~Entity() {}
+    ~Entity();
 
     ////////////////////////////////////////
     //           Get functions            //
     ////////////////////////////////////////
 
+    // Return X position.
+    float getX();
+
+    // Return Y position.
+    float getY();
+
+    // Return Z position.
+    float getZ();
+
+    // Return angle (in radians)
+    float getAngle();
+
+    // Return scale
+    float getScale();
+
     // Return center of scaled Entity as screen x,y.
-    virtual const VECTOR2* getCenter()   
-    {
-        center = VECTOR2(getCenterX(),getCenterY());
-        return &center;
-    }
+    const vector2_t getCenter();
+
+    // Return collision center
+    const vector2_t getCollisionCenter();
 
     // Return radius of collision circle.
-    virtual float getRadius() const     {return radius;}
+    float getRadius() const;
 
     // Return RECT structure used for BOX and ROTATED_BOX collision detection.
-    virtual const RECT& getEdge() const {return edge;}
+    const rect_t& getEdge() const;
 
     // Return corner c of ROTATED_BOX
-    virtual const VECTOR2* getCorner(UINT c) const
-    {
-        if(c>=4) 
-            c=0;
-        return &corners[c]; 
-    }
+    const vector2_t getCorner(unsigned int c) const;
 
     // Return corners array
-    virtual VECTOR2* getCorners() { return corners; }
+    vector2_t* getCorners();
 
     // Return projection overlaps used in rotated box collision
-    virtual float getOverlap01()    { return overlap01; }
-    virtual float getOverlap03()    { return overlap03; }
-    virtual float getMinOverlap()   { return minOverlap; }
+    float getMinOverlap();
 
     // Return velocity vector.
-    virtual const VECTOR2 getVelocity() const {return velocity;}
+    const vector2_t getVelocity() const;
+
+    // Get delta velocity. Added to velocity in update().
+    vector2_t getDeltaV();
 
     // Returns rotation rate
-    virtual float getRotationRate() { return rotationRate; }
+    float getRotation();
+
+    // Get speed
+    float getSpeed();
 
     // Return active.
-    // Only active entities may collide.
-    virtual bool  getActive()   const {return active;}
+    bool  getActive() const;
 
     // Return intersecting. 
     // Intersecting is true if this entity is intersecting another entity.
-    virtual bool getIntersecting() const {return intersecting;}
+    bool getIntersecting() const;
+
+    // Get collision
+    bool getCollision();
 
     // Return embedded
     // embedded is true if this entity is completely contained within the collision area of another entity.
-    virtual bool getEmbedded() const {return embedded;}
+    bool getEmbedded() const;
 
     // Return mass.
-    virtual float getMass()     const {return mass;}
+    float getMass() const;
 
     // Return bounciness
-    virtual float getBounciness()   const {return bounciness;}
+    float getBounciness() const;
 
     // Return noBounce
-    virtual bool getNoBounce()   const { return noBounce; }
-
-    // Return gravitational constant.
-    virtual float getGravity()  const {return gravity;}
-
-    // Return health;
-    virtual float getHealth()   const {return health;}
+    bool getNoBounce() const;
 
     // Return collision type (NONE, CIRCLE, BOX, ROTATED_BOX, PIXEL_PERFECT)
-    virtual entityNS::COLLISION_TYPE getCollisionType() {return collisionType;}
+    entityNS::COLLISION_TYPE getCollisionType();
 
     // Return number of pixels colliding in pixel perfect collision
-    virtual DWORD getPixelsColliding() const {return pixelsColliding;}
+    unsigned long getPixelsColliding() const;
 
     // Return oldX
-    virtual float getOldX()     const {return oldX;}
+    float getOldX() const;
 
     // Return oldY
-    virtual float getOldY()     const {return oldY;}
+    float getOldY() const;
+
+    // Set rotatedBoxReady. Set to false to force recalculation.
+    bool getRotatedBoxReady();
+
 
     ////////////////////////////////////////
     //           Set functions            //
     ////////////////////////////////////////
 
-	// Set velocity.
-    virtual void  setVelocity(VECTOR2 v)    {velocity = v;}
+    // Set corner c of ROTATED_BOX
+    void setCorner(vector2_t v, unsigned int n);
+
+    // Set minimum overlap
+    void setMinOverlap(float overlap);
+
+    // Set X location.
+    void setX(float newX);
+
+    // Set Y location.
+    void setY(float newY);
+
+    // Set Z location.
+    void setZ(float newZ);
+
+    // Set angle (in radians)
+    void setAngle(float angle);
+
+    // Set scale
+    void setScale(float scale);
+
+    // Set velocity.
+    void  setVelocity(vector2_t v);
 
     // Set delta velocity. Added to velocity in update().
-    virtual void  setDeltaV(VECTOR2 dv)     {deltaV = dv;}
+    void  setDeltaV(vector2_t dv);
 
     // Set rotation rate, radians/second
-    virtual void setRotationRate(float r)   { rotationRate = r; }
+    void setRotation(float r);
 
-    // Set active. Only active entities may collide.
-    virtual void  setActive(bool a)         {active = a;}
+    // Set speed
+    void setSpeed(float s);
 
-    // Set health.
-    virtual void setHealth(float h)         {health = h;}
+    // Set active.
+    void  setActive(bool a);
+
+    void setIntersecting(bool i);
+
+    // Set collision Boolean
+    void setCollision(bool c);
 
     // Set mass.
-    virtual void  setMass(float m)          {mass = m;}
+    void  setMass(float m);
 
     // Set bounciness
     // 0 = no bounce, 1 = max bounce.
-    virtual void setBounciness(float b)
-    {
-        if (b < 0)
-            b = 0;
-        else if (b > 1)
-            b = 1;
-        bounciness = b;
-    }
+    void setBounciness(float b);
 
     // Set noBounce
     // true indicates this entity does not move as a result of a collision
-    virtual void setNoBounce(bool no)  { noBounce = no; }
-
-    // Set gravitational constant. Default is 6.67428e-11
-    virtual void  setGravity(float g)       {gravity = g;}
+    void setNoBounce(bool no);
 
     // Set radius of collision circle.
-    virtual void setCollisionRadius(float r)    {radius = r;}
+    void setCollisionRadius(float r);
+
+    // Set collision center
+    void setCollisionCenter(vector2_t cc);
 
     // Set collision type (NONE, CIRCLE, BOX, ROTATED_BOX, PIXEL_PERFECT)
-    // PIXEL_PERFECT is much slower than the other methods. It calls CIRCLE collision
-    // to set the collision vector.
-    virtual void setCollisionType(entityNS::COLLISION_TYPE ctype)
-    {collisionType = ctype;}
+    void setCollisionType(entityNS::COLLISION_TYPE ctype);
 
     // Set embedded
     // embedded is true if this entity is completely contained within the collision area of another entity.
-    virtual void setEmbedded(bool e) { embedded = e; }
+    void setEmbedded(bool e);
 
     // Set RECT structure used for BOX and ROTATED_BOX collision detection.
     // edge specifies the collision box relative to the center of the entity.
     // left and top are typically negative numbers.
-    virtual void setEdge(RECT e)    {edge = e;}
+    void setEdge(rect_t e);
 
     // Set rotatedBoxReady. Set to false to force recalculation.
-    virtual void setRotatedBoxReady(bool r) {rotatedBoxReady = r;}
+    void setRotatedBoxReady(bool r);
 
     ////////////////////////////////////////
     //          Move functions            //
@@ -307,10 +234,7 @@ class Entity : public Image
     //      rotateRate = radians/second, + clockwise, - counterclockwise
     // Post: Current rotation rate is unchanged (no change in momentum)
     //=============================================================================
-    virtual void rotate(float frameTime, float rotateRate)
-    {
-        spriteData.angle += frameTime * rotateRate;   // apply rotation
-    }
+    void rotate(float frameTime, float rotateRate);
 
     //=============================================================================
     // Rotate using current rotationRate
@@ -318,10 +242,7 @@ class Entity : public Image
     // Post: Current rotation rate is unchanged (no change in momentum)
     // Call this from the game's update method to give the Entity momentum.
     //=============================================================================
-    virtual void rotate(float frameTime)
-    {
-        spriteData.angle += frameTime * rotationRate;   // apply rotation
-    }
+    void rotate(float frameTime);
 
     //=============================================================================
     // Change rotationRate (angular momentum)
@@ -330,27 +251,21 @@ class Entity : public Image
     // Post: Current rotation rate is changed (change in momentum)
     // The Entity does not turn until the rotate method is called.
     //=============================================================================
-    virtual void turn(float frameTime, float rotateRate)
-    {
-        rotationRate += frameTime * rotateRate;
-    }
+    void turn(float frameTime, float rotateRate);
 
     //=============================================================================
     // Angle to target
     // Pre:  x,y = Target center
     // Returns: Angle to target in radians. + target is clockwise, - target is counterclockwise
     //=============================================================================
-    virtual float angleToTarget(float x, float y);
+    float angleToTarget(float x, float y);
 
     //=============================================================================
     // Angle to target
     // Pre:  target = Target center
     // Returns: Angle to target in radians. + target is clockwise, - target is counterclockwise
     //=============================================================================
-    virtual float angleToTarget(VECTOR2 target)
-    {
-        return angleToTarget(target.x, target.y);
-    }
+    float angleToTarget(vector2_t target);
 
     //=============================================================================
     // Aim at target
@@ -360,7 +275,7 @@ class Entity : public Image
     // Post: Current rotation rate is unchanged (no change in momentum)
     // Returns: Angle to target in radians. + target is clockwise, - target is counterclockwise
     //=============================================================================
-    virtual float aimAtTarget(float frameTime, float rotationRate, float x, float y);
+    float aimAtTarget(float frameTime, float rotationRate, float x, float y);
 
     //=============================================================================
     // Aim at target
@@ -370,20 +285,14 @@ class Entity : public Image
     // Post: Current rotation rate is unchanged (no change in momentum)
     // Returns: Angle to target in radians. + target is clockwise, - target is counterclockwise
     //=============================================================================
-    virtual float aimAtTarget(float frameTime, float rotationRate, VECTOR2 target)
-    {
-        return aimAtTarget(frameTime, rotationRate, target.x, target.y);
-    }
+    float aimAtTarget(float frameTime, float rotationRate, vector2_t target);
 
     //=============================================================================
     // Move in X direction using current velocity
     // Pre: frameTime = Elapsed time in seconds
     // Post: Current velocity vector is unchanged (no change in momentum)
     //=============================================================================
-    virtual void moveX(float frameTime)
-    {
-        spriteData.x += frameTime * velocity.x;     // move X 
-    }
+    void moveX(float frameTime);
 
     //=============================================================================
     // Move in X direction
@@ -391,20 +300,14 @@ class Entity : public Image
     //      speed = Pixels/second (+ right, - left)
     // Post: Current velocity vector is unchanged (no change in momentum)
     //=============================================================================
-    virtual void moveX(float frameTime, float speed)
-    {
-        spriteData.x += frameTime * speed;          // move X 
-    }
+    void moveX(float frameTime, float speed);
 
     //=============================================================================
     // Move in Y direction using current velocity
     // Pre: frameTime = Elapsed time in seconds
     // Post: Current velocity vector is unchanged (no change in momentum)
     //=============================================================================
-    virtual void moveY(float frameTime)
-    {
-        spriteData.y += frameTime * velocity.y;     // move Y
-    }
+    void moveY(float frameTime);
 
     //=============================================================================
     // Move in Y direction
@@ -412,10 +315,7 @@ class Entity : public Image
     //      speed = Pixels/second (+ down, - up)
     // Post: Current velocity vector is unchanged (no change in momentum)
     //=============================================================================
-    virtual void moveY(float frameTime, float speed)
-    {
-        spriteData.y += frameTime * speed;          // move Y
-    }
+    void moveY(float frameTime, float speed);
 
     //=============================================================================
     // Move in X,Y direction using current velocity
@@ -423,11 +323,7 @@ class Entity : public Image
     // Post: Current velocity vector is unchanged (no change in momentum)
     // Call this from the game's update method to give the Entity momentum.
     //=============================================================================
-    virtual void move(float frameTime)
-    {
-        moveX(frameTime, velocity.x);
-        moveY(frameTime, velocity.y);
-    }
+    void move(float frameTime);
 
     //=============================================================================
     // Move in X,Y direction using specified velocity
@@ -435,11 +331,7 @@ class Entity : public Image
     //      vel = Velocity vector
     // Post: Current velocity vector is unchanged (no change in momentum)
     //=============================================================================
-    virtual void move(float frameTime, VECTOR2 vel)
-    {
-        moveX(frameTime, vel.x);
-        moveY(frameTime, vel.y);
-    }
+    void move(float frameTime, vector2_t vel);
 
     //=============================================================================
     // MoveTo X,Y at speed. Ignores current velocity.
@@ -448,15 +340,7 @@ class Entity : public Image
     //      x,y = Destination location (center)
     // Post: Current velocity vector is unchanged (no change in momentum)
     //=============================================================================
-    virtual void moveTo(float frameTime, float speed, float x, float y)
-    {
-        float distX = x - getCenterX();             // destination X - current X
-        float distY = y - getCenterY();             // destination Y - current Y
-        float distance = sqrt(distX*distX + distY*distY);
-        float moveTime = distance / speed;          // time required to complete move
-        moveX(frameTime, distX/moveTime);           // move in X direction
-        moveY(frameTime, distY / moveTime);         // move in Y direction
-    }
+    void moveTo(float frameTime, float speed, float x, float y);
 
     //=============================================================================
     // Change the velocity
@@ -465,12 +349,13 @@ class Entity : public Image
     //      vel = Velocity vector
     // Post: Current velocity vector is changed (change in momentum)
     //=============================================================================
-    virtual void accelerate(float frameTime, float speed, VECTOR2 deltaV)
-    {
-        //velocity.x += deltaV.x * speed * frameTime;
-        //velocity.y += deltaV.y * speed * frameTime;
-        velocity += deltaV * speed * frameTime;
-    }
+    void accelerate(float frameTime, float speed, vector2_t deltaV);
+
+    // move forward
+    void forward();
+
+    // move in reverse
+    void reverse();
 
     ////////////////////////////////////////
     //         Other functions            //
@@ -482,82 +367,31 @@ class Entity : public Image
     // Pre: frameTime = Elapsed time of the prevous frame in seconds.
     //                  It is used to regulate the speed of movement and animation.
     //=============================================================================
-    virtual void update(float frameTime);
+    void update(float frameTime);
 
     //=============================================================================
     // Initialize Entity
-    // Pre: *gamePtr = pointer to Game object
-    //      width = width of Image in pixels  (0 = use full texture width)
-    //      height = height of Image in pixels (0 = use full texture height)
-    //      ncols = number of columns in texture (1 to n) (0 same as 1)
-    //      *textureM = pointer to TextureManager object
     //=============================================================================
-    virtual bool initialize(Game *gamePtr, int width, int height, int ncols,
-                            TextureManager *textureM);
+    bool initialize(const vector2_t& position);
+
     //=============================================================================
     // Activate Entity. Only active etities may collide.
     //=============================================================================
-    virtual void activate();
+    void activate();
 
     //=============================================================================
+    // ai (artificial intelligence)
     // Empty ai function to allow Entity objects to be instantiated.
+    // typically called once per frame
+    // performs ai calculations, ent is passed for interaction
     //=============================================================================
-    virtual void ai(float frameTime, Entity &ent);
+    void ai(float frameTime, Entity& ent);
 
     //=============================================================================
     // Is this Entity outside the specified rectangle
     // Post: returns true if outside rect, false otherwise
     //=============================================================================
-    virtual bool outsideRect(RECT rect);
-
-    //=============================================================================
-    // Does this entity intersect with ent?
-    // Each entity must use a single collision type. Complex shapes that require
-    // multiple collision types may be done by treating each part as a separate
-    // entity or by using PIXEL_PERFECT collision. PIXEL_PERFECT collision detection
-    // is slower and returns a less accurate collision vector so it is not good for
-    // realistic physics.
-    // Pre:  &ent = The other Entity.
-    //       &collisionVector = Set by this function.
-    // Post: Returns true if the entities are intersecting.
-    //       Sets the collision vector if intersecting.
-    //       Sets intersecting true if this entity is intersecting another entity.
-    //   The collisionVector points in the direction of force that would be applied
-    //   to this entity as a result of the collision. (e.g. If this entity is a ball
-    //   that is dropped onto a box, the collision vector would point up (-Y).
-    //=============================================================================
-    virtual bool intersects(Entity &ent, VECTOR2 &collisionVector);
-
-    //=============================================================================
-    // Perform collision detection between this entity and the other Entity.
-    // Calls intersects function.
-    // Each entity must use a single collision type. Complex shapes that require
-    // multiple collision types may be done by treating each part as a separate
-    // entity or by using PIXEL_PERFECT collision.  PIXEL_PERFECT collision detection
-    // is slower and returns a less accurate collision vector so it is not good for
-    // realistic physics. 
-    // Typically called once per frame.
-    // The collision types: CIRCLE, BOX, ROTATED_BOX or PIXEL_PERFECT.
-    // Pre:  &ent = The other Entity.
-    //       &collisionVector = Set by this function.
-    // Post: Returns true if collision, false otherwise. A collision is occurring if
-    //       the entities are intersecting and moving toward each other. If the
-    //       entities are intersecting and moving apart it is assumed they are
-    //       intersecting as the result of a previous collision; false is returned.
-    //       Sets intersecting true if collision.
-    //       Sets collisionVector if collision. The collisionVector points in the
-    //         direction of force that would be applied to this entity as a result
-    //         of the collision. (e.g. If this entity is a ball that is dropped
-    //         onto a box, the collision vector would point up (-Y).
-    //=============================================================================
-    virtual bool collidesWith(Entity &ent, VECTOR2 &collisionVector);
-
-    //=============================================================================
-    // damage
-    // This entity has been damaged by a weapon.
-    // Override this function in the inheriting class.
-    //=============================================================================
-    virtual void damage(int weapon);
+    bool outsideRect(rect_t rect);
 
     //=============================================================================
     // Entity bounces after collision with another entity
@@ -570,25 +404,30 @@ class Entity : public Image
     //      This entity is moved in the direction of the collison vector by a
     //      distance proportional to the mass ratio with the other entity.
     //=============================================================================
-    void bounce(VECTOR2 &collisionVector, Entity &ent);
+    void bounce(vector2_t& collisionVector, Entity& ent);
 
     //=============================================================================
     // Move this entity to its oldX, oldY
     //=============================================================================
-    void moveToOldXY()
-    {
-        setX(oldX);
-        setY(oldY);
-    }
+    void moveToOldXYZ();
+
+    //=============================================================================
+    // Move entity out of collision
+    //=============================================================================
+    void toOldPosition();
 
     //=============================================================================
     // Force of gravity on this entity from other entity
     // Adds the gravitational force to the velocity vector of this entity
-    // force = GRAVITY * m1 * m2 / r*r
-    //                    2              2
-    //  r*r  =   (Ax - Bx)   +  (Ay - By)
+    // force = (GRAVITY * m1 * m2) / (r * r)
+    //
+    //  (r * r)  = (Ax - Bx) ^ 2 + (Ay - By) ^ 2
     //=============================================================================
-    void gravityForce(Entity *other, float frameTime);
+    void gravityForce(Entity* other, float frameTime);
 };
 
-#endif
+//=============================================================================
+// Perform collision detection between this entity and the other Entity.
+//=============================================================================
+bool collidesWith(Entity& ent0, Entity& ent1, vector2_t& collisionVector);
+

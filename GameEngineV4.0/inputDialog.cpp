@@ -1,8 +1,3 @@
-// Programming 2D Games
-// Copyright (c) 2011 by: 
-// Charles Kelly
-// inputDialog.cpp v1.1
-
 #include "inputDialog.h"
 
 //=============================================================================
@@ -12,7 +7,7 @@ InputDialog::InputDialog()
 {
     textBackColor = inputDialogNS::TEXT_BACK_COLOR;
     textFontColor = inputDialogNS::TEXT_COLOR;
-    inTextVerts = NULL;
+    SDL_memset(&inTextVerts, 0, 4 * sizeof(VERTEX));
     inText = "";
 }
 
@@ -21,7 +16,14 @@ InputDialog::InputDialog()
 //=============================================================================
 InputDialog::~InputDialog()
 {
-    onLostDevice();            // call onLostDevice() for every graphics item
+}
+
+//=============================================================================
+// Initialize the InputDialog
+//=============================================================================
+bool InputDialog::initialize(Graphics* pGraphics, Input* pInput)
+{
+    return MessageDialog::initialize(pGraphics, pInput);
 }
 
 //=============================================================================
@@ -29,40 +31,34 @@ InputDialog::~InputDialog()
 //=============================================================================
 void InputDialog::prepareVerts()
 {
-    MessageDialog::prepareVerts();  // call perpareVerts in base class
-    safeRelease(inTextVerts);
+    MessageDialog::prepareVerts();
 
     // inText top left
-    vtx[0].x = x + messageDialogNS::BORDER*2;
-    vtx[0].y = y + height - messageDialogNS::BORDER - messageDialogNS::MARGIN - messageDialogNS::BUTTON_HEIGHT*2.5f;
-    vtx[0].z = 0.0f;
-    vtx[0].rhw = 1.0f;
-    vtx[0].color = textBackColor;
+    inTextVerts[0].position.x = offset.x + b * 2;
+    inTextVerts[0].position.y = offset.y + extent.y - b - m - messageDialogNS::BUTTON_HEIGHT * 2.5f;
+    inTextVerts[0].color = textBackColor;
+
     // inText top right
-    vtx[1].x = x + width - messageDialogNS::BORDER*2;
-    vtx[1].y = vtx[0].y;
-    vtx[1].z = 0.0f;
-    vtx[1].rhw = 1.0f;
-    vtx[1].color = textBackColor;
+    inTextVerts[1].position.x = offset.x + extent.x - b * 2;
+    inTextVerts[1].position.y = inTextVerts[0].position.y;
+    inTextVerts[1].color = textBackColor;
+
     // inText bottom right
-    vtx[2].x =  vtx[1].x;
-    vtx[2].y = vtx[0].y + messageDialogNS::BUTTON_HEIGHT;
-    vtx[2].z = 0.0f;
-    vtx[2].rhw = 1.0f;
-    vtx[2].color = textBackColor;
+    inTextVerts[2].position.x = inTextVerts[1].position.x;
+    inTextVerts[2].position.y = inTextVerts[0].position.y +
+        messageDialogNS::BUTTON_HEIGHT;
+    inTextVerts[2].color = textBackColor;
+
     // inText bottom left
-    vtx[3].x = vtx[0].x;
-    vtx[3].y = vtx[2].y;
-    vtx[3].z = 0.0f;
-    vtx[3].rhw = 1.0f;
-    vtx[3].color = textBackColor;
-    graphics->createVertexBuffer(vtx, sizeof vtx, inTextVerts);
+    inTextVerts[3].position.x = inTextVerts[0].position.x;
+    inTextVerts[3].position.y = inTextVerts[2].position.y;
+    inTextVerts[3].color = textBackColor;
 
     // set inTextRect
-    inTextRect.left   = (long)vtx[0].x;
-    inTextRect.right  = (long)vtx[1].x;
-    inTextRect.top    = (long)vtx[0].y;
-    inTextRect.bottom = (long)vtx[2].y;
+    inTextRect.min[0] = (long)inTextVerts[0].position.x;
+    inTextRect.max[0] = (long)inTextVerts[2].position.x;
+    inTextRect.min[1] = (long)inTextVerts[0].position.y;
+    inTextRect.max[1] = (long)inTextVerts[2].position.y;
 }
 
 //=============================================================================
@@ -71,38 +67,89 @@ void InputDialog::prepareVerts()
 const void InputDialog::draw()
 {
     if (!visible || graphics == NULL || !initialized)
+    {
         return;
+    }
 
-    graphics->drawQuad(borderVerts);        // draw border
-    graphics->drawQuad(dialogVerts);        // draw backdrop
-    graphics->drawQuad(buttonVerts);        // draw button
-    graphics->drawQuad(button2Verts);       // draw button2
-    graphics->drawQuad(inTextVerts);        // draw input text area
+    graphics->drawQuad(borderVerts[0].position, borderVerts[1].position,
+        borderVerts[2].position, borderVerts[3].position, borderColor);         // border
+    graphics->drawQuad(dialogVerts[0].position, dialogVerts[1].position,
+        dialogVerts[2].position, dialogVerts[3].position, backColor);           // backdrop
+    graphics->drawQuad(button1Verts[0].position, button1Verts[1].position,
+        button1Verts[2].position, button1Verts[3].position, buttonColor);       // button1
+    graphics->drawQuad(button2Verts[0].position, button2Verts[1].position,
+        button2Verts[2].position, button2Verts[3].position, buttonColor);       // button2
+    graphics->drawQuad(inTextVerts[0].position, inTextVerts[1].position,
+        inTextVerts[2].position, inTextVerts[3].position, textBackColor);       // input text area
 
-    graphics->spriteBegin();                // begin drawing sprites
+    graphics->spriteBegin();
 
-    if(text.size() == 0)
+    if (text.size() == 0)
+    {
         return;
+    }
+
     // display text on MessageDialog
-    dxFont.setFontColor(fontColor);
-    dxFont.print(text,textRect,DT_CENTER|DT_WORDBREAK);
+    font.setFontColor(fontColor);
+    font.print(text, textRect, format);
 
     // display text on buttons
-    dxFont.setFontColor(buttonFontColor);
-    dxFont.print(messageDialogNS::BUTTON1_TEXT[buttonType],buttonRect,DT_SINGLELINE|DT_CENTER|DT_VCENTER);
-    dxFont.print(messageDialogNS::BUTTON2_TEXT[buttonType],button2Rect,DT_SINGLELINE|DT_CENTER|DT_VCENTER);
+    font.setFontColor(buttonFontColor);
+    font.print(messageDialogNS::BUTTON1_TEXT[buttonType], button1Rect,
+        ALIGNMENT::SINGLELINE | ALIGNMENT::HCENTER | ALIGNMENT::VCENTER);
+    font.print(messageDialogNS::BUTTON2_TEXT[buttonType], button2Rect,
+        ALIGNMENT::SINGLELINE | ALIGNMENT::HCENTER | ALIGNMENT::VCENTER);
 
     // display input text
-    dxFont.setFontColor(textFontColor);
-    tempRect = inTextRect;      // save
-    // No text is printed with DT_CALDRECT option. It moves RECT.right
-    dxFont.print(inText,tempRect,DT_SINGLELINE|DT_LEFT|DT_VCENTER|DT_CALCRECT);
-    if(tempRect.right > inTextRect.right)   // if text too long, right justify
-        dxFont.print(inText,inTextRect,DT_SINGLELINE|DT_RIGHT|DT_VCENTER);
-    else    // else, left justify
-        dxFont.print(inText,inTextRect,DT_SINGLELINE|DT_LEFT|DT_VCENTER);
+    font.setFontColor(textFontColor);
+    tempRect = inTextRect;          // save
+    // No text is printed with CALDRECT option. It moves rect.max[0]
+    font.print(inText, tempRect, ALIGNMENT::SINGLELINE | ALIGNMENT::LEFT |
+        ALIGNMENT::VCENTER | ALIGNMENT::CALCRECT);
 
-    graphics->spriteEnd();                  // end drawing sprites
+    if (tempRect.max[0] > inTextRect.max[0])            // if text too long, right justify
+    {
+        font.print(inText, inTextRect, ALIGNMENT::SINGLELINE | ALIGNMENT::RIGHT |
+            ALIGNMENT::VCENTER);
+    }
+    else            // else, left justify
+    {
+        font.print(inText, inTextRect, ALIGNMENT::SINGLELINE | ALIGNMENT::LEFT |
+            ALIGNMENT::VCENTER);
+    }
+
+    graphics->spriteEnd();
+}
+
+//=============================================================================
+// Return input text.
+//=============================================================================
+std::string InputDialog::getText()
+{
+    if (!visible)
+    {
+        return inText;
+    }
+    else
+    {
+        return "";
+    }
+}
+
+//=============================================================================
+// Set input text font color
+//=============================================================================
+void InputDialog::setTextFontColor(color_t fc)
+{
+    textFontColor = fc;
+}
+
+//=============================================================================
+// Set input text background color
+//=============================================================================
+void InputDialog::setTextBackColor(color_t bc)
+{
+    textBackColor = bc;
 }
 
 //=============================================================================
@@ -110,37 +157,53 @@ const void InputDialog::draw()
 //=============================================================================
 void InputDialog::update()
 {
-    MessageDialog::update();        // call update in base class
+    MessageDialog::update();
+
     if (!initialized || !visible)
     {
-        if(buttonClicked == 2)      // if Cancel button
-            inText = "";            // clear input text
+        if (buttonClicked == 2)         // cancel button
+        {
+            inText = "";
+        }
+
         return;
     }
-    inText = input->getTextIn();    // get input text
+
+    inText = input->getTextIn();
 }
 
 //=============================================================================
-// Set text string, size dialog bottom to fit text and set visible = true
+// Set text string, rectangle and format, size dialog bottom to fit text and
+// set visible = true
 //=============================================================================
-void InputDialog::print(const std::string &str)         
+void InputDialog::print(const std::string& str, rect_t& rect, unsigned int format)
 {
-    if (!initialized || visible)    // if not initialized or already in use
+    if (!initialized || visible)
+    {
         return;
-    text = str + "\n\n\n\n\n";   // leave some room for input text and buttons
+    }
 
-    // Set textRect to text area of dialog
-    textRect.left   = (long)(x + messageDialogNS::MARGIN);
-    textRect.right  = (long)(x + messageDialogNS::WIDTH - messageDialogNS::MARGIN);
-    textRect.top    = (long)(y + messageDialogNS::MARGIN);
-    textRect.bottom = (long)(y + messageDialogNS::HEIGHT - messageDialogNS::MARGIN);
+    offset.x = (float)(rect.min[0]);
+    offset.y = (float)(rect.min[1]);
+    extent.x = (float)(rect.max[0] - rect.min[0]);
+    extent.y = (float)(rect.max[1] - rect.min[1]);
 
-    // Set textRect.bottom to precise height required for text
-    // No text is printed with DT_CALDRECT option.
-    dxFont.print(text,textRect,DT_CENTER|DT_WORDBREAK|DT_CALCRECT);
-    height = textRect.bottom - (int)y + messageDialogNS::BORDER + messageDialogNS::MARGIN;
+    text = str + "\n\n\n\n\n";          // leave some room for input text and buttons
 
-    prepareVerts();                 // prepare the vertex buffers
+    // set textRect to text area of dialog
+    textRect.min[0] = (long)(offset.x + m);
+    textRect.max[0] = (long)((offset.x + extent.x) - m);
+    textRect.min[1] = (long)(offset.y + m);
+    textRect.max[1] = (long)((offset.y + extent.y) - m);
+
+    // set textRect.max[1] to precise height required for text
+    // no text is printed with CALDRECT option.
+    this->format = format;
+    font.print(text, textRect, format | ALIGNMENT::CALCRECT);
+    extent.y = (textRect.max[1] - textRect.min[1]) - (float)(b + m);
+
+    InputDialog::prepareVerts();
+
     inText = "";                    // clear old input
     input->clearTextIn();
     buttonClicked = 0;              // clear buttonClicked
@@ -148,13 +211,38 @@ void InputDialog::print(const std::string &str)
 }
 
 //=============================================================================
-// Called when graphics device is lost
+// Set text string, x and y, size dialog bottom to fit text and
+// set visible = true
 //=============================================================================
-void InputDialog::onLostDevice()
+void InputDialog::print(const std::string& str, int x, int y)
 {
-    if (!initialized)
-        return;
-    MessageDialog::onLostDevice();
-    safeRelease(inTextVerts);
+    rect_t rect;            // text rectangle
+
+    rect.min[0] = (long)(x);
+    rect.max[0] = (long)(x + messageDialogNS::W);
+    rect.min[1] = (long)(y);
+    rect.max[1] = (long)(y + messageDialogNS::H);
+
+    InputDialog::print(str, rect, ALIGNMENT::HCENTER | ALIGNMENT::WORDBOUNDS);
 }
 
+//=============================================================================
+// Set text string, size dialog bottom to fit text and set visible = true
+//=============================================================================
+void InputDialog::print(const std::string& str)
+{
+    rect_t rect;            // text rectangle
+
+    viewport3d = graphics->get3DViewport();
+
+    rect.min[0] = (long)(((viewport3d.w - viewport3d.x) / 2) -
+        (float)(messageDialogNS::X));
+    rect.max[0] = (long)(((viewport3d.w - viewport3d.x) / 2) -
+        (float)(messageDialogNS::X)+messageDialogNS::W);
+    rect.min[1] = (long)(((viewport3d.h - viewport3d.y) / 4) -
+        (float)(messageDialogNS::Y));
+    rect.max[1] = (long)(((viewport3d.h - viewport3d.y) / 4) -
+        (float)(messageDialogNS::Y)+messageDialogNS::H);
+
+    InputDialog::print(str, rect, ALIGNMENT::HCENTER | ALIGNMENT::WORDBOUNDS);
+}
