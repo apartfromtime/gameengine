@@ -5,3 +5,4 @@
 */*.vcxproj.user
 Win32/
 x64/
+*/*/*.ttf

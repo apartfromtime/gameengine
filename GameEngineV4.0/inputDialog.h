@@ -1,43 +1,37 @@
-// Programming 2D Games
-// Copyright (c) 2011 by: 
-// Charles Kelly
-// inputDialog.h v1.1
-
-#ifndef _INPUTDIALOG_H          // Prevent multiple definitions if this 
-#define _INPUTDIALOG_H          // file is included in more than one place
-#define WIN32_LEAN_AND_MEAN
-
-class InputDialog;
-
-#include <string>
+#pragma once
 #include "constants.h"
-#include "textDX.h"
-#include "graphics.h"
-#include "input.h"
 #include "messageDialog.h"
 
 namespace inputDialogNS
 {
-    const COLOR_ARGB TEXT_BACK_COLOR = graphicsNS::WHITE;   // input text background
-    const COLOR_ARGB TEXT_COLOR = graphicsNS::BLACK;        // input text color
+    const color_t TEXT_BACK_COLOR = graphicsNS::WHITE;   // input text background
+    const color_t TEXT_COLOR = graphicsNS::BLACK;        // input text color
 }
 
 // Input Dialog, inherits from Message Dialog
 class InputDialog : public MessageDialog
 {
+    // Dialog properties
 private:
-    std::string inText;                 // input text
-    RECT        inTextRect;
-    RECT        tempRect;
-    COLOR_ARGB  textBackColor;          // text area background color
-    COLOR_ARGB  textFontColor;          // text area font color
-    LP_VERTEXBUFFER inTextVerts;        // text area vertex buffer
+    // Dialog
+    std::string inText;         // input text
+    VERTEX  inTextVerts[4];            // text area vertex buffer
+    color_t textBackColor;          // text area background color
+    color_t textFontColor;          // text area font color
+    rect_t  inTextRect;
+    rect_t  tempRect;
 
 public:
     // Constructor
     InputDialog();
+
     // Destructor
-    virtual ~InputDialog();
+    ~InputDialog();
+
+    // Initialize the MessageDialog.
+    // Pre: pGraphics points to Graphics object
+    //      pInput points to Input object
+    bool initialize(Graphics* pGraphics, Input* pInput);
 
     // Prepare vertex buffers
     void prepareVerts();
@@ -46,29 +40,24 @@ public:
     const void draw();
 
     // Return input text.
-    std::string getText()   
-    {
-        if(!visible)
-            return inText;
-        else
-            return "";
-    }
+    std::string getText();
 
     // Set input text font color
-    void setTextFontColor(COLOR_ARGB fc)  {textFontColor = fc;}
+    void setTextFontColor(color_t fc);
 
     // Set input text background color
-    void setTextBackColor(COLOR_ARGB bc)  {textBackColor = bc;}
+    void setTextBackColor(color_t bc);
+
+    // Display text str inside rectangle using format in MessageDialog
+    void print(const std::string& str, rect_t& rect, unsigned int format);
+
+    // Display text str at x, y in InputDialog
+    void print(const std::string& str, int x, int y);
 
     // Display text str in InputDialog
-    void print(const std::string &str);
+    void print(const std::string& str);
 
     // Checks for Close event
     void update();
-
-    // Call when graphics device is lost.
-    void onLostDevice();
 };
-
-#endif
 

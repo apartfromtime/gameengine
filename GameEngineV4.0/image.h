@@ -1,203 +1,208 @@
-// Programming 2D Games
-// Copyright (c) 2011 by: 
-// Charles Kelly
-// image.h v1.5
-// Last modification: Dec-25-2014   Merry Christmas
-
-#ifndef _IMAGE_H                // Prevent multiple definitions if this 
-#define _IMAGE_H                // file is included in more than one place
-#define WIN32_LEAN_AND_MEAN
-
-class Image;
-
-#include "textureManager.h"
+#pragma once
 #include "constants.h"
+#include "graphics.h"
+#include "textureManager.h"
 
 class Image
 {
     // Image properties
-  protected:
-    Graphics *graphics;     // pointer to graphics
-    TextureManager *textureManager; // pointer to texture manager
-    // spriteData contains the data required to draw the image by Graphics::drawSprite()
-    SpriteData spriteData;  // SpriteData is defined in "graphics.h"
-    COLOR_ARGB colorFilter; // applied as a color filter (use WHITE for no change)
-    int     cols;           // number of cols (1 to n) in multi-frame sprite
+protected:
+    // System
+    Graphics* graphics;
+    // Animation
     int     startFrame;     // first frame of current animation
     int     endFrame;       // end frame of current animation
     int     currentFrame;   // current frame of animation
     float   frameDelay;     // how long between frames of animation
     float   animTimer;      // animation timer
-    HRESULT hr;             // standard return type
     bool    loop;           // true to loop frames
+    bool    animComplete;   // true when loop is false and endFrame has finished displaying
+    bool    animate;        // true to animate, else static
+    // Image
+    TextureManager* textureM;   // pointer to texture manager
+    // spriteData contains the data required to draw the image by Graphics::drawSprite()
+    SpriteData spriteData;  // SpriteData is defined in "sdlgraphics.h"
+    color_t colorFilter;    // applied as a color filter (use WHITE for no change)
+    int     cols;           // number of cols (1 to n) in multi-frame sprite
+    int     rows;           // number of rows (1 to n) in multi-frame sprite
     bool    visible;        // true when visible
     bool    initialized;    // true when successfully initialized
-    bool    animComplete;   // true when loop is false and endFrame has finished displaying
 
-  public:
+public:
     // Constructor
     Image();
+
     // Destructor
-    virtual ~Image();
+    ~Image();
 
     ////////////////////////////////////////
     //           Get functions            //
     ////////////////////////////////////////
 
+    // Return reference to SpriteData structure.
+    const SpriteData& getSpriteInfo();          // for backward compatibility
+    const SpriteData& getSpriteData();
+
     // Return visible parameter.
-    virtual bool  getVisible()  {return visible;}
+    bool getVisible();
 
     // Return X position.
-    virtual float getX()        {return spriteData.x;}
+    float getX();
 
     // Return Y position.
-    virtual float getY()        {return spriteData.y;}
+    float getY();
+
+    // Return Z position.
+    float getZ();
 
     // Return scale factor.
-    virtual float getScale()    {return spriteData.scale;}
+    float getScale();
 
     // Return width.
-    virtual int   getWidth()    {return spriteData.width;}
+    int getW();
 
     // Return height.
-    virtual int   getHeight()   {return spriteData.height;}
+    int getH();
 
     // Return center X.
-    virtual float getCenterX()      {return spriteData.x + spriteData.width/2*getScale();}
+    float getCenterX();
 
     // Return center Y.
-    virtual float getCenterY()      {return spriteData.y + spriteData.height/2*getScale();}
+    float getCenterY();
 
     // Return rotation angle in degrees.
-    virtual float getDegrees()      {return spriteData.angle*(180.0f/(float)PI);}
+    float getDegrees();
 
     // Return rotation angle in radians.
-    virtual float getRadians()      {return spriteData.angle;}
+    float getRadians();
 
     // Return delay between frames of animation.
-    virtual float getFrameDelay()   {return frameDelay;}
+    float getFrameDelay();
 
     // Return number of starting frame.
-    virtual int   getStartFrame()   {return startFrame;}
+    int getStartFrame();
 
     // Return number of ending frame.
-    virtual int   getEndFrame()     {return endFrame;}
+    int getEndFrame();
 
     // Return number of current frame.
-    virtual int   getCurrentFrame() {return currentFrame;}
-
-    // Return reference to SpriteData structure.
-    const virtual SpriteData& getSpriteInfo() {return spriteData;}  // for backward compatibility
-    const virtual SpriteData& getSpriteData() {return spriteData;}
+    int getCurrentFrame();
 
     // Return RECT structure of Image.
-    virtual RECT  getSpriteDataRect() {return spriteData.rect;}
+    rect_t getSpriteDataRect();
 
     // Return state of animation complete.
-    virtual bool  getAnimationComplete() {return animComplete;}
+    bool getAnimationComplete();
 
     // Return colorFilter.
-    virtual COLOR_ARGB getColorFilter() {return colorFilter;}
+    color_t getColorFilter();
+
+    // Set textureNumber
+    TextureManager* getTextureManager();
+
+    // Return animation timer.
+    float getAnimTimer();
 
     ////////////////////////////////////////
     //           Set functions            //
     ////////////////////////////////////////
 
     // Set X location.
-    virtual void setX(float newX)   {spriteData.x = newX;}
+    void setX(float newX);
 
     // Set Y location.
-    virtual void setY(float newY)   {spriteData.y = newY;}
+    void setY(float newY);
 
-    // Set scale.
-    virtual void setScale(float s)  {spriteData.scale = s;}
+    // Set Z location.
+    void setZ(float newZ);
 
     // Set width.
-    virtual void setWidth(int w)  {spriteData.width = w;}
+    void setW(int newW);
 
     // Set height.
-    virtual void setHeight(int h) {spriteData.height = h;}
+    void setH(int newH);
+
+    // Set scale.
+    void setScale(float s);
+
+    // Set X location.
+    void setCenterX(float newX);
+
+    // Set Y location.
+    void setCenterY(float newY);
 
     // Set rotation angle in degrees.
     // 0 degrees is up. Angles progress clockwise.
-    virtual void setDegrees(float deg)  {spriteData.angle = deg*((float)PI/180.0f);}
+    void setDegrees(float deg);
 
     // Set rotation angle in radians.
     // 0 radians is up. Angles progress clockwise.
-    virtual void setRadians(float rad)  {spriteData.angle = rad;}
+    void setRadians(float rad);
 
     // Set visible.
-    virtual void setVisible(bool v) {visible = v;}
+    void setVisible(bool v);
 
     // Set delay between frames of animation.
-    virtual void setFrameDelay(float d) {frameDelay = d;}
+    void setFrameDelay(float d);
 
     // Set starting and ending frames of animation.
-    virtual void setFrames(int s, int e){startFrame = s; endFrame = e;}
+    void setFrames(int s, int e);
 
     // Set current frame of animation.
-    virtual void setCurrentFrame(int c);
+    void setCurrentFrame(int c);
 
     // Set spriteData.rect to draw currentFrame
-    virtual void setRect(); 
+    void setRect();
 
     // Set spriteData.rect to r.
-    virtual void setSpriteDataRect(RECT r)  {spriteData.rect = r;}
+    void setSpriteDataRect(rect_t r);
 
     // Set animation loop. lp = true to loop.
-    virtual void setLoop(bool lp) {loop = lp;}
+    void setLoop(bool lp);
 
     // Set animation complete Boolean.
-    virtual void setAnimationComplete(bool a) {animComplete = a;};
+    void setAnimationComplete(bool a);
 
     // Set color filter. (use WHITE for no change)
-    virtual void setColorFilter(COLOR_ARGB color) {colorFilter = color;}
+    void setColorFilter(color_t color);
 
     // Set TextureManager
-    virtual void setTextureManager(TextureManager *textureM)
-    { textureManager = textureM; }
+    void setTextureManager(TextureManager* textureM);
 
-    // Set Animation Timer
-    virtual void setAnimTimer(float t)  {animTimer = t;};
+    // Set animation timer
+    void setAnimTimer(float t);
 
     ////////////////////////////////////////
     //         Other functions            //
     ////////////////////////////////////////
 
     // Initialize Image
-    // Pre: *g = pointer to Graphics object
-    //      width = width of Image in pixels  (0 = use full texture width)
-    //      height = height of Image in pixels (0 = use full texture height)
-    //      ncols = number of columns in texture (1 to n) (0 same as 1)
-    //      *textureM = pointer to TextureManager object
-    virtual bool Image::initialize(Graphics *g, int width, int height, 
-                                    int ncols, TextureManager *textureM);
+    bool initialize(Graphics* pGraphics, int width, int height, int ncols, int nrows,
+        TextureManager* textureM);
 
     // Flip image horizontally (mirror)
-    virtual void flipHorizontal(bool flip)  {spriteData.flipHorizontal = flip;}
+    void flipHorizontal(bool flip);
 
     // Flip image vertically
-    virtual void flipVertical(bool flip)    {spriteData.flipVertical = flip;}
+    void flipVertical(bool flip);
 
     // Draw Image using color as filter. Default color is WHITE.
     // textureN is number of texture in textureManager 
-    virtual void draw(COLOR_ARGB color, UINT textureN);
+    void draw(COLOR_ARGB color, unsigned int textureN);
 
     // Draw Image using color as filter. Default color is WHITE.
-    virtual void draw(COLOR_ARGB color = graphicsNS::WHITE) { draw(color, 0); }
+    void draw(COLOR_ARGB color = graphicsNS::WHITE);
 
     // Draw Image using default color filter.
-    // textureN is number of texture in textureManager 
-    virtual void draw(UINT textureN) { draw(graphicsNS::WHITE, textureN); }
+    void draw(unsigned int textureN);
 
     // Draw this image using the specified SpriteData.
     // The current SpriteData.rect is used to select the texture.
     // textureN is number of texture in textureManager 
-    virtual void draw(SpriteData sd, COLOR_ARGB color = graphicsNS::WHITE, UINT textureN=0);
+    void draw(SpriteData sd, COLOR_ARGB color = graphicsNS::WHITE,
+        unsigned int textureN = 0);
 
     // Update the animation. frameTime is used to regulate the speed.
-    virtual void update(float frameTime);
+    void update(float frameTime);
 };
-
-#endif
 

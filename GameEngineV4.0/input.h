@@ -1,93 +1,96 @@
-// Programming 2D Games
-// Copyright (c) 2011 by: 
-// Charles Kelly
-// input.h v1.8
-// Last modified April-12-2013
-
-#ifndef _INPUT_H                // Prevent multiple definitions if this 
-#define _INPUT_H                // file is included in more than one place
-#define WIN32_LEAN_AND_MEAN
-
-class Input;
-
-#include <windows.h>
-#include <WindowsX.h>
+#pragma once
+#include <SDL3\sdl.h>
 #include <string>
-#include <XInput.h>
 #include "constants.h"
 #include "gameError.h"
 
-
-// for high-definition mouse
-#ifndef HID_USAGE_PAGE_GENERIC
-#define HID_USAGE_PAGE_GENERIC      ((USHORT) 0x01)
-#endif
-#ifndef HID_USAGE_GENERIC_MOUSE
-#define HID_USAGE_GENERIC_MOUSE     ((USHORT) 0x02)
-#endif
-//--------------------------
+//-----------------------------------------------------------------------------
+//
+// INPUT
+//
+//-----------------------------------------------------------------------------
 
 namespace inputNS
 {
-    const int KEYS_ARRAY_LEN = 256;     // size of key arrays
-    
+    const int KEYS_ARRAY_LEN = 512;         // size of key arrays
+
     // what values for clear(), bit flag
-    const UCHAR KEYS_DOWN = 1;
-    const UCHAR KEYS_PRESSED = 2;
-    const UCHAR MOUSE = 4;
-    const UCHAR TEXT_IN = 8;
-    const UCHAR KEYS_MOUSE_TEXT = KEYS_DOWN + KEYS_PRESSED + MOUSE + TEXT_IN;
+    const unsigned char KEYS_DOWN = 0x01;
+    const unsigned char KEYS_PRESSED = 0x02;
+    const unsigned char MOUSE = 0x04;
+    const unsigned char MOUSE_BUTTONS_PRESSED = 0x08;
+    const unsigned char TEXT_IN = 0x10;
+    const unsigned char GAMEPAD = 0x20;
+    const unsigned char KEYS_MOUSE_TEXT_GAMEPAD = KEYS_DOWN + KEYS_PRESSED +
+        MOUSE + MOUSE_BUTTONS_PRESSED + TEXT_IN + GAMEPAD;
 }
 
-const short GAMEPAD_THUMBSTICK_DEADZONE = (short)(0.20f * 0X7FFF);    // default to 20% of range as deadzone
-const short GAMEPAD_TRIGGER_DEADZONE = 20;                      // trigger range 0-255
-const DWORD MAX_CONTROLLERS = 4;                                // Maximum number of controllers supported by XInput
+const unsigned int GAMEPAD_THUMBSTICK_DEADZONE = (unsigned int)(0.20f * 0X7FFF);            // default to 20% of range as deadzone
+const unsigned int GAMEPAD_TRIGGER_DEADZONE = (unsigned int)(0.08f * 0X7FFF);               // trigger range 0-32767
+const unsigned int MAX_CONTROLLERS = 4;         // Maximum number of controllers supported by XInput
 
-// Bit corresponding to gamepad button in state.Gamepad.wButtons
-const DWORD GAMEPAD_DPAD_UP        = 0x0001;
-const DWORD GAMEPAD_DPAD_DOWN      = 0x0002;
-const DWORD GAMEPAD_DPAD_LEFT      = 0x0004;
-const DWORD GAMEPAD_DPAD_RIGHT     = 0x0008;
-const DWORD GAMEPAD_START_BUTTON   = 0x0010;
-const DWORD GAMEPAD_BACK_BUTTON    = 0x0020;
-const DWORD GAMEPAD_LEFT_THUMB     = 0x0040;
-const DWORD GAMEPAD_RIGHT_THUMB    = 0x0080;
-const DWORD GAMEPAD_LEFT_SHOULDER  = 0x0100;
-const DWORD GAMEPAD_RIGHT_SHOULDER = 0x0200;
-const DWORD GAMEPAD_A              = 0x1000;
-const DWORD GAMEPAD_B              = 0x2000;
-const DWORD GAMEPAD_X              = 0x4000;
-const DWORD GAMEPAD_Y              = 0x8000;
+// Bit corresponding to gamepad button in gamepadButtons
+const unsigned int GAMEPAD_A                = 0x0001;
+const unsigned int GAMEPAD_B                = 0x0002;
+const unsigned int GAMEPAD_X                = 0x0004;
+const unsigned int GAMEPAD_Y                = 0x0008;
+const unsigned int GAMEPAD_BACK_BUTTON      = 0x0010;
+const unsigned int GAMEPAD_GUIDE_BUTTON     = 0x0020;
+const unsigned int GAMEPAD_START_BUTTON     = 0x0040;
+const unsigned int GAMEPAD_LEFT_THUMB       = 0x0080;
+const unsigned int GAMEPAD_RIGHT_THUMB      = 0x0100;
+const unsigned int GAMEPAD_LEFT_SHOULDER    = 0x0200;
+const unsigned int GAMEPAD_RIGHT_SHOULDER   = 0x0400;
+const unsigned int GAMEPAD_DPAD_UP          = 0x0800;
+const unsigned int GAMEPAD_DPAD_DOWN        = 0x1000;
+const unsigned int GAMEPAD_DPAD_LEFT        = 0x2000;
+const unsigned int GAMEPAD_DPAD_RIGHT       = 0x4000;
+
+const unsigned int MOUSE_L_BUTTON = 0x0001;
+const unsigned int MOUSE_M_BUTTON = 0x0002;
+const unsigned int MOUSE_R_BUTTON = 0x0004;
+const unsigned int MOUSE_4_BUTTON = 0x0008;
+const unsigned int MOUSE_5_BUTTON = 0x0010;
 
 struct ControllerState
 {
-    XINPUT_STATE        state;
-    XINPUT_VIBRATION    vibration;
-    float               vibrateTimeLeft;    // mSec
-    float               vibrateTimeRight;   // mSec
+    SDL_Gamepad*        controller;
+    unsigned int        gamepadButtons;
+    unsigned short      vibrateMotorSpeedLeft;
+    unsigned short      vibrateMotorSpeedRight;
+    float               vibrateTimeLeft;            // milliseconds
+    float               vibrateTimeRight;           // milliseconds
+    bool                hasRumble;
     bool                connected;
 };
 
 class Input
 {
+    // Input properties
 private:
-    bool keysDown[inputNS::KEYS_ARRAY_LEN];     // true if specified key is down
-    bool keysPressed[inputNS::KEYS_ARRAY_LEN];  // true if specified key was pressed
-    std::string textIn;                         // user entered text
-    char charIn;                                // last character entered
-    bool newLine;                               // true on start of new line
-    int  mouseX, mouseY;                        // mouse screen coordinates
-    int  mouseRawX, mouseRawY;                  // high-definition mouse data
-    int  mouseWheel;                            // mouse wheel movement
-
-    RAWINPUTDEVICE Rid[1];                      // for high-definition mouse
-    bool mouseCaptured;                         // true if mouse captured
-    bool mouseLButton;                          // true if left mouse button down
-    bool mouseMButton;                          // true if middle mouse button down
-    bool mouseRButton;                          // true if right mouse button down
-    bool mouseX1Button;                         // true if X1 mouse button down
-    bool mouseX2Button;                         // true if X2 mouse button down
-    ControllerState controllers[MAX_CONTROLLERS];    // state of controllers
+    // Keyboard
+    bool keysDown[inputNS::KEYS_ARRAY_LEN];
+    bool keysPressed[inputNS::KEYS_ARRAY_LEN];
+    std::string textIn;
+    char charIn;
+    bool newLine;
+    // Mouse
+    int mouseX, mouseY;         // mouse screen coordinates
+    int mouseRawX, mouseRawY;           // high-definition mouse data
+    int  mouseWheel;            // mouse wheel movement
+    bool mouseCaptured;         // true if mouse captured
+    bool mouseLButtonPressed;           // true if mouse left button down
+    bool mouseMButtonPressed;           // true if mouse middle button down
+    bool mouseRButtonPressed;           // true if mouse right button down
+    bool mouse4ButtonPressed;           // true if mouse 4th button down
+    bool mouse5ButtonPressed;           // true if mouse 5th button down
+    bool mouseLButton;          // true if mouse left button down
+    bool mouseMButton;          // true if mouse middle button down
+    bool mouseRButton;          // true if mouse right button down
+    bool mouse4Button;          // true if mouse 4th button down
+    bool mouse5Button;          // true if mouse 5th button down
+    // Controller
+    ControllerState controllers[MAX_CONTROLLERS];           // state of controllers
     short thumbstickDeadzone;
     short triggerDeadzone;
 
@@ -96,132 +99,111 @@ public:
     Input();
 
     // Destructor
-    virtual ~Input();
+    ~Input();
 
     // Initialize mouse and controller input.
-    // Throws GameError
-    // Pre: hwnd = window handle
-    //      capture = true to capture mouse.
-    void initialize(HWND hwnd, bool capture);
+    bool initialize(SDL_Window* hwnd, bool capture);
 
     // Save key down state
-    void keyDown(WPARAM);
+    void keyDown(unsigned int key);
 
     // Save key up state
-    void keyUp(WPARAM);
+    void keyUp(unsigned int key);
 
     // Save the char just entered in textIn string
-    void keyIn(WPARAM);
+    void keyIn(unsigned int key);
 
     // Returns true if the specified VIRTUAL KEY is down, otherwise false.
-    bool isKeyDown(UCHAR vkey) const;
+    bool isKeyDown(unsigned char vkey) const;
 
     // Return true if the specified VIRTUAL KEY has been pressed in the most recent frame.
     // Key presses are erased at the end of each frame.
-    bool wasKeyPressed(UCHAR vkey) const;
+    bool wasKeyPressed(unsigned char vkey) const;
 
     // Return true if any key was pressed in the most recent frame.
     // Key presses are erased at the end of each frame.
     bool anyKeyPressed() const;
 
     // Clear the specified key press
-    void clearKeyPress(UCHAR vkey);
+    void clearKeyPress(unsigned char vkey);
 
     // Clear specified input buffers where what is any combination of
     // KEYS_DOWN, KEYS_PRESSED, MOUSE, TEXT_IN or KEYS_MOUSE_TEXT.
-    // Use OR '|' operator to combine parameters.
-    void clear(UCHAR what);
+    // Use OR '|' operator to combine parmeters.
+    void clear(unsigned char what);
 
     // Clears key, mouse and text input data
-    void clearAll() {clear(inputNS::KEYS_MOUSE_TEXT);}
+    void clearAll();
 
     // Clear text input buffer
-    void clearTextIn() {textIn.clear();}
+    void clearTextIn();
 
     // Clear last character entered
-    void clearCharIn()      {charIn = 0;}
+    void clearCharIn();
 
     // Return text input as a string
-    std::string getTextIn() {return textIn;}
+    std::string getTextIn();
 
     // Set text input string
-    void setTextIn(std::string str) {textIn = str;}
+    void setTextIn(std::string str);
 
     // Return last character entered
-    char getCharIn()        {return charIn;}
+    char getCharIn();
 
     // Reads mouse screen position into mouseX, mouseY
-    void mouseIn(LPARAM);
+    void mouseIn(int x, int y);
 
     // Reads raw mouse data into mouseRawX, mouseRawY
     // This routine is compatible with a high-definition mouse
-    void mouseRawIn(LPARAM);
+    void mouseRawIn(int x, int y);
 
     // Reads mouse wheel movement.
-    void mouseWheelIn(WPARAM);
+    void mouseWheelIn(int w);
+
+    // Return true if the specified VIRTUAL BUTTON has been pressed in the most recent frame.
+    bool wasMouseButtonPressed(unsigned char vbutton);
 
     // Save state of mouse button
-    void setMouseLButton(bool b) { mouseLButton = b; }
+    void setMouseLButton(bool b);
 
     // Save state of mouse button
-    void setMouseMButton(bool b) { mouseMButton = b; }
+    void setMouseMButton(bool b);
 
     // Save state of mouse button
-    void setMouseRButton(bool b) { mouseRButton = b; }
+    void setMouseRButton(bool b);
 
     // Save state of mouse button
-    void setMouseXButton(WPARAM wParam) {mouseX1Button = (wParam & MK_XBUTTON1) ? true:false;
-                                         mouseX2Button = (wParam & MK_XBUTTON2) ? true:false;}
+    void setMouse4Button(bool b);
+    void setMouse5Button(bool b);
 
     // Return mouse X position
-    int  getMouseX()        const { return mouseX; }
+    int  getMouseX() const;
 
     // Return mouse Y position
-    int  getMouseY()        const { return mouseY; }
+    int  getMouseY() const;
 
-    // Return raw mouse X movement relative to previous position.
-    // Left is <0, Right is >0
+    // Return raw mouse X movement. Left is <0, Right is >0
     // Compatible with high-definition mouse.
-    int  getMouseRawX()
-    { 
-        int rawX = mouseRawX;
-        mouseRawX = 0;
-        return rawX; 
-    }
+    int  getMouseRawX();
 
-    // Return raw mouse Y movement relative to previous position.
-    // Up is <0, Down is >0
+    // Return raw mouse Y movement. Up is <0, Down is >0
     // Compatible with high-definition mouse.
-    int  getMouseRawY()
-    { 
-        int rawY = mouseRawY;
-        mouseRawY = 0;
-        return rawY; 
-    }
-
-    // Return mouse wheel movement relative to previous position.
-    // Forward is >0, Backward is <0, movement is in multiples of WHEEL_DATA (120).
-    int  getMouseWheel()
-    { 
-        int wheel = mouseWheel;
-        mouseWheel = 0;
-        return wheel; 
-    }
+    int  getMouseRawY();
 
     // Return state of left mouse button.
-    bool getMouseLButton()  const { return mouseLButton; }
+    bool getMouseLButton() const;
 
     // Return state of middle mouse button.
-    bool getMouseMButton()  const { return mouseMButton; }
+    bool getMouseMButton() const;
 
     // Return state of right mouse button.
-    bool getMouseRButton()  const { return mouseRButton; }
+    bool getMouseRButton() const;
 
     // Return state of X1 mouse button.
-    bool getMouseX1Button() const { return mouseX1Button; }
+    bool getMouse4Button() const;
 
     // Return state of X2 mouse button.
-    bool getMouseX2Button() const { return mouseX2Button; }
+    bool getMouse5Button() const;
 
     // Update connection status of game controllers.
     void checkControllers();
@@ -230,264 +212,131 @@ public:
     void readControllers();
 
     // Set thumbstick deadzone
-    void setThumbstickDeadzone(short dz) { thumbstickDeadzone = abs(dz); }
+    void setThumbstickDeadzone(short dz);
 
     // Set trigger deadzone
-    void setTriggerDeadzone(BYTE dz) { triggerDeadzone = dz; }
+    void setTriggerDeadzone(unsigned char dz);
 
     // Get thumbstick deadzone
-    short getThumbstickDeadzone() { return thumbstickDeadzone; }
+    short getThumbstickDeadzone();
 
     // Get trigger deadzone
-    BYTE getTriggerDeadzone() { return static_cast<BYTE>(triggerDeadzone); }
+    unsigned char getTriggerDeadzone();
 
     // Return state of specified game controller.
-    const ControllerState* getControllerState(UINT n)
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return &controllers[n];
-    }
+    const ControllerState* getControllerState(unsigned int n);
 
     // Return connection state of specified game controller
-    bool getGamepadConnected(UINT n)
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return controllers[n].connected;
-    }
+    bool getGamepadConnected(unsigned int n);
 
     // Return state of controller n buttons.
-    const WORD getGamepadButtons(UINT n)
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return controllers[n].state.Gamepad.wButtons;
-    }
+    const unsigned short getGamepadButtons(unsigned int n);
 
     // Return state of controller n D-pad Up
-    bool getGamepadDPadUp(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return ((controllers[n].state.Gamepad.wButtons&GAMEPAD_DPAD_UP) != 0);
-    }
+    bool getGamepadDPadUp(unsigned int n);
 
     // Return state of controller n D-pad Down.
-    bool getGamepadDPadDown(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return ((controllers[n].state.Gamepad.wButtons&GAMEPAD_DPAD_DOWN) != 0);
-    }
+    bool getGamepadDPadDown(unsigned int n);
 
     // Return state of controller n D-pad Left.
-    bool getGamepadDPadLeft(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return ((controllers[n].state.Gamepad.wButtons&GAMEPAD_DPAD_LEFT) != 0);
-    }
+    bool getGamepadDPadLeft(unsigned int n);
 
     // Return state of controller n D-pad Right.
-    bool getGamepadDPadRight(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return bool((controllers[n].state.Gamepad.wButtons&GAMEPAD_DPAD_RIGHT) != 0);
-    }
+    bool getGamepadDPadRight(unsigned int n);
 
     // Return state of controller n Start button.
-    bool getGamepadStart(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return bool((controllers[n].state.Gamepad.wButtons&GAMEPAD_START_BUTTON) != 0);
-    }
+    bool getGamepadStart(unsigned int n);
 
     // Return state of controller n Back button.
-    bool getGamepadBack(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return bool((controllers[n].state.Gamepad.wButtons&GAMEPAD_BACK_BUTTON) != 0);
-    }
+    bool getGamepadBack(unsigned int n);
 
     // Return state of controller n Left Thumb button.
-    bool getGamepadLeftThumb(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return bool((controllers[n].state.Gamepad.wButtons&GAMEPAD_LEFT_THUMB) != 0);
-    }
+    bool getGamepadLeftThumb(unsigned int n);
 
     // Return state of controller n Right Thumb button.
-    bool getGamepadRightThumb(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return bool((controllers[n].state.Gamepad.wButtons&GAMEPAD_RIGHT_THUMB) != 0);
-    }
+    bool getGamepadRightThumb(unsigned int n);
 
     // Return state of controller n Left Shoulder button.
-    bool getGamepadLeftShoulder(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return bool((controllers[n].state.Gamepad.wButtons&GAMEPAD_LEFT_SHOULDER) != 0);
-    }
+    bool getGamepadLeftShoulder(unsigned int n);
 
     // Return state of controller n Right Shoulder button.
-    bool getGamepadRightShoulder(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return bool((controllers[n].state.Gamepad.wButtons&GAMEPAD_RIGHT_SHOULDER) != 0);
-    }
+    bool getGamepadRightShoulder(unsigned int n);
 
     // Return state of controller n A button.
-    bool getGamepadA(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return bool((controllers[n].state.Gamepad.wButtons&GAMEPAD_A) != 0);
-    }
+    bool getGamepadA(unsigned int n);
 
     // Return state of controller n B button.
-    bool getGamepadB(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return bool((controllers[n].state.Gamepad.wButtons&GAMEPAD_B) != 0);
-    }
+    bool getGamepadB(unsigned int n);
 
     // Return state of controller n X button.
-    bool getGamepadX(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return bool((controllers[n].state.Gamepad.wButtons&GAMEPAD_X) != 0);
-    }
+    bool getGamepadX(unsigned int n);
 
     // Return state of controller n Y button.
-    bool getGamepadY(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return bool((controllers[n].state.Gamepad.wButtons&GAMEPAD_Y) != 0);
-    }
+    bool getGamepadY(unsigned int n);
 
-    // Return value of controller n Left Trigger (0 through 255).
-    // Trigger movement less than GAMEPAD_TRIGGER_DEADZONE returns 0.
-    // Return value is scaled to 0 through 255
-    BYTE getGamepadLeftTrigger(UINT n);
-
-    // Return value of controller n Left Trigger (0 through 255).
+    // Return value of controller n Left Trigger.
     // Deadzone is not applied.
-    BYTE getGamepadLeftTriggerUndead(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return controllers[n].state.Gamepad.bLeftTrigger;
-    }
-
-    // Return value of controller n Right Trigger (0 through 255).
-    // Trigger movement less than GAMEPAD_TRIGGER_DEADZONE returns 0.
-    // Return value is scaled to 0 through 255
-    BYTE getGamepadRightTrigger(UINT n);
-
-    // Return value of controller n Right Trigger (0 through 255).
     // Deadzone is not applied.
-    BYTE getGamepadRightTriggerUndead(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return controllers[n].state.Gamepad.bRightTrigger;
-    }
+    int getGamepadLeftTriggerUndead(unsigned int n);
+
+    // Return value of controller n Left Trigger (0 through 32767).
+    // Trigger movement less than triggerDeadzone returns 0.
+    // Return value is scaled to 0 through 32767
+    int getGamepadLeftTrigger(unsigned int n);
+
+    // Return value of controller n Right Trigger.
+    int getGamepadRightTriggerUndead(unsigned int n);
+
+
+    // Return value of controller n Right Trigger (0 through 32767).
+    // Trigger movement less than triggerDeadzone returns 0.
+    // Return value is scaled to 0 through 32767
+    int getGamepadRightTrigger(unsigned int n);
+
+    // Return value of controller n Left Thumbstick X.
+    int getGamepadThumbLXUndead(unsigned int n);
 
     // Return value of controller n Left Thumbstick X (-32767 through 32767).
-    // Stick movement less than GAMEPAD_THUMBSTICK_DEADZONE returns 0.
+    // Stick movement less than thumbstickDeadzone returns 0.
     // Return value is scaled to -32768 through 32767
-    SHORT getGamepadThumbLX(UINT n);
+    int getGamepadThumbLX(unsigned int n);
 
-    // Return value of controller n Left Thumbstick X (-32767 through 32767).
-    // Deadzone is not applied.
-    SHORT getGamepadThumbLXUndead(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return controllers[n].state.Gamepad.sThumbLX;
-    }
+    // Return value of controller n Left Thumbstick Y.
+    int getGamepadThumbLYUndead(unsigned int n);
 
     // Return value of controller n Left Thumbstick Y (-32768 through 32767).
-    // Stick movement less than GAMEPAD_THUMBSTICK_DEADZONE returns 0.
+    // Stick movement less than thumbstickDeadzone returns 0.
     // Return value is scaled to -32768 through 32767
-    SHORT getGamepadThumbLY(UINT n);
+    int getGamepadThumbLY(unsigned int n);
 
-    // Return value of controller n Left Thumbstick Y (-32768 through 32767).
-    // Deadzone is not applied.
-    SHORT getGamepadThumbLYUndead(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return controllers[n].state.Gamepad.sThumbLY;
-    }
+    // Return value of controller n Right Thumbstick X.
+    int getGamepadThumbRXUndead(unsigned int n);
 
     // Return value of controller n Right Thumbstick X (-32768 through 32767).
-    // Stick movement less than GAMEPAD_THUMBSTICK_DEADZONE returns 0.
+    // Stick movement less than thumbstickDeadzone returns 0.
     // Return value is scaled to -32768 through 32767
-    SHORT getGamepadThumbRX(UINT n);
+    int getGamepadThumbRX(unsigned int n);
 
-    // Return value of controller n Right Thumbstick X (-32768 through 32767).
-    // Deadzone is not applied.
-    SHORT getGamepadThumbRXUndead(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)   // if invalid controller number
-            n=MAX_CONTROLLERS-1;    // force valid
-        return controllers[n].state.Gamepad.sThumbRX;
-    }
+    // Return value of controller n Right Thumbstick Y.
+    int getGamepadThumbRYUndead(unsigned int n);
 
     // Return value of controller n Right Thumbstick Y (-32768 through 32767).
-    // Stick movement less than GAMEPAD_THUMBSTICK_DEADZONE returns 0.
+    // Stick movement less than thumbstickDeadzone returns 0.
     // Return value is scaled to -32768 through 32767
-    SHORT getGamepadThumbRY(UINT n);
-
-    // Return value of controller n Right Thumbstick Y (-32768 through 32767).
-    // Deadzone is not applied.
-    SHORT getGamepadThumbRYUndead(UINT n) 
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        return controllers[n].state.Gamepad.sThumbRY;
-    }
+    int getGamepadThumbRY(unsigned int n);
 
     // Vibrate controller n left motor.
     // Left is low frequency vibration.
     // speed 0=off, 65536=100 percent
     // sec is time to vibrate in seconds
-    void gamePadVibrateLeft(UINT n, WORD speed, float sec)
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        controllers[n].vibration.wLeftMotorSpeed = speed;
-        controllers[n].vibrateTimeLeft = sec;
-    }
+    void gamePadVibrateLeft(unsigned int n, unsigned short speed, float sec);
 
     // Vibrate controller n right motor.
     // Right is high frequency vibration.
     // speed 0=off, 65536=100 percent
     // sec is time to vibrate in seconds
-    void gamePadVibrateRight(UINT n, WORD speed, float sec)
-    {
-        if(n > MAX_CONTROLLERS-1)
-            n=MAX_CONTROLLERS-1;
-        controllers[n].vibration.wRightMotorSpeed = speed;
-        controllers[n].vibrateTimeRight = sec;
-    }
+    void gamePadVibrateRight(unsigned int n, unsigned short speed, float sec);
 
     // Vibrates the connected controllers for the desired time.
     void vibrateControllers(float frameTime);
 };
-
-#endif
-

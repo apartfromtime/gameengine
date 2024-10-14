@@ -1,10 +1,3 @@
-// Programming 2D Games
-// Copyright (c) 2011, 2013 by: 
-// Charles Kelly
-// textureManager.cpp v2.1
-// Last modification: Apr-12-2013
-// A TextureManager object loads and maintains texture files. 
-
 #include "textureManager.h"
 
 //=============================================================================
@@ -13,6 +6,10 @@
 TextureManager::TextureManager()
 {
     graphics = NULL;
+    width.clear();
+    height.clear();
+    texture.clear();
+    fileNames.clear();
     initialized = false;            // set true when successfully initialized
 }
 
@@ -21,58 +18,127 @@ TextureManager::TextureManager()
 //=============================================================================
 TextureManager::~TextureManager()
 {
-    for(UINT i=0; i<texture.size(); i++)
+    for (unsigned int i = 0; i < texture.size(); i++)
         safeReleaseTexture(texture[i]);
 }
 
 //=============================================================================
-// Loads the texture file(s) from disk.
-// Post: returns true if successful, false if failed
-//       If file is a .txt file it is assumed to contain individual texture
-//       file names, one name per line.
+// Reads a line from io stream
 //=============================================================================
-bool TextureManager::initialize(Graphics *g, std::string file)
+bool TextureManager::getLine(SDL_IOStream* iostream, std::string& str)
+{
+    if (iostream == NULL || SDL_GetIOStatus(iostream) != SDL_IO_STATUS_READY)
+    {
+        return false;
+    }
+
+    unsigned char c = 0;
+
+    do {
+        SDL_ReadU8(iostream, &c);
+        if (c != '\n' || c != '\r')
+        {
+            str += c;
+        }
+    } while (SDL_GetIOStatus(iostream) == SDL_IO_STATUS_READY &&
+        (c != '\n' || c != '\r'));
+
+    return true;
+}
+
+//=============================================================================
+// Returns a pointer to texture n
+//=============================================================================
+LP_TEXTURE TextureManager::getTexture(unsigned int n) const
+{
+    if (n >= texture.size())
+    {
+        return NULL;
+    }
+
+    return texture[n];
+}
+
+//=============================================================================
+// Returns the width of texture n
+//=============================================================================
+unsigned int TextureManager::getW(unsigned int n) const
+{
+    if (n >= texture.size())
+    {
+        return 0;
+    }
+
+    return width[n];
+}
+
+//=============================================================================
+// Return the height of texture n
+//=============================================================================
+unsigned int TextureManager::getH(unsigned int n) const
+{
+    if (n >= texture.size())
+    {
+        return 0;
+    }
+
+    return height[n];
+}
+
+//=============================================================================
+// Loads the texture file(s) from disk.
+//=============================================================================
+bool TextureManager::initialize(Graphics* pGraphics, std::string file)
 {
     bool success = true;
-    try{
-        graphics = g;                       // the graphics object
-        for(UINT i=0; i<file.size(); i++)    // convert to lowercase
-            file.at(i) = tolower(file.at(i));
-        if(file.rfind(".txt") == file.size()-4) // if .txt extension
+
+    graphics = pGraphics;
+
+    for (unsigned int i = 0; i < file.size(); i++)
+    {
+        file.at(i) = tolower(file.at(i));
+    }
+
+    if (file.rfind(".txt") == file.size() - 4)          // .txt extension
+    {
+        // open file containing individual texture names
+        SDL_IOStream* infile = SDL_IOFromFile(file.c_str(), "rb");
+        if (infile == NULL)
         {
-            // open file containing individual texture names
-            std::ifstream infile(file.c_str());   
-            if(!infile)                     // if open failed
-                return false;
-            std::string name;
-            while(getline(infile,name))
-            {
-                fileNames.push_back(name);  // add to files
-                width.push_back(0);         // make room for width
-                height.push_back(0);        // make room for height
-                texture.push_back(NULL);    // make room for texture
-            }
-            infile.close();
-        } 
-        else    // not .txt file so file contains name of one texture
-        {
-            fileNames.push_back(file);      // put one file name in files
-            width.push_back(0);         // make room for width
-            height.push_back(0);        // make room for height
-            texture.push_back(NULL);    // make room for texture
+            return false;
         }
 
-        // load texture files
-        for(UINT i=0; i<fileNames.size(); i++)
+        std::string name = "";
+        while (getLine(infile, name))
         {
-            hr = graphics->loadTexture(fileNames[i].c_str(), 
-                 graphicsNS::TRANSCOLOR, width[i], height[i], texture[i]);
-            if (FAILED(hr))
-                success = false;    // at least one texture failed to load
+            fileNames.push_back(name);
+            width.push_back(0);
+            height.push_back(0);
+            texture.push_back(NULL);
+        }
+        SDL_CloseIO(infile);
+    }
+    else            // not .txt file so file contains name of one texture
+    {
+        fileNames.push_back(file);
+        width.push_back(0);
+        height.push_back(0);
+        texture.push_back(NULL);
+    }
+
+    // load texture files
+    for (unsigned int i = 0; i < fileNames.size(); i++)
+    {
+        bool result = graphics->loadTexture(fileNames[i].c_str(),
+            graphicsNS::TRANSCOLOR, width[i], height[i], texture[i]);
+        if (result == false)
+        {
+            success = false;            // at least one texture failed to load
         }
     }
-    catch(...) {return false;}
-    initialized = true;                    // set true when initialized
+
+    initialized = true;
+    
     return success;
 }
 
@@ -81,16 +147,14 @@ bool TextureManager::initialize(Graphics *g, std::string file)
 //=============================================================================
 void TextureManager::onLostDevice()
 {
-    try
+    if (!initialized)
     {
-        if (!initialized)
-            return;
-        for(UINT i=0; i<texture.size(); i++)
-            safeReleaseTexture(texture[i]);
-    }catch(...)
+        return;
+    }
+
+    for (unsigned int i = 0; i < texture.size(); i++)
     {
-        throw(GameError(gameErrorNS::WARNING, 
-            "Warning, TextureManager onLostDevice attempted to access an invalid texture."));
+        safeReleaseTexture(texture[i]);
     }
 }
 
@@ -101,14 +165,27 @@ void TextureManager::onResetDevice()
 {
     if (!initialized)
         return;
+
     // load texture files
-    for(UINT i=0; i<fileNames.size(); i++)
+    for (unsigned int i = 0; i < fileNames.size(); i++)
     {
-        hr = graphics->loadTexture(fileNames[i].c_str(), 
-             graphicsNS::TRANSCOLOR, width[i], height[i], texture[i]);
-        if (FAILED(hr))
+        bool result = graphics->loadTexture(fileNames[i].c_str(),
+            graphicsNS::TRANSCOLOR, width[i], height[i], texture[i]);
+        if (result == false)
+        {
             safeReleaseTexture(texture[i]);
+        }
     }
 }
 
-
+//=============================================================================
+// Safely release texture
+//=============================================================================
+void TextureManager::safeReleaseTexture(LP_TEXTURE& ptr)
+{
+    if (ptr)
+    {
+        graphics->freeTexture(ptr);
+        ptr = NULL;
+    }
+}

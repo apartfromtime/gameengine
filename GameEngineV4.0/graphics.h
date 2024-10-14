@@ -1,43 +1,27 @@
-// Programming 2D Games
-// Copyright (c) 2011 by:
-// Charles Kelly
-// graphics.h v1.8
-// Last modification: November-6-2014
-
-#ifndef _GRAPHICS_H             // Prevent multiple definitions if this 
-#define _GRAPHICS_H             // file is included in more than one place
-#define WIN32_LEAN_AND_MEAN
-
-#ifdef _DEBUG
-#define D3D_DEBUG_INFO
-#endif
-
-class Graphics;
-
-#include <d3d9.h>
-#include <d3dx9.h>
-#include <D3dx9core.h>
+#pragma once
+#include <SDL3\SDL.h>
+#include <SDL3\SDL_image.h>
+#include <GEUL\g_math.h>
 #include "constants.h"
 #include "gameError.h"
+#include "sprite.h"
 
-// DirectX pointer types
-#define LP_TEXTURE  LPDIRECT3DTEXTURE9
-#define LP_SPRITE   LPD3DXSPRITE
-#define LP_3DDEVICE LPDIRECT3DDEVICE9
-#define LP_3D       LPDIRECT3D9
-#define VECTOR2     D3DXVECTOR2
-#define LP_VERTEXBUFFER LPDIRECT3DVERTEXBUFFER9
-#define LP_DXFONT   LPD3DXFONT
-#define LP_VERTEXBUFFER LPDIRECT3DVERTEXBUFFER9
-#define LP_DXLINE   LPD3DXLINE
+//-----------------------------------------------------------------------------
+//
+// GRAPHICS
+//
+//-----------------------------------------------------------------------------
+
+// SDL pointer types
+#define LP_DEVICE           SDL_Renderer*
+#define LP_TEXTURE          SDL_Texture*
+#define LP_VERTEX           SDL_Vertex*
 
 // Color defines
-// ARGB numbers range from 0 through 255
-// a = Alpha channel (transparency where 255 is opaque)
-// r = Red, g = Green, b = Blue
-#define COLOR_ARGB DWORD
-#define SETCOLOR_ARGB(a,r,g,b) \
-    ((COLOR_ARGB)((((a)&0xff)<<24)|(((r)&0xff)<<16)|(((g)&0xff)<<8)|((b)&0xff)))
+#define COLOR_ARGB color_t
+
+#define SETCOLOR_ARGB(a,r,g,b) (Color((r & 0xff) / 255.0f, (g & 0xff) / 255.0f, \
+    (b & 0xff) / 255.0f, (a & 0xff) / 255.0f))
 
 namespace graphicsNS
 {
@@ -45,171 +29,205 @@ namespace graphicsNS
     // ARGB numbers range from 0 through 255
     // A = Alpha channel (transparency where 255 is opaque)
     // R = Red, G = Green, B = Blue
-    const COLOR_ARGB ORANGE  = D3DCOLOR_ARGB(255,255,165,  0);
-    const COLOR_ARGB BROWN   = D3DCOLOR_ARGB(255,139, 69, 19);
-    const COLOR_ARGB LTGRAY  = D3DCOLOR_ARGB(255,192,192,192);
-    const COLOR_ARGB GRAY    = D3DCOLOR_ARGB(255,128,128,128);
-    const COLOR_ARGB OLIVE   = D3DCOLOR_ARGB(255,128,128,  0);
-    const COLOR_ARGB PURPLE  = D3DCOLOR_ARGB(255,128,  0,128);
-    const COLOR_ARGB MAROON  = D3DCOLOR_ARGB(255,128,  0,  0);
-    const COLOR_ARGB TEAL    = D3DCOLOR_ARGB(255,  0,128,128);
-    const COLOR_ARGB GREEN   = D3DCOLOR_ARGB(255,  0,128,  0);
-    const COLOR_ARGB NAVY    = D3DCOLOR_ARGB(255,  0,  0,128);
-    const COLOR_ARGB WHITE   = D3DCOLOR_ARGB(255,255,255,255);
-    const COLOR_ARGB YELLOW  = D3DCOLOR_ARGB(255,255,255,  0);
-    const COLOR_ARGB MAGENTA = D3DCOLOR_ARGB(255,255,  0,255);
-    const COLOR_ARGB RED     = D3DCOLOR_ARGB(255,255,  0,  0);
-    const COLOR_ARGB CYAN    = D3DCOLOR_ARGB(255,  0,255,255);
-    const COLOR_ARGB LIME    = D3DCOLOR_ARGB(255,  0,255,  0);
-    const COLOR_ARGB BLUE    = D3DCOLOR_ARGB(255,  0,  0,255);
-    const COLOR_ARGB BLACK   = D3DCOLOR_ARGB(255,  0,  0,  0);
-    const COLOR_ARGB FILTER  = D3DCOLOR_ARGB(  0,  0,  0,  0);  // use to specify drawing with colorFilter
-    const COLOR_ARGB ALPHA25 = D3DCOLOR_ARGB( 64,255,255,255);  // AND with color to get 25% alpha
-    const COLOR_ARGB ALPHA50 = D3DCOLOR_ARGB(128,255,255,255);  // AND with color to get 50% alpha
-    const COLOR_ARGB BACK_COLOR = NAVY;                         // background color of game
-    const COLOR_ARGB TRANSCOLOR = MAGENTA;                      // transparent color
+    const COLOR_ARGB ORANGE     = SETCOLOR_ARGB(255, 255, 165,   0);
+    const COLOR_ARGB BROWN      = SETCOLOR_ARGB(255, 139,  69,  19);
+    const COLOR_ARGB LTGRAY     = SETCOLOR_ARGB(255, 192, 192, 192);
+    const COLOR_ARGB GRAY       = SETCOLOR_ARGB(255, 128, 128, 128);
+    const COLOR_ARGB OLIVE      = SETCOLOR_ARGB(255, 128, 128,   0);
+    const COLOR_ARGB PURPLE     = SETCOLOR_ARGB(255, 128,   0, 128);
+    const COLOR_ARGB MAROON     = SETCOLOR_ARGB(255, 128,   0,   0);
+    const COLOR_ARGB TEAL       = SETCOLOR_ARGB(255,   0, 128, 128);
+    const COLOR_ARGB GREEN      = SETCOLOR_ARGB(255,   0, 128,   0);
+    const COLOR_ARGB NAVY       = SETCOLOR_ARGB(255,   0,   0, 128);
+    const COLOR_ARGB WHITE      = SETCOLOR_ARGB(255, 255, 255, 255);
+    const COLOR_ARGB YELLOW     = SETCOLOR_ARGB(255, 255, 255,   0);
+    const COLOR_ARGB MAGENTA    = SETCOLOR_ARGB(255, 255,   0, 255);
+    const COLOR_ARGB RED        = SETCOLOR_ARGB(255, 255,   0,   0);
+    const COLOR_ARGB CYAN       = SETCOLOR_ARGB(255,   0, 255, 255);
+    const COLOR_ARGB LIME       = SETCOLOR_ARGB(255,   0, 255,   0);
+    const COLOR_ARGB BLUE       = SETCOLOR_ARGB(255,   0,   0, 255);
+    const COLOR_ARGB BLACK      = SETCOLOR_ARGB(255,   0,   0,   0);
+    const COLOR_ARGB FILTER     = SETCOLOR_ARGB(  0,   0,   0,   0);            // use to specify drawing with colorFilter
+    const COLOR_ARGB ALPHA25    = SETCOLOR_ARGB( 64, 255, 255, 255);            // AND with color to get 25% alpha
+    const COLOR_ARGB ALPHA50    = SETCOLOR_ARGB(128, 255, 255, 255);            // AND with color to get 50% alpha
+    const COLOR_ARGB ALPHA75    = SETCOLOR_ARGB(192, 255, 255, 255);            // AND with color to get 75% alpha
+    const COLOR_ARGB BACK_COLOR = NAVY;          // background color of game
+    const COLOR_ARGB TRANSCOLOR = SETCOLOR_ARGB(255, 255,   0, 255);  // transparent color (magenta)
 
-    enum DISPLAY_MODE{TOGGLE, FULLSCREEN, WINDOW};
+    enum DISPLAY_MODE { TOGGLE, FULLSCREEN, WINDOW };
 }
 
-struct VertexC              // Vertex with Color
+// Texture locked rectangle
+typedef struct _LOCKED_RECT
 {
-    float x, y, z;          // vertex location
-    float rhw;              // reciprocal homogeneous W (set to 1)
-    unsigned long color;    // vertex color
-};
+    int pitch;
+    void* pBits;
+} LOCKED_RECT;
 
-// Flexible Vertex Format Codes
-// D3DFVF_XYZRHW = The verticies are transformed
-// D3DFVF_DIFFUSE = The verticies contain diffuse color data 
-#define D3DFVF_VERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE)
+typedef struct _VERTEX
+{
+    vector4_t     position;         // Vertex position
+    vector4_t     texcoord;         // Texture coordinates
+    vector3_t     normal;           // Vertex normal
+    color_t       color;            // Vertex color
+} VERTEX;
+
+typedef enum
+{
+    SPRITEEFFECT_NONE       = 0x00,
+    SPRITEEFFECT_FLIPH      = 0x01,
+    SPRITEEFFECT_FLIPV      = 0x02
+} SPRITEEFFECT;
 
 // SpriteData: The properties required by Graphics::drawSprite to draw a sprite
 struct SpriteData
 {
-    int         width;      // width of sprite in pixels
-    int         height;     // height of sprite in pixels
+    int         w;          // width of sprite in pixels
+    int         h;          // height of sprite in pixels
     float       x;          // screen location (top left corner of sprite)
     float       y;
+    float       z;
+    float       depth;      // depth scale distance
     float       scale;      // <1 smaller, >1 bigger
     float       angle;      // rotation angle in radians
-    RECT        rect;       // used to select an image from a larger texture
+    rect_t      rect;       // used to select an image from a larger texture
     LP_TEXTURE  texture;    // pointer to texture
-    bool        flipHorizontal; // true to flip sprite horizontally (mirror)
-    bool        flipVertical;   // true to flip sprite vertically
+    uint32_t    effect;     // flip x, y
 };
+
+typedef enum
+{
+    TRANSFORMTYPE_WORLD         = 0x00,
+    TRANSFORMTYPE_VIEW          = 0x01,
+    TRANSFORMTYPE_PROJECTION    = 0x02,
+    TRANSFORMTYPE_TRANSFORM     = 0x03
+} TRANSFORMTYPE;
 
 class Graphics
 {
+    // Graphics properties
 private:
-    // DirectX pointers and stuff
-    LP_3D       direct3d;
-    LP_3DDEVICE device3d;
-    LP_SPRITE   sprite;
-    LP_DXLINE   line;       // line pointer
-    D3DPRESENT_PARAMETERS d3dpp;
-    D3DDISPLAYMODE pMode;
-    IDirect3DQuery9* pOcclusionQuery;   // for pixel perfect collision detection
-    DWORD   numberOfPixelsColliding;    // for pixel perfect collision detection
+    // SDL
+    SDL_Window* hwnd;
+    SDL_Renderer* renderer2d;
+    SDL_DisplayMode displayMode;
+    unsigned long numberOfPixelsColliding;          // for pixel perfect collision detection
+    SDL_Texture* depthStencilBuffer;
+    bool stencilSupport;
+    SDL_Rect windowRect;
+    SDL_Rect viewport2d;
+    LP_SPRITE sprite;
 
-    // other variables
-    HRESULT     result;         // standard Windows return codes
-    HWND        hwnd;
+    // Presentation parameters
+    int backBufferWidth;
+    int backBufferHeight;
+    SDL_PixelFormat backBufferFormat;
+    int backBufferCount;
+    bool enableAutoDepthStencil;
+    SDL_PixelFormat autoDepthStencilFormat;
+    float fullScreenRefreshRateInHz;
+    int presentationInterval;
+
+    // View
+    viewport_t viewport3d;
+    matrix4_t matrix3d[3];            // world = 0, view = 1, projection = 2
+    matrix4_t transform3d;
+
+    // Window
+    bool        vsync;
     bool        fullscreen;
-    bool        stencilSupport; // true if device supports stencil buffer
     int         width;
     int         height;
-    COLOR_ARGB  backColor;      // background color
+    COLOR_ARGB  backColor;          // background color
 
-    // (For internal engine use only. No user serviceable parts inside.)
-    // Initialize D3D presentation parameters
-    void    initD3Dpp();
+    // (For internal use only. No user serviceable parts inside.)
+
+    // Initialize SDL presentation parameters
+    void initSDLpp();
 
 public:
     // Constructor
     Graphics();
 
     // Destructor
-    virtual ~Graphics();
+    ~Graphics();
 
-    // Releases direct3d and device3d.
-    void    releaseAll();
+    // Releases direct3d and renderer3d.
+    void releaseAll();
 
-    // Initialize DirectX graphics
-    // Throws GameError on error
-    // Pre: hw = handle to window
-    //      width = width in pixels
-    //      height = height in pixels
-    //      fullscreen = true for full screen, false for window
-    void    initialize(HWND hw, int width, int height, bool fullscreen);
-
-    // Create a vertex buffer.
-    // Pre: verts[] contains vertex data.
-    //      size = size of verts[]
-    // Post: &vertexBuffer points to buffer if successful.
-    HRESULT createVertexBuffer(VertexC verts[], UINT size, LP_VERTEXBUFFER &vertexBuffer);
-
-    // Display a quad (rectangle) with alpha transparency.
-    // Pre: createVertexBuffer was used to create vertexBuffer containing four
-    //      vertices defining the quad in clockwise order.
-    //      g3ddev->BeginScene was called
-    bool    drawQuad(LP_VERTEXBUFFER vertexBuffer);
-
-    // Load the texture into default D3D memory (normal texture use)
-    // For internal engine use only. Use the TextureManager class to load game textures.
-    // Pre: filename = name of texture file.
-    //      transcolor = transparent color
-    // Post: width and height = size of texture
-    //       texture points to texture
-    HRESULT loadTexture(const char * filename, COLOR_ARGB transcolor, UINT &width, UINT &height, LP_TEXTURE &texture);
-
-    // Load the texture into system memory (system memory is lockable)
-    // Provides direct access to pixel data. Use the TextureManager class to load textures for display.
-    // Pre: filename = name of texture file.
-    //      transcolor = transparent color
-    // Post: width and height = size of texture
-    //       texture points to texture
-    HRESULT loadTextureSystemMem(const char *filename, COLOR_ARGB transcolor, UINT &width, UINT &height, LP_TEXTURE &texture);
-
-    // Display the offscreen backbuffer to the screen.
-    HRESULT showBackbuffer();
+    // Initialize SDL graphics
+    bool initialize(SDL_Window* hw, int width, int height, bool fullscreen, bool vsync);
 
     // Checks the adapter to see if it is compatible with the BackBuffer height,
-    // width and refresh rate specified in d3dpp. Fills in the pMode structure with
+    // width and refresh rate specified in sdlpp. Fills in the pMode structure with
     // the format of the compatible mode, if found.
-    // Pre: d3dpp is initialized.
-    // Post: Returns true if compatible mode found and pMode structure is filled.
-    //       Returns false if no compatible mode found.
-    bool    isAdapterCompatible();
-
-    // Draw the sprite described in SpriteData structure.
-    // color is optional, it is applied as a filter, WHITE is default (no change).
-    // Creates a sprite Begin/End pair.
-    // Pre: spriteData.rect defines the portion of spriteData.texture to draw
-    //      spriteData.rect.right must be right edge + 1
-    //      spriteData.rect.bottom must be bottom edge + 1
-    void    drawSprite(const SpriteData &spriteData,           // sprite to draw
-                       COLOR_ARGB color = graphicsNS::WHITE);      // default to white color filter (no change)
+    bool isAdapterCompatible();
 
     // Reset the graphics device.
-    HRESULT reset();
+    bool reset();
 
     // Toggle, fullscreen or window display mode
-    // Pre: All user created D3DPOOL_DEFAULT surfaces are freed.
-    // Post: All user surfaces are recreated.
-    void    changeDisplayMode(graphicsNS::DISPLAY_MODE mode = graphicsNS::TOGGLE);
+    void changeDisplayMode(graphicsNS::DISPLAY_MODE mode = graphicsNS::TOGGLE);
 
-    // Return length of vector v.
-    static float    Vector2Length(const VECTOR2 *v) {return D3DXVec2Length(v);}
+    // Display the offscreen backbuffer to the screen.
+    bool showBackbuffer();
 
-    // Return Dot product of vectors v1 and v2.
-    static float    Vector2Dot(const VECTOR2 *v1, const VECTOR2 *v2) {return D3DXVec2Dot(v1, v2);}
+    // Locks a rectangle on a texture resource.
+    bool lockRect(LP_TEXTURE& texture, LOCKED_RECT* pLockedRect, const rect_t* pRect = NULL);
 
-    // Normalize vector v.
-    static void     Vector2Normalize(VECTOR2 *v) {D3DXVec2Normalize(v, v);}
+    // Unlocks a rectangle on a texture resource.
+    bool unlockRect(LP_TEXTURE& texture);
 
-    // Transform vector v with matrix m.
-    static VECTOR2* Vector2Transform(VECTOR2 *v, D3DXMATRIX *m) {return D3DXVec2TransformCoord(v,v,m);}
+    // Frees the data associated with this texture
+    void freeTexture(LP_TEXTURE texture);
+
+    // Load the texture into default SDL memory (normal texture use)
+    bool loadTexture(const char* filename, COLOR_ARGB transcolor,
+        unsigned int& width, unsigned int& height, LP_TEXTURE& texture);
+
+    // Load the texture into system memory (system memory is lockable)
+    // Provides direct access to pixel data.
+    bool loadTextureSystemMem(const char* filename, COLOR_ARGB transcolor,
+        unsigned int& width, unsigned int& height, LP_TEXTURE& texture);
+
+    // Draw pixel at (x, y). 
+    //      color defaults to graphicsNS::WHITE.
+    void drawPoint(int16_t x, int16_t y, uint8_t width = 1,
+        COLOR_ARGB color = graphicsNS::WHITE);
+
+    // Draw pixels from list
+    //      color defaults to graphicsNS::WHITE.
+    void drawPoint(const vector2_t* pointList, unsigned long pointListCount,
+        uint8_t width, COLOR_ARGB color = graphicsNS::WHITE);
+
+    // Draw line from (x1, y1) to (x2, y2). 
+    //      width defauts to 1. 
+    //      color defaults to graphicsNS::WHITE.
+    void drawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t width = 1,
+        COLOR_ARGB color = graphicsNS::WHITE);
+
+    // Draw lines, from vertex list
+    //      width defaults to 1
+    //      color defaults to graphicsNS::WHITE
+    void drawLine(const vector2_t* vertexList, unsigned long vertexListCount,
+        uint8_t width = 1, COLOR_ARGB color = graphicsNS::WHITE);
+
+    // Display quad (rectangle) with alpha transparency.
+    void drawQuad(const vector4_t v0, const vector4_t v1, const vector4_t v2,
+        const vector4_t v3, COLOR_ARGB color = graphicsNS::WHITE);
+
+    // Display quads (rectangle) from quad list with alpha transparency.
+    void drawQuad(const vector4_t* quadList[4], uint32_t quadListCount,
+        COLOR_ARGB color = graphicsNS::WHITE);
+
+    // Draw the sprite described in SpriteData structure. (SDL_RenderGeometry)
+    // color is optional, it is applied as a filter, WHITE is default (no change).
+    void drawSprite(const SpriteData& spriteData,
+        COLOR_ARGB color = graphicsNS::WHITE);
+
+    // Draw sprites from sprite list.
+    void drawSprite(const SpriteData* spriteList, unsigned long spriteListCount,
+        COLOR_ARGB color = graphicsNS::WHITE);
 
     // Return the number of pixels colliding between the two sprites.
     // Pre: The device supports a stencil buffer and pOcclusionQuery points to
@@ -218,139 +236,61 @@ public:
     // This function waits for the graphics card to render the last frame and return
     // the collision query pixel count. To avoid slowing down your game, use a
     // simple collison test first to eliminate entities that are not colliding.
-    DWORD pixelCollision(const SpriteData &sprite1, const SpriteData &sprite2);
+    unsigned long pixelCollision(const SpriteData& sprite1,
+        const SpriteData& sprite2);
+
+    // Multiplies world, view, or projection matrices
+    void multiplyTransform();
 
     // get functions
-    // Return direct3d.
-    LP_3D get3D()               { return direct3d; }
 
-    // Return device3d.
-    LP_3DDEVICE get3Ddevice()   { return device3d; }
+    // return the window client area in pixels
+    SDL_Rect getWindowRect();
+
+    // return 3d viewport
+    viewport_t get3DViewport();
+
+    // Return renderer3d.
+    SDL_Renderer* get2DRenderer();
 
     // Return sprite
-    LP_SPRITE getSprite()       { return sprite; }
-
-    // Return handle to device context (window).
-    HDC getDC()                 { return GetDC(hwnd); }
+    LP_SPRITE getSprite();
 
     // Test for lost device
-    HRESULT getDeviceState();
+    bool getDeviceState();
+
+    // return width and height
+    int getWidth();
+    int getHeight();
 
     // Return fullscreen
-    bool getFullscreen()        { return fullscreen; }
-
-    // Return pOcclusionQuery
-    IDirect3DQuery9* getPOcclusionQuery()   { return pOcclusionQuery; }
+    bool getFullscreen();
 
     // Returns true if the graphics card supports a stencil buffer
-    bool getStencilSupport()    { return stencilSupport; }
+    bool getStencilSupport();
+
+    // Returns transform
+    void getTransform(matrix4_t& matrix, TRANSFORMTYPE type);
+
+    // Set VSync
+    void setVSync(bool vsync);
 
     // Set color used to clear screen
-    void setBackColor(COLOR_ARGB c) {backColor = c;}
+    void setBackColor(COLOR_ARGB c);
 
-    //=============================================================================
-    // Create DX line, description from D3dx9core.h
-    // This object intends to provide an easy way to draw lines using D3D.
-    //
-    // Begin - 
-    //    Prepares device for drawing lines
-    // Draw -
-    //    Draws a line strip in screen-space.
-    //    Input is in the form of a array defining points on the line strip. of D3DXVECTOR2 
-    // DrawTransform -
-    //    Draws a line in screen-space with a specified input transformation matrix.
-    // End - 
-    //     Restores device state to how it was when Begin was called.
-    // SetPattern - 
-    //     Applies a stipple pattern to the line.  Input is one 32-bit
-    //     DWORD which describes the stipple pattern. 1 is opaque, 0 is
-    //     transparent.
-    // SetPatternScale - 
-    //     Stretches the stipple pattern in the u direction.  Input is one
-    //     floating-point value.  0.0f is no scaling, whereas 1.0f doubles
-    //     the length of the stipple pattern.
-    // SetWidth - 
-    //     Specifies the thickness of the line in the v direction.  Input is
-    //     one floating-point value.
-    // SetAntialias - 
-    //     Toggles line antialiasing.  Input is a BOOL.
-    //     TRUE  = Antialiasing on.
-    //     FALSE = Antialiasing off.
-    // SetGLLines - 
-    //     Toggles non-antialiased OpenGL line emulation.  Input is a BOOL.
-    //     TRUE  = OpenGL line emulation on.
-    //     FALSE = OpenGL line emulation off.
-    // OpenGL line:     Regular line:  
-    //   *\                *\
-    //   | \              /  \
-    //   |  \            *\   \
-    //   *\  \             \   \
-    //     \  \             \   \
-    //      \  *             \   *
-    //       \ |              \ /
-    //        \|               *
-    //         *
-    // OnLostDevice, OnResetDevice -
-    //    Call OnLostDevice() on this object before calling Reset() on the
-    //    device, so that this object can release any stateblocks and video
-    //    memory resources.  After Reset(), the call OnResetDevice().
-    //=============================================================================
-    void createLine(LP_DXLINE *line)
-    {
-        D3DXCreateLine(device3d, line);
-    }
+    // Set transform
+    void setTransform(const matrix4_t& matrix, TRANSFORMTYPE type);
 
-    //=============================================================================
-    // Draw DirectX line from X1,Y1 to X2,Y2. 
-    //    width defauts to 1. 
-    //    color defaults to graphicsNS::WHITE.
-    //=============================================================================
-    void drawLine(float x1, float y1, float x2, float y2, float width = 1.0f, COLOR_ARGB color = graphicsNS::WHITE);
-
-    //=============================================================================
     // Clear backbuffer and BeginScene()
-    //=============================================================================
-    HRESULT beginScene() 
-    {
-        result = E_FAIL;
-        if(device3d == NULL)
-            return result;
-        // Clear back buffer, stencil buffer and depth buffer
-        device3d->Clear(0, 0, 
-            D3DCLEAR_TARGET | D3DCLEAR_STENCIL | D3DCLEAR_ZBUFFER,
-            backColor, 1.0f, 0);
+    bool beginScene();
 
-        result = device3d->BeginScene();          // begin scene for drawing
-        return result;
-    }
-
-    //=============================================================================
     // EndScene()
-    //=============================================================================
-    HRESULT endScene() 
-    {
-        result = E_FAIL;
-        if(device3d)
-            result = device3d->EndScene();
-        return result;
-    }
+    bool endScene();
 
-    //=============================================================================
     // Sprite Begin
-    //=============================================================================
-    void spriteBegin() 
-    {
-        sprite->Begin(D3DXSPRITE_ALPHABLEND);
-    }
+    void spriteBegin();
 
-    //=============================================================================
     // Sprite End
-    //=============================================================================
-    void spriteEnd() 
-    {
-        sprite->End();
-    }
+    void spriteEnd();
 };
-
-#endif
 
