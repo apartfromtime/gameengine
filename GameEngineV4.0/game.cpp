@@ -285,9 +285,9 @@ void Game::renderGame()
 
         graphics->spriteEnd();
 
-        console->draw();            // drawn on top
         messageDialog->draw();          // drawn on top
         inputDialog->draw();            // drawn on top
+        console->draw();            // drawn on top
 
         // stop rendering
         graphics->endScene();
