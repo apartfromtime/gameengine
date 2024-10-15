@@ -308,6 +308,11 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
         if (*iter == '\n') line_num++;
     }
 
+    if (line_num > 1)
+    {
+        strW = rectW;
+    }
+
     // format string
     while (offset < str.length())
     {
