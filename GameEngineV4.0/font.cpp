@@ -74,6 +74,7 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
 
     TTF_SetFontStyle(font, weight);
     SDL_bool proportional = !TTF_FontFaceIsFixedWidth(font);
+
     rect_t* metrics = (rect_t*)SDL_malloc(GRID_R * GRID_C * sizeof(rect_t));
     int* advance = (int*)SDL_malloc(GRID_R * GRID_C * sizeof(int));
 
@@ -340,7 +341,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                     sprRect.min[0] = ((chN % GRID_C) * cellW) +
                         metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
                     sprRect.max[0] = ((chN % GRID_C) * cellW) +
-                        metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0];
+                        metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
                     charW = (sprRect.max[0] - sprRect.min[0]);
 
                     if (charW >= cellW)         // if full width character do not add spacing
@@ -349,7 +350,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                     }
                     else            // not full width so add spacing between characters
                     {
-                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)];
+                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                     }
                 }
                 else            // fixed pitch
@@ -397,7 +398,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                                 sprRect.min[0] = ((chN % GRID_C) * cellW) +
                                     metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
                                 sprRect.max[0] = ((chN % GRID_C) * cellW) +
-                                    metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0];
+                                    metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
                                 charW = (sprRect.max[0] - sprRect.min[0]);
 
                                 if (charW >= cellW)
@@ -406,7 +407,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                                 }
                                 else
                                 {
-                                    charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)];
+                                    charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                                 }
                             }
                             else            // fixed pitch
@@ -493,7 +494,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                         sprRect.min[0] = ((chN % GRID_C) * cellW) +
                             metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
                         sprRect.max[0] = ((chN % GRID_C) * cellW) +
-                            metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0];
+                            metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
                         charW = (sprRect.max[0] - sprRect.min[0]);
 
                         if (charW >= cellW)         // if full width character do not add spacing
@@ -502,7 +503,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                         }
                         else            // not full width so add spacing between characters
                         {
-                            charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)];
+                            charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                         }
                     }
                     else            // fixed pitch
@@ -676,7 +677,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                     sprRect.min[0] = ((chN % GRID_C) * cellW) +
                         metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
                     sprRect.max[0] = ((chN % GRID_C) * cellW) +
-                        metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0];
+                        metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
                     charW = (sprRect.max[0] - sprRect.min[0]);
 
                     if (charW >= cellW)         // if full width character do not add spacing
@@ -685,7 +686,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                     }
                     else            // not full width so add spacing between characters
                     {
-                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)];
+                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                     }
                 }
                 else            // fixed pitch
@@ -827,7 +828,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                     sprRect.min[0] = ((chN % GRID_C) * cellW) +
                         metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
                     sprRect.max[0] = ((chN % GRID_C) * cellW) +
-                        metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0];
+                        metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
                     charW = (sprRect.max[0] - sprRect.min[0]);
 
                     if (charW >= cellW)         // if full width character do not add spacing
@@ -838,7 +839,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                     }
                     else            // not full width so add spacing between characters
                     {
-                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)];
+                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                     }
                 }
                 else            // fixed pitch
