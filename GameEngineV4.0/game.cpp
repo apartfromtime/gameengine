@@ -90,7 +90,19 @@ void Game::messageHandler(const SDL_Window* hwnd, const SDL_Event* msg)
         }
         case SDL_EVENT_TEXT_INPUT:          // character entered
         {
-            input->keyIn(msg->text.text[0]);
+            if (console->getVisible())
+            {
+                console->keyIn(msg->text.text[0]);
+            }
+            else if (inputDialog->getVisible())
+            {
+                inputDialog->keyIn(msg->text.text[0]);
+            }
+            else
+            {
+                input->keyIn(msg->text.text[0]);
+            }
+
             return;
         }
         case SDL_EVENT_MOUSE_MOTION:            // mouse moved

@@ -25,6 +25,7 @@ Console::Console()
 
     SDL_memset(&vtx, 0, 4 * sizeof(VERTEX));
 
+    textIn = "";
     rows = 0;
     scrollAmount = 0;
 }
@@ -145,7 +146,7 @@ void Console::draw()
     textRect.max[1] = (long)(y + (h - m));
     textRect.min[1] = (long)(textRect.max[1] - rowHeight);
     std::string prompt = ">";           // build prompt string
-    prompt += input->getTextIn();
+    prompt += textIn;
     font.print(prompt, textRect, ALIGNMENT::LEFT);         // display prompt and command
 
     graphics->spriteEnd();
@@ -162,6 +163,7 @@ void Console::showHide()
     }
 
     visible = !visible;
+    textIn.clear();
     input->clear(inputNS::KEYS_PRESSED | inputNS::TEXT_IN);
 }
 
@@ -234,6 +236,33 @@ void Console::print(const std::string& str)
 }
 
 //=============================================================================
+// Save the char just entered in textIn string
+//=============================================================================
+void Console::keyIn(unsigned int key)
+{
+    if (input->wasKeyPressed(BACKSPACE_KEY) == true)            // backspace
+    {
+        if (textIn.length() > 0)
+        {
+            textIn.erase(textIn.size() - 1);
+        }
+    }
+    else
+    {
+        // don't process console key
+        if (key == '`')
+        {
+            return;
+        }
+
+        if (textIn.length() + 1 < 256)
+        {
+            textIn.insert(textIn.length(), 1, (key & 0xFF));
+        }
+    }
+}
+
+//=============================================================================
 // Return console command
 // Handles console single key commands.
 // Returns all other commands to game.
@@ -291,25 +320,29 @@ std::string Console::getCommand()
         scrollAmount = (int)(text.size()) - 1;
     }
 
-    commandStr = input->getTextIn();            // get user entered text
+    if (textIn.length() == 0)
+    {
+        return "";
+    }
+
+    if (input->wasKeyPressed(BACKSPACE_KEY) == true)            // backspace
+    {
+        textIn.erase(textIn.size() - 1);
+    }
+
+    if (input->wasKeyPressed(ENTER_KEY) == false)           // if 'Enter' key not pressed
+    {
+        return "";
+    }
 
     // do not pass keys through to game
     input->clear(inputNS::KEYS_DOWN | inputNS::KEYS_PRESSED
         | inputNS::MOUSE);
 
-    if (commandStr.length() == 0)
-    {
-        return "";
-    }
+    inputStr = textIn;
+    textIn.clear();
 
-    if (commandStr.at(commandStr.length() - 1) != '\r')   // if 'Enter' key not pressed
-        return "";
-
-    commandStr.erase(commandStr.length() - 1);          // erase '\r' from end of command string
-    input->clearTextIn();           // clear input line
-    inputStr = commandStr;          // save input text
-
-    return commandStr;
+    return inputStr;
 }
 
 //=============================================================================
@@ -317,7 +350,7 @@ std::string Console::getCommand()
 //=============================================================================
 std::string Console::getInput()
 {
-    return inputStr;
+    return textIn;
 }
 
 //=============================================================================
@@ -325,5 +358,5 @@ std::string Console::getInput()
 //=============================================================================
 void Console::clearInput()
 {
-    inputStr = "";
+    textIn = "";
 }

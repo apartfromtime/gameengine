@@ -90,31 +90,6 @@ void TranslateAndDispatchEvent(const SDL_Event* msg)
 {
     if (msg != NULL)
     {
-        if (msg->type == SDL_EVENT_KEY_DOWN)
-        {
-            SDL_Event event = { 0 };
-
-            // FIXME: sdl doesn't generate text input control codes.
-            static char text[2] = { '\b', '\r' };
-            if (msg->key.scancode == SDL_SCANCODE_BACKSPACE)
-            {
-                event.type = SDL_EVENT_TEXT_INPUT;
-                event.text.timestamp = SDL_GetTicksNS();
-                event.text.windowID = SDL_GetWindowID(s_hwnd);
-                event.text.text = &text[0];
-                SDL_PushEvent(&event);
-            }
-
-            if (msg->key.scancode == SDL_SCANCODE_RETURN)
-            {
-                event.type = SDL_EVENT_TEXT_INPUT;
-                event.text.timestamp = SDL_GetTicksNS();
-                event.text.windowID = SDL_GetWindowID(s_hwnd);
-                event.text.text = &text[1];
-                SDL_PushEvent(&event);
-            }
-        }
-
         SDLProc(s_hwnd, msg);
     }
 }

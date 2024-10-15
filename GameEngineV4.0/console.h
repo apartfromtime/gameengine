@@ -33,7 +33,7 @@ private:
     float       w, h;           // width and height
     float       b, m;           // border and margin
     int         rows;           // number of rows of text that will fit on console
-    std::string commandStr;         // console command
+    std::string textIn;         // console command
     std::string inputStr;           // console text input
     std::deque<std::string> text;           // console text
     rect_t      textRect;           // text rectangle
@@ -75,6 +75,8 @@ public:
     // Add text str to Console display.
     // Only the first line of text in str will be displayed.
     void print(const std::string& str);
+
+    void keyIn(unsigned int key);
 
     // Return Console command
     std::string getCommand();

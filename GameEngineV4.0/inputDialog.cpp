@@ -8,7 +8,7 @@ InputDialog::InputDialog()
     textBackColor = inputDialogNS::TEXT_BACK_COLOR;
     textFontColor = inputDialogNS::TEXT_COLOR;
     SDL_memset(&inTextVerts, 0, 4 * sizeof(VERTEX));
-    inText = "";
+    textIn = "";
 }
 
 //=============================================================================
@@ -104,21 +104,48 @@ const void InputDialog::draw()
     font.setFontColor(textFontColor);
     tempRect = inTextRect;          // save
     // No text is printed with CALDRECT option. It moves rect.max[0]
-    font.print(inText, tempRect, ALIGNMENT::SINGLELINE | ALIGNMENT::LEFT |
+    font.print(textIn, tempRect, ALIGNMENT::SINGLELINE | ALIGNMENT::LEFT |
         ALIGNMENT::VCENTER | ALIGNMENT::CALCRECT);
 
     if (tempRect.max[0] > inTextRect.max[0])            // if text too long, right justify
     {
-        font.print(inText, inTextRect, ALIGNMENT::SINGLELINE | ALIGNMENT::RIGHT |
+        font.print(textIn, inTextRect, ALIGNMENT::SINGLELINE | ALIGNMENT::RIGHT |
             ALIGNMENT::VCENTER);
     }
     else            // else, left justify
     {
-        font.print(inText, inTextRect, ALIGNMENT::SINGLELINE | ALIGNMENT::LEFT |
+        font.print(textIn, inTextRect, ALIGNMENT::SINGLELINE | ALIGNMENT::LEFT |
             ALIGNMENT::VCENTER);
     }
 
     graphics->spriteEnd();
+}
+
+//=============================================================================
+// Save the char just entered in textIn string
+//=============================================================================
+void InputDialog::keyIn(unsigned int key)
+{
+    if (input->wasKeyPressed(BACKSPACE_KEY) == true)            // backspace
+    {
+        if (textIn.length() > 0)
+        {
+            textIn.erase(textIn.size() - 1);
+        }
+    }
+    else
+    {
+        // don't process console key
+        if (key == '`')
+        {
+            return;
+        }
+
+        if (textIn.length() + 1 < 256)
+        {
+            textIn.insert(textIn.length(), 1, (key & 0xFF));
+        }
+    }
 }
 
 //=============================================================================
@@ -128,7 +155,7 @@ std::string InputDialog::getText()
 {
     if (!visible)
     {
-        return inText;
+        return textIn;
     }
     else
     {
@@ -163,13 +190,21 @@ void InputDialog::update()
     {
         if (buttonClicked == 2)         // cancel button
         {
-            inText = "";
+            textIn = "";
         }
 
         return;
     }
 
-    inText = input->getTextIn();
+    if (textIn.length() == 0)
+    {
+        return;
+    }
+
+    if (input->wasKeyPressed(BACKSPACE_KEY) == true)            // backspace
+    {
+        textIn.erase(textIn.size() - 1);
+    }
 }
 
 //=============================================================================
@@ -204,8 +239,7 @@ void InputDialog::print(const std::string& str, rect_t& rect, unsigned int forma
 
     InputDialog::prepareVerts();
 
-    inText = "";                    // clear old input
-    input->clearTextIn();
+    textIn = "";                    // clear old input
     buttonClicked = 0;              // clear buttonClicked
     visible = true;
 }

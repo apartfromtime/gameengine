@@ -124,7 +124,7 @@ void Input::keyIn(unsigned int key)
         newLine = false;
     }
 
-    if (key == '\b')            // backspace
+    if (wasKeyPressed(BACKSPACE_KEY) == true)            // backspace
     {
         if (textIn.length() > 0)
         {
@@ -147,7 +147,7 @@ void Input::keyIn(unsigned int key)
         charIn = (key & 0xFF);
     }
 
-    if (key == '\r')            // return
+    if (wasKeyPressed(ENTER_KEY) == true)           // return
     {
         newLine = true;
     }
