@@ -14,7 +14,7 @@ class InputDialog : public MessageDialog
     // Dialog properties
 private:
     // Dialog
-    std::string inText;         // input text
+    std::string textIn;         // input text
     VERTEX  inTextVerts[4];            // text area vertex buffer
     color_t textBackColor;          // text area background color
     color_t textFontColor;          // text area font color
@@ -38,6 +38,8 @@ public:
 
     // Display the InputDialog.
     const void draw();
+
+    void keyIn(unsigned int key);
 
     // Return input text.
     std::string getText();
