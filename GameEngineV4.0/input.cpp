@@ -21,6 +21,8 @@ Input::Input()
     mouseY = 0;
     mouseRawX = 0;
     mouseRawY = 0;
+    mouseWheel = 0;
+    mouseCaptured = false;
     mouseLButtonPressed = false;
     mouseMButtonPressed = false;
     mouseRButtonPressed = false;

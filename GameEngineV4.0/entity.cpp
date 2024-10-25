@@ -6,6 +6,7 @@
 Entity::Entity()
 {
     // Physics
+    center = Vector2();
     curX = entityNS::X;
     curY = entityNS::Y;
     curZ = entityNS::Z;
@@ -26,6 +27,12 @@ Entity::Entity()
     rotation = 0;
     speed = entityNS::SPEED;
     // Collision
+    corners[0] = Vector2();
+    corners[1] = Vector2();
+    corners[2] = Vector2();
+    corners[3] = Vector2();
+    collisionCenter = Vector2();
+    minOverlap = 1.0f;
     radius = (entityNS::W + entityNS::H) / 4;
     edge.min[0] = -(long)(entityNS::W / 2.0f);
     edge.min[1] = -(long)(entityNS::H / 2.0f);
@@ -33,6 +40,7 @@ Entity::Entity()
     edge.max[1] =  (long)(entityNS::H / 2.0f);
     rotatedBoxReady = false;
     intersecting = false;
+    collision = false;
     embedded = false;
     collisionType = entityNS::CIRCLE;
     pixelsColliding = 0;

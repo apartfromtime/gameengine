@@ -5,16 +5,19 @@
 //=============================================================================
 Net::Net()
 {
+    // SDL
     datagramSocket = NULL;
     streamSocket = NULL;
     serverSocket = NULL;
     remoteAddr = NULL;
     localAddr = NULL;
 
+    // Net
+    SDL_memset(serverIP, 0, sizeof(char) * netNS::IP_SIZE);
+    type = netNS::UNCONNECTED;
+    mode = netNS::UNINITIALIZED;
     netInitialized = false;
     bound = false;
-    mode = netNS::UNINITIALIZED;
-    type = netNS::UNCONNECTED;
 }
 
 //=============================================================================

@@ -39,6 +39,7 @@ public:
     // Display the InputDialog.
     const void draw();
 
+    // Save the char just entered in textIn string
     void keyIn(unsigned int key);
 
     // Return input text.

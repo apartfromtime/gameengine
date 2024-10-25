@@ -36,6 +36,7 @@ Game::Game()
     // Font
     fontOther = 0;
     // Commands
+    SDL_memset(buffer, 0, sizeof(char) * gameNS::BUF_SIZE);
     fpsOn = false;
     paused = false;
     initialized = false;

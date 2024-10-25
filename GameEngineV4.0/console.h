@@ -76,6 +76,7 @@ public:
     // Only the first line of text in str will be displayed.
     void print(const std::string& str);
 
+    // Save the char just entered in textIn string
     void keyIn(unsigned int key);
 
     // Return Console command

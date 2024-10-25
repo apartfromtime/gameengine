@@ -12,10 +12,10 @@ private:
     // View
     viewport_t  viewport3d;
     // Font
+    LP_FONT     font;
     std::string fontName;
     COLOR_ARGB  fontColor;
     float       angle;
-    LP_FONT     font;
     int         height;
 
 public:
