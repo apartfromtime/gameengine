@@ -17,6 +17,7 @@ Image::Image()
     animComplete = false;
     animate = true;
     // Image
+    textureM = NULL;
     initialized = false;
     spriteData.effect = SPRITEEFFECT_NONE;
     spriteData.w = 2;
@@ -33,6 +34,7 @@ Image::Image()
     spriteData.rect.max[1] = spriteData.h;
     spriteData.texture = NULL;
     cols = 1;
+    rows = 1;
     visible = true;
     colorFilter = graphicsNS::WHITE;
 }

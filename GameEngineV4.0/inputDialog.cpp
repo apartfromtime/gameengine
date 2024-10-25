@@ -5,10 +5,12 @@
 //=============================================================================
 InputDialog::InputDialog()
 {
+    textIn = "";
+    SDL_memset(&inTextVerts, 0, 4 * sizeof(VERTEX));
     textBackColor = inputDialogNS::TEXT_BACK_COLOR;
     textFontColor = inputDialogNS::TEXT_COLOR;
-    SDL_memset(&inTextVerts, 0, 4 * sizeof(VERTEX));
-    textIn = "";
+    inTextRect = Rectangle();
+    tempRect = Rectangle();
 }
 
 //=============================================================================

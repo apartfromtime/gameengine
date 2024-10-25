@@ -44,6 +44,8 @@ protected:
     vector2_t   offset;         // screen location
     vector2_t   extent;         // dialog width and height (height calculated in print())
     float       b, m;           // margin
+    float       screenRatioX;
+    float       screenRatioY;
     std::string text;           // dialog text
     rect_t      textRect;           // text rectangle
     rect_t      button1Rect;            // button rectangle
@@ -62,7 +64,6 @@ protected:
     int         buttonType;         // 0 = OK/Cancel, 1 = Yes/No
     bool        initialized;            // true when initialized successfully
     bool        visible;            // true to display
-    float       screenRatioX, screenRatioY;
 
 public:
     // Constructor

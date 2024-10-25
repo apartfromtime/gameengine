@@ -11,9 +11,9 @@ TextSDL::TextSDL()
     viewport3d = Viewport();
     // Font
     font = NULL;
+    fontName = "";
     fontColor = graphicsNS::WHITE;
     angle = 0;
-    fontName = "";
     height = 0;
 }
 

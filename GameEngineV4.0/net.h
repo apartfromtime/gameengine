@@ -76,6 +76,7 @@ namespace netNS
 class Net
 {
 private:
+    // SDL
     SDLNet_DatagramSocket* datagramSocket;          // UDP\DATAGRAM socket client\server
     SDLNet_StreamSocket* streamSocket;          // TCP\STREAM socket client\server
     SDLNet_Server* serverSocket;

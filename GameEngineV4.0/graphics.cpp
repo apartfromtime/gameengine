@@ -5,19 +5,23 @@
 //=============================================================================
 Graphics::Graphics()
 {
+    // SDL
+    hwnd = NULL;
+    renderer2d = NULL;
+    SDL_memset(&displayMode, 0, sizeof(SDL_DisplayMode));
+    numberOfPixelsColliding = 0;
+    depthStencilBuffer = NULL;
+    stencilSupport = false;
     windowRect.x = 0;
     windowRect.y = 0;
     windowRect.w = 0;
     windowRect.h = 0;
-    hwnd = 0;
-    renderer2d = 0;
-    fullscreen = false;
-    depthStencilBuffer = NULL;
-    stencilSupport = false;
-    width = 0;         // width & height are replaced in initialize()
-    height = 0;
-    backColor = graphicsNS::BACK_COLOR;
-    numberOfPixelsColliding = 0;
+    viewport2d.x = 0;
+    viewport2d.y = 0;
+    viewport2d.w = 0;
+    viewport2d.h = 0;
+    sprite = NULL;
+    // Presentation parameters
     backBufferWidth = 0;
     backBufferHeight = 0;
     backBufferFormat = SDL_PIXELFORMAT_UNKNOWN;
@@ -26,6 +30,18 @@ Graphics::Graphics()
     autoDepthStencilFormat = SDL_PIXELFORMAT_UNKNOWN;
     fullScreenRefreshRateInHz = 0;
     presentationInterval = 0;
+    // View
+    viewport3d = Viewport();
+    matrix3d[0] = Matrix4();
+    matrix3d[1] = Matrix4();
+    matrix3d[2] = Matrix4();
+    transform3d = Matrix4();
+    // Window
+    vsync = false;
+    fullscreen = false;
+    width = 0;         // width & height are replaced in initialize()
+    height = 0;
+    backColor = graphicsNS::BACK_COLOR;
 }
 
 //=============================================================================

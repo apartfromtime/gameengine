@@ -11,26 +11,32 @@ MessageDialog::MessageDialog()
     // View
     viewport3d = Viewport();
     // Dialog
-    initialized = false;
-    visible = false;
-    fontColor = messageDialogNS::FONT_COLOR;
-    borderColor = messageDialogNS::BORDER_COLOR;
-    backColor = messageDialogNS::BACK_COLOR;
-    buttonColor = messageDialogNS::BUTTON_COLOR;
-    buttonFontColor = messageDialogNS::BUTTON_FONT_COLOR;
     offset.x = messageDialogNS::X;
     offset.y = messageDialogNS::Y;
     extent.x = messageDialogNS::H;
     extent.y = messageDialogNS::W;
     b = messageDialogNS::BORDER;
     m = messageDialogNS::MARGIN;
-    SDL_memset(&textRect, 0, sizeof(rect_t));
+    screenRatioX = 1.0f;
+    screenRatioY = 1.0f;
+    text = "";
+    textRect = Rectangle();
+    button1Rect = Rectangle();
+    button2Rect = Rectangle();
+    fontColor = messageDialogNS::FONT_COLOR;
+    borderColor = messageDialogNS::BORDER_COLOR;
+    backColor = messageDialogNS::BACK_COLOR;
+    buttonColor = messageDialogNS::BUTTON_COLOR;
+    buttonFontColor = messageDialogNS::BUTTON_FONT_COLOR;
     SDL_memset(&dialogVerts,  0, 4 * sizeof(VERTEX));
     SDL_memset(&borderVerts,  0, 4 * sizeof(VERTEX));
     SDL_memset(&button1Verts, 0, 4 * sizeof(VERTEX));
     SDL_memset(&button2Verts, 0, 4 * sizeof(VERTEX));
+    format = TOP | LEFT;
+    buttonClicked = 0;
     buttonType = 0;     // OK/Cancel
-
+    initialized = false;
+    visible = false;
 }
 
 //=============================================================================

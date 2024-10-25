@@ -7,6 +7,7 @@ Console::Console()
 {
     initialized = false;            // set true when successfully initialized
     graphics = NULL;
+    input = NULL;
     visible = false;            // not visible
     fontColor = consoleNS::FONT_COLOR;
     backColor = consoleNS::BACK_COLOR;
