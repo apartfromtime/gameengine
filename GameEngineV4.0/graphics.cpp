@@ -280,7 +280,7 @@ void Graphics::changeDisplayMode(graphicsNS::DISPLAY_MODE mode)
 {
     switch (mode)
     {
-    case graphicsNS::FULLSCREEN:
+    case graphicsNS::DISPLAYMODE_FULLSCREEN:
     {
         if (fullscreen)         // if already in fullscreen mode
         {
@@ -289,7 +289,7 @@ void Graphics::changeDisplayMode(graphicsNS::DISPLAY_MODE mode)
 
         fullscreen = true;
     } break;
-    case graphicsNS::WINDOW:
+    case graphicsNS::DISPLAYMODE_WINDOW:
     {
         if (fullscreen == false)            // if already in window mode
         {
@@ -298,7 +298,7 @@ void Graphics::changeDisplayMode(graphicsNS::DISPLAY_MODE mode)
 
         fullscreen = false;
     } break;
-    case graphicsNS::TOGGLE:
+    case graphicsNS::DISPLAYMODE_TOGGLE:
     {
         fullscreen = !fullscreen;
     } break;

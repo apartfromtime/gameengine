@@ -699,44 +699,6 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
             {
                 switch (ch)
                 {
-                case '\b':          // backspace
-                {
-                    lineW -= charW;
-                } break;
-                case '\t':          // horizontal tab
-                {
-                    if ((Format & EXPANDTABS) == EXPANDTABS)
-                    {
-                        charW = cellW;
-
-                        int tabX = static_cast<int>(lineW) / (charW * tabSize);
-                        tabX = (tabX + 1) * charW * tabSize;
-                        int tabW = tabX - static_cast<int>(lineW);
-
-                        while (tabW > 0)
-                        {
-                            if (tabW >= charW)
-                            {
-                                lineW += charW;
-                            }
-                            else
-                            {
-                                // fractional part of character to align with tab stop
-                                charW = tabW;
-                                lineW += tabW;
-                            }
-                            tabW -= charW;
-                        }
-                    }
-                    else            // space
-                    {
-                        if (proportional)
-                        {
-                            charW = cellW / 2;
-                        }
-                        lineW += charW;
-                    }
-                } break;
                 case '\n':          // linefeed
                 {
                     if ((Format & BOTTOM) == BOTTOM &&
@@ -861,44 +823,6 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
             {
                 switch (ch)
                 {
-                case '\b':          // backspace
-                {
-                    x -= charW;
-                } break;
-                case '\t':          // horizontal tab
-                {
-                    if ((Format & EXPANDTABS) == EXPANDTABS)
-                    {
-                        charW = cellW;
-
-                        int tabX = static_cast<int>(x) / (charW * tabSize);
-                        tabX = (tabX + 1) * charW * tabSize;
-                        int tabW = tabX - static_cast<int>(x);
-
-                        while (tabW > 0)
-                        {
-                            if (tabW >= charW)
-                            {
-                                x += charW;
-                            }
-                            else
-                            {
-                                // fractional part of character to align with tab stop
-                                charW = tabW;
-                                x += tabW;
-                            }
-                            tabW -= charW;
-                        }
-                    }
-                    else            // space
-                    {
-                        if (proportional)
-                        {
-                            charW = cellW / 2;
-                        }
-                        x += charW;
-                    }
-                } break;
                 case '\n':          // linefeed
                 {
                     if ((Format & BOTTOM) != BOTTOM &&

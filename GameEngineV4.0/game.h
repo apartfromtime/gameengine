@@ -93,7 +93,7 @@ public:
     void renderGame();
 
     // Set display mode (fullscreen, window or toggle)
-    void setDisplayMode(graphicsNS::DISPLAY_MODE mode = graphicsNS::TOGGLE);
+    void setDisplayMode(graphicsNS::DISPLAY_MODE mode = graphicsNS::DISPLAYMODE_TOGGLE);
 
     // Exit the game
     void exitGame();

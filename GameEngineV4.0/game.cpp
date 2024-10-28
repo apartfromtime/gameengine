@@ -436,7 +436,7 @@ void Game::run()
     if ((input->isKeyDown(LALT_KEY) || input->isKeyDown(RALT_KEY))
         && input->wasKeyPressed(ENTER_KEY))
     {
-        setDisplayMode(graphicsNS::TOGGLE);         // toggle fullscreen/window
+        setDisplayMode(graphicsNS::DISPLAYMODE_TOGGLE);         // toggle fullscreen/window
     }
 
     // if Alt+F4 exit game
