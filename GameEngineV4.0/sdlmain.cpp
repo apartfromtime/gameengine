@@ -121,7 +121,7 @@ bool CreateMainWindow(SDL_Window** phwnd, int cmdShow)
     // set up the screen in windowed or fullscreen mode?
     Uint32 flags = SDL_WINDOW_HIDDEN;
 
-    if (FULLSCREEN)
+    if (GAME_FULLSCREEN)
     {
         flags |= SDL_WINDOW_FULLSCREEN;
     }

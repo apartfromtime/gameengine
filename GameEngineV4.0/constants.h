@@ -89,7 +89,7 @@ void ExitMainWindow();
 
 const char CLASS_NAME[] = "Game Engine";
 const char GAME_TITLE[] = "Game Engine";
-const bool FULLSCREEN = false;              // windowed or fullscreen
+const bool GAME_FULLSCREEN = false;              // windowed or fullscreen
 const int GAME_WIDTH = 640;              // width of game in pixels
 const int GAME_HEIGHT = 480;               // height of game in pixels
 

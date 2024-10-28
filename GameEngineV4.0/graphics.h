@@ -54,7 +54,7 @@ namespace graphicsNS
     const COLOR_ARGB BACK_COLOR = NAVY;          // background color of game
     const COLOR_ARGB TRANSCOLOR = SETCOLOR_ARGB(255, 255,   0, 255);  // transparent color (magenta)
 
-    enum DISPLAY_MODE { TOGGLE, FULLSCREEN, WINDOW };
+    enum DISPLAY_MODE { DISPLAYMODE_TOGGLE, DISPLAYMODE_FULLSCREEN, DISPLAYMODE_WINDOW };
 }
 
 // Texture locked rectangle
@@ -167,7 +167,7 @@ public:
     bool reset();
 
     // Toggle, fullscreen or window display mode
-    void changeDisplayMode(graphicsNS::DISPLAY_MODE mode = graphicsNS::TOGGLE);
+    void changeDisplayMode(graphicsNS::DISPLAY_MODE mode = graphicsNS::DISPLAYMODE_TOGGLE);
 
     // Display the offscreen backbuffer to the screen.
     bool showBackbuffer();
