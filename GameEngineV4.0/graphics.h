@@ -1,7 +1,6 @@
 #pragma once
 #include <SDL3\SDL.h>
-#include <SDL3\SDL_image.h>
-#include <GEUL\g_math.h>
+#include <GEUL\g_geul.h>
 #include "constants.h"
 #include "gameError.h"
 #include "sprite.h"
