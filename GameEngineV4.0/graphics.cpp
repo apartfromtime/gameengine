@@ -356,77 +356,65 @@ bool Graphics::loadTexture(const char* filename, COLOR_ARGB transcolor,
     unsigned int& width, unsigned int& height, LP_TEXTURE& texture)
 {
     // create surface
-    SDL_Surface* image = IMG_Load(filename);
+    image_info_t info = {};
+    image_t image = {};
+    bool result = false;
 
-    if (image == NULL)
+    result = GetImageInfoFromFile(&info, filename);
+
+    if (result == false)
     {
+        texture = NULL;
         return false;
     }
 
-    SDL_SetSurfaceColorKey(image, SDL_TRUE,
-        SDL_MapRGBA(SDL_GetPixelFormatDetails(image->format),
-            SDL_GetSurfacePalette(image),
-            (uint8_t)(transcolor.r * 255),
-            (uint8_t)(transcolor.g * 255),
-            (uint8_t)(transcolor.b * 255),
-            (uint8_t)(transcolor.a * 255)));
+    width = info.xsize;
+    height = info.ysize;
 
-    width  = image->w;
-    height = image->h;
+    const rgba_t colorkey = {
+        (uint8_t)(transcolor.b * 255.0f),
+        (uint8_t)(transcolor.g * 255.0f),
+        (uint8_t)(transcolor.r * 255.0f),
+        (uint8_t)(transcolor.a * 255.0f)
+    };
+
+    result = LoadImageFromFile(&image,
+        NULL,
+        NULL,
+        filename,
+        PIXELTYPE_UNKNOWN,
+        NULL,
+        FILTER_NONE,
+        colorkey,
+        &info);
+
+    if (result == false)
+    {
+        texture = NULL;
+        return false;
+    }
 
     // create the new texture
-    texture = SDL_CreateTexture(renderer2d, SDL_PIXELFORMAT_UNKNOWN,
-        SDL_TEXTUREACCESS_STATIC, image->w, image->h);
+    texture = SDL_CreateTexture(renderer2d, SDL_PIXELFORMAT_ABGR8888,
+        SDL_TEXTUREACCESS_STATIC, width, height);
 
     if (texture == NULL)
     {
         return false;
     }
 
-    SDL_PropertiesID properties = SDL_GetTextureProperties(texture);
-    SDL_PixelFormat format = (SDL_PixelFormat)SDL_GetNumberProperty(properties,
-        SDL_PROP_TEXTURE_FORMAT_NUMBER, SDL_PIXELFORMAT_UNKNOWN);
-    SDL_Surface* surface = SDL_ConvertSurface(image, format);
-    SDL_DestroySurface(image);
-
-    if (surface == NULL)
-    {
-        SDL_DestroyTexture(texture);
-        
-        return false;
-    }
-
     LOCKED_RECT pLockedRect;
 
-    if (SDL_MUSTLOCK(surface))
-    {
-        if (SDL_LockSurface(surface) == SDL_FALSE)
-        {
-            SDL_DestroySurface(surface);
-            SDL_DestroyTexture(texture);
-
-            return false;
-        }
-    }
-    
-    pLockedRect.pBits = surface->pixels;
-    pLockedRect.pitch = surface->pitch;
+    pLockedRect.pBits = image.data;
+    pLockedRect.pitch = image.xsize * 4;
 
     if (SDL_UpdateTexture(texture, NULL, pLockedRect.pBits, pLockedRect.pitch) ==
         SDL_FALSE)
     {
-        SDL_DestroySurface(surface);
         SDL_DestroyTexture(texture);
-        
+
         return false;
     }
-
-    if (SDL_MUSTLOCK(surface))
-    {
-        SDL_UnlockSurface(surface);
-    }
-
-    SDL_DestroySurface(surface);
 
     return true;
 }
@@ -440,77 +428,67 @@ bool Graphics::loadTextureSystemMem(const char* filename, COLOR_ARGB transcolor,
     unsigned int& width, unsigned int& height, LP_TEXTURE& texture)
 {
     // create surface
-    SDL_Surface* image = IMG_Load(filename);
+    image_info_t info = {};
+    image_t image = {};
+    bool result = false;
 
-    if (image == NULL)
+    result = GetImageInfoFromFile(&info, filename);
+
+    if (result == false)
     {
+        texture = NULL;
         return false;
     }
 
-    SDL_SetSurfaceColorKey(image, SDL_TRUE,
-        SDL_MapRGBA(SDL_GetPixelFormatDetails(image->format),
-            SDL_GetSurfacePalette(image),
-            (uint8_t)(transcolor.r * 255),
-            (uint8_t)(transcolor.g * 255),
-            (uint8_t)(transcolor.b * 255),
-            (uint8_t)(transcolor.a * 255)));
+    width = info.xsize;
+    height = info.ysize;
 
-    width = image->w;
-    height = image->h;
+    const rgba_t colorkey = {
+        (uint8_t)(transcolor.b * 255.0f),
+        (uint8_t)(transcolor.g * 255.0f),
+        (uint8_t)(transcolor.r * 255.0f),
+        (uint8_t)(transcolor.a * 255.0f)
+    };
+
+    result = LoadImageFromFile(&image,
+        NULL,
+        NULL,
+        filename,
+        PIXELTYPE_UNKNOWN,
+        NULL,
+        FILTER_NONE,
+        colorkey,
+        &info);
+
+    if (result == false)
+    {
+        texture = NULL;
+        return false;
+    }
 
     // create the new texture
-    texture = SDL_CreateTexture(renderer2d, SDL_PIXELFORMAT_UNKNOWN,
-        SDL_TEXTUREACCESS_STREAMING, image->w, image->h);
+    texture = SDL_CreateTexture(renderer2d, SDL_PIXELFORMAT_ABGR8888,
+        SDL_TEXTUREACCESS_STREAMING, width, height);
 
     if (texture == NULL)
     {
         return false;
     }
 
-    SDL_PropertiesID properties = SDL_GetTextureProperties(texture);
-    SDL_PixelFormat format = (SDL_PixelFormat)SDL_GetNumberProperty(properties,
-        SDL_PROP_TEXTURE_FORMAT_NUMBER, SDL_PIXELFORMAT_UNKNOWN);
-    SDL_Surface* surface = SDL_ConvertSurface(image, format);
-    SDL_DestroySurface(image);
-
-    if (surface == NULL)
-    {
-        SDL_DestroyTexture(texture);
-
-        return false;
-    }
-
     LOCKED_RECT pLockedRect;
 
-    if (SDL_MUSTLOCK(surface))
-    {
-        if (SDL_LockSurface(surface) == SDL_FALSE)
-        {
-            SDL_DestroySurface(surface);
-            SDL_DestroyTexture(texture);
-
-            return false;
-        }
-    }
-
-    pLockedRect.pBits = surface->pixels;
-    pLockedRect.pitch = surface->pitch;
+    pLockedRect.pBits = image.data;
+    pLockedRect.pitch = image.xsize * 4;
 
     if (SDL_UpdateTexture(texture, NULL, pLockedRect.pBits, pLockedRect.pitch) ==
         SDL_FALSE)
     {
-        SDL_DestroySurface(surface);
         SDL_DestroyTexture(texture);
 
         return false;
     }
 
-    if (SDL_MUSTLOCK(surface))
-    {
-        SDL_UnlockSurface(surface);
-    }
-
-    SDL_DestroySurface(surface);
+    return true;
 
     return true;
 }
