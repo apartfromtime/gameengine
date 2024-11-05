@@ -85,7 +85,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(DXSDK_DIR)\Include;$(SDL3)\include;$(SDL3_TTF)\include;$(SDL3_IMAGE)\include;$(SDL3_NET)\include;$(FAUDIO)\include;$(GEUL)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDL3)\include;$(SDL3_TTF)\include;$(SDL3_NET)\include;$(FAUDIO)\include;$(GEUL)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -93,8 +93,8 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl3.lib;sdl3_ttf.lib;sdl3_image.lib;sdl3_net.lib;faudio.lib;d3d9.lib;d3dx9.lib;winmm.lib;xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(DXSDK_DIR)\Lib\x86;$(SDL3)\lib\x86\debug;$(SDL3_TTF)\lib\x86\debug;$(SDL3_IMAGE)\lib\x86\debug;$(SDL3_NET)\lib\x86\debug;$(FAUDIO)\lib\x86\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>geul.lib;sdl3.lib;sdl3_ttf.lib;sdl3_net.lib;faudio.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SDL3)\lib\x86\debug;$(SDL3_TTF)\lib\x86\debug;$(SDL3_NET)\lib\x86\debug;$(FAUDIO)\lib\x86\debug;$(GEUL)\lib\x86\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
@@ -102,15 +102,15 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(DXSDK_DIR)\Include;$(SDL3)\include;$(SDL3_TTF)\include;$(SDL3_IMAGE)\include;$(SDL3_NET)\include;$(FAUDIO)\include;$(GEUL)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDL3)\include;$(SDL3_TTF)\include;$(SDL3_NET)\include;$(FAUDIO)\include;$(GEUL)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl3.lib;sdl3_ttf.lib;sdl3_image.lib;sdl3_net.lib;faudio.lib;d3d9.lib;d3dx9.lib;winmm.lib;xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(DXSDK_DIR)\Lib\x64;$(SDL3)\lib\x64\debug;$(SDL3_TTF)\lib\x64\debug;$(SDL3_IMAGE)\lib\x64\debug;$(SDL3_NET)\lib\x64\debug;$(FAUDIO)\lib\x64\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>geul.lib;sdl3.lib;sdl3_ttf.lib;sdl3_net.lib;faudio.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SDL3)\lib\x64\debug;$(SDL3_TTF)\lib\x64\debug;$(SDL3_NET)\lib\x64\debug;$(FAUDIO)\lib\x64\debug;$(GEUL)\lib\x64\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -118,15 +118,15 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(DXSDK_DIR)\Include;$(SDL3)\include;$(SDL3_TTF)\include;$(SDL3_IMAGE)\include;$(SDL3_NET)\include;$(FAUDIO)\include;$(GEUL)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDL3)\include;$(SDL3_TTF)\include;$(SDL3_NET)\include;$(FAUDIO)\include;$(GEUL)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl3.lib;sdl3_ttf.lib;sdl3_image.lib;sdl3_net.lib;faudio.lib;d3d9.lib;d3dx9.lib;winmm.lib;xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(DXSDK_DIR)\Lib\x86;$(SDL3)\lib\x86\release;$(SDL3_TTF)\lib\x86\release;$(SDL3_IMAGE)\lib\x86\release;$(SDL3_NET)\lib\x86\release;$(FAUDIO)\lib\x86\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>geul.lib;sdl3.lib;sdl3_ttf.lib;sdl3_net.lib;faudio.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SDL3)\lib\x86\release;$(SDL3_TTF)\lib\x86\release;$(SDL3_NET)\lib\x86\release;$(FAUDIO)\lib\x86\release;$(GEUL)\lib\x86\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -137,15 +137,15 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(DXSDK_DIR)\Include;$(SDL3)\include;$(SDL3_TTF)\include;$(SDL3_IMAGE)\include;$(SDL3_NET)\include;$(FAUDIO)\include;$(GEUL)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDL3)\include;$(SDL3_TTF)\include;$(SDL3_NET)\include;$(FAUDIO)\include;$(GEUL)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>sdl3.lib;sdl3_ttf.lib;sdl3_image.lib;sdl3_net.lib;faudio.lib;d3d9.lib;d3dx9.lib;winmm.lib;xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(DXSDK_DIR)\Lib\x64;$(SDL3)\lib\x64\release;$(SDL3_TTF)\lib\x64\release;$(SDL3_IMAGE)\lib\x64\release;$(SDL3_NET)\lib\x64\release;$(FAUDIO)\lib\x64\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>geul.lib;sdl3.lib;sdl3_ttf.lib;sdl3_net.lib;faudio.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SDL3)\lib\x64\release;$(SDL3_TTF)\lib\x64\release;$(SDL3_NET)\lib\x64\release;$(FAUDIO)\lib\x64\release;$(GEUL)\lib\x64\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
