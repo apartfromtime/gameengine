@@ -489,8 +489,6 @@ bool Graphics::loadTextureSystemMem(const char* filename, COLOR_ARGB transcolor,
     }
 
     return true;
-
-    return true;
 }
 
 //=============================================================================
