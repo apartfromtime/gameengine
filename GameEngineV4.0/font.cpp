@@ -281,7 +281,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
 
     std::string str2 = "";
     std::string str = std::string(pString, Count);
-    rect_t sprRect;
+    rect_t sprRect = {};
     int offset = 0;
     int extent = 0;
     int line_num = (str != "") ? 1 : 0;

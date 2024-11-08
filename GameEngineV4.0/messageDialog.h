@@ -87,10 +87,10 @@ public:
     // Return button clicked
     // 0 = no button clicked
     // 1 is left button, 2 is right button
-    int getButtonClicked();
+    int getButtonClicked() const;
 
     // Return visible.
-    bool getVisible();
+    bool getVisible() const;
 
     // Set font color
     void setFontColor(color_t fc);

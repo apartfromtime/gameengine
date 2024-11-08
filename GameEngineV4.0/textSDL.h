@@ -38,13 +38,13 @@ public:
     int print(const std::string& str, rect_t& rect, unsigned int format);
 
     // Return rotation angle in degrees.
-    float getDegrees();
+    float getDegrees() const;
 
     // Return rotation angle in radians.
-    float getRadians();
+    float getRadians() const;
 
     // Returns font color
-    COLOR_ARGB getFontColor();
+    COLOR_ARGB getFontColor() const;
 
     // Set rotation angle in degrees.
     // 0 degrees is up. Angles progress clockwise.

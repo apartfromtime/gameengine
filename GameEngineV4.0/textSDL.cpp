@@ -80,7 +80,7 @@ int TextSDL::print(const std::string& str, int x, int y)
         return 0;
     }
 
-    rect_t rect;            // text rectangle
+    rect_t rect = {};            // text rectangle
     vector2_t rCenter = Vector2((float)x, (float)y);
     unsigned int format = TOP | LEFT;
 
@@ -102,7 +102,7 @@ int TextSDL::print(const std::string& str, int x, int y)
 //=============================================================================
 // Return rotation angle in degrees.
 //=============================================================================
-float TextSDL::getDegrees()
+float TextSDL::getDegrees() const
 {
     return RAD2DEG(angle);
 }
@@ -110,7 +110,7 @@ float TextSDL::getDegrees()
 //=============================================================================
 // Return rotation angle in radians.
 //=============================================================================
-float TextSDL::getRadians()
+float TextSDL::getRadians() const
 {
     return angle;
 }
@@ -118,7 +118,7 @@ float TextSDL::getRadians()
 //=============================================================================
 // Returns font color
 //=============================================================================
-COLOR_ARGB TextSDL::getFontColor()
+COLOR_ARGB TextSDL::getFontColor() const
 {
     return fontColor;
 }

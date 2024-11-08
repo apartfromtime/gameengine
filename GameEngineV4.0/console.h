@@ -61,7 +61,7 @@ public:
     void showHide();
 
     // Return visible.
-    bool getVisible();
+    bool getVisible() const;
 
     // Set visible = true;
     void show();

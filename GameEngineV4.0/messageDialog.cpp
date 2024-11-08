@@ -65,8 +65,8 @@ bool MessageDialog::initialize(Graphics* pGraphics, Input* pInput)
     font.setFontColor(fontColor);
 
     viewport3d = graphics->get3DViewport();
-    offset.x = ((viewport3d.w - viewport3d.x) / 2) - (float)(messageDialogNS::X);
-    offset.y = ((viewport3d.h - viewport3d.y) / 4) - (float)(messageDialogNS::Y);
+    offset.x = ((float)(viewport3d.w - viewport3d.x) / 2) - (float)(messageDialogNS::X);
+    offset.y = ((float)(viewport3d.h - viewport3d.y) / 4) - (float)(messageDialogNS::Y);
 
     initialized = true;
 
@@ -216,7 +216,7 @@ const void MessageDialog::draw()
 // 0 = no button clicked
 // 1 is left button, 2 is right button
 //=============================================================================
-int MessageDialog::getButtonClicked()
+int MessageDialog::getButtonClicked() const
 {
     return buttonClicked;
 }
@@ -224,7 +224,7 @@ int MessageDialog::getButtonClicked()
 //=============================================================================
 // Return visible.
 //=============================================================================
-bool MessageDialog::getVisible()
+bool MessageDialog::getVisible() const
 {
     return visible;
 }
@@ -401,7 +401,7 @@ void MessageDialog::print(const std::string& str, rect_t& rect, unsigned int for
 //=============================================================================
 void MessageDialog::print(const std::string& str, int x, int y)
 {
-    rect_t rect;            // text rectangle
+    rect_t rect = {};            // text rectangle
 
     rect.min[0] = (long)(x);
     rect.max[0] = (long)(x + messageDialogNS::W);
@@ -416,17 +416,17 @@ void MessageDialog::print(const std::string& str, int x, int y)
 //=============================================================================
 void MessageDialog::print(const std::string& str)
 {
-    rect_t rect;            // text rectangle
+    rect_t rect = {};            // text rectangle
 
     viewport3d = graphics->get3DViewport();
 
-    rect.min[0] = (long)(((viewport3d.w - viewport3d.x) / 2) -
+    rect.min[0] = (long)((float)((viewport3d.w - viewport3d.x) / 2) -
         (float)(messageDialogNS::X));
-    rect.max[0] = (long)(((viewport3d.w - viewport3d.x) / 2) -
+    rect.max[0] = (long)((float)((viewport3d.w - viewport3d.x) / 2) -
         (float)(messageDialogNS::X)+ messageDialogNS::W);
-    rect.min[1] = (long)(((viewport3d.h - viewport3d.y) / 4) -
+    rect.min[1] = (long)((float)((viewport3d.h - viewport3d.y) / 4) -
         (float)(messageDialogNS::Y));
-    rect.max[1] = (long)(((viewport3d.h - viewport3d.y) / 4) -
+    rect.max[1] = (long)((float)((viewport3d.h - viewport3d.y) / 4) -
         (float)(messageDialogNS::Y)+ messageDialogNS::H);
 
     MessageDialog::print(str, rect, ALIGNMENT::HCENTER | ALIGNMENT::WORDBOUNDS);

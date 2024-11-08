@@ -171,7 +171,7 @@ void Console::showHide()
 //=============================================================================
 // Return visible.
 //=============================================================================
-bool Console::getVisible()
+bool Console::getVisible() const
 {
     return visible;
 }
