@@ -63,7 +63,7 @@ Entity::~Entity()
 //=============================================================================
 // Return X position.
 //=============================================================================
-float Entity::getX()
+float Entity::getX() const
 {
     return curX;
 }
@@ -71,7 +71,7 @@ float Entity::getX()
 //=============================================================================
 // Return Y position.
 //=============================================================================
-float Entity::getY()
+float Entity::getY() const
 {
     return curY;
 }
@@ -79,7 +79,7 @@ float Entity::getY()
 //=============================================================================
 // Return Z position.
 //=============================================================================
-float Entity::getZ()
+float Entity::getZ() const
 {
     return curZ;
 }
@@ -87,7 +87,7 @@ float Entity::getZ()
 //=============================================================================
 // Get angle (in radians)
 //=============================================================================
-float Entity::getAngle()
+float Entity::getAngle() const
 {
     return curAngle;
 }
@@ -95,7 +95,7 @@ float Entity::getAngle()
 //=============================================================================
 // Get scale
 //=============================================================================
-float Entity::getScale()
+float Entity::getScale() const
 {
     return curScale;
 }
@@ -112,7 +112,7 @@ const vector2_t Entity::getCenter()
 //=============================================================================
 // Return collision center
 //=============================================================================
-const vector2_t Entity::getCollisionCenter()
+const vector2_t Entity::getCollisionCenter() const
 {
     return collisionCenter;
 }
@@ -149,7 +149,7 @@ const vector2_t Entity::getCorner(unsigned int c) const
 //=============================================================================
 // Return corners array
 //=============================================================================
-vector2_t* Entity::getCorners()
+const vector2_t* Entity::getCorners() const
 {
     return corners;
 }
@@ -157,7 +157,7 @@ vector2_t* Entity::getCorners()
 //=============================================================================
 // Return projection overlaps used in rotated box collision
 //=============================================================================
-float Entity::getMinOverlap()
+float Entity::getMinOverlap() const
 {
     return minOverlap;
 }
@@ -173,7 +173,7 @@ const vector2_t Entity::getVelocity() const
 //=============================================================================
 // Return velocity vector.
 //=============================================================================
-vector2_t Entity::getDeltaV()
+vector2_t Entity::getDeltaV() const
 {
     return deltaV;
 }
@@ -181,7 +181,7 @@ vector2_t Entity::getDeltaV()
 //=============================================================================
 // Returns rotation rate
 //=============================================================================
-float Entity::getRotation()
+float Entity::getRotation() const
 {
     return rotation;
 }
@@ -189,7 +189,7 @@ float Entity::getRotation()
 //=============================================================================
 // Return speed
 //=============================================================================
-float Entity::getSpeed()
+float Entity::getSpeed() const
 {
     return speed;
 }
@@ -214,7 +214,7 @@ bool Entity::getIntersecting() const
 //=============================================================================
 // Get collision
 //=============================================================================
-bool Entity::getCollision()
+bool Entity::getCollision() const
 {
     return collision;
 }
@@ -256,7 +256,7 @@ bool Entity::getNoBounce() const
 //=============================================================================
 // Return collision type (NONE, CIRCLE, BOX, ROTATED_BOX)
 //=============================================================================
-entityNS::COLLISION_TYPE Entity::getCollisionType()
+entityNS::COLLISION_TYPE Entity::getCollisionType() const
 {
     return collisionType;
 }
@@ -288,7 +288,7 @@ float Entity::getOldY() const
 //=============================================================================
 // Get rotatedBoxReady.
 //=============================================================================
-bool Entity::getRotatedBoxReady()
+bool Entity::getRotatedBoxReady() const
 {
     return rotatedBoxReady;
 }
@@ -720,7 +720,7 @@ void Entity::ai(float frameTime, Entity& ent)
 //=============================================================================
 // Is this Entity outside the specified rectangle
 //=============================================================================
-bool Entity::outsideRect(rect_t rect)
+bool Entity::outsideRect(rect_t rect) const
 {
     if (curX + (edge.max[0]) * getScale() < rect.min[0] ||
         curX - (edge.min[0]) * getScale() > rect.max[0] ||
@@ -841,7 +841,7 @@ void Entity::gravityForce(Entity* ent, float frameTime)
 // |   |
 // 3---2
 //=============================================================================
-void computeRotatedBox(Entity& ent)
+static void computeRotatedBox(Entity& ent)
 {
     if (ent.getRotatedBoxReady() == true)
     {
@@ -885,7 +885,7 @@ void computeRotatedBox(Entity& ent)
 // of the collision. The magnitude of the collision vector is the
 // distance the entities are overlapping.
 //=============================================================================
-bool collideCircle(Entity& ent0, Entity& ent1, vector2_t& collisionVector)
+static bool collideCircle(Entity& ent0, Entity& ent1, vector2_t& collisionVector)
 {
     // difference between centers
     vector2_t distSquared = SubtractVector2(ent0.getCenter(), ent1.getCenter());
@@ -924,7 +924,7 @@ bool collideCircle(Entity& ent0, Entity& ent1, vector2_t& collisionVector)
 // of the collision. The magnitude of the collision vector is the
 // distance the entities are overlapping.
 //=============================================================================
-bool collideBox(Entity& ent0, Entity& ent1, vector2_t& collisionVector)
+static bool collideBox(Entity& ent0, Entity& ent1, vector2_t& collisionVector)
 {
     vector2_t ent0Center = ent0.getCenter();
     vector2_t ent1Center = ent1.getCenter();
@@ -1019,10 +1019,10 @@ bool collideBox(Entity& ent0, Entity& ent1, vector2_t& collisionVector)
 //           minOverlap contains minimum overlap distance
 //           collisionVector is set
 //=============================================================================
-bool projectionsOverlap(Entity& entA, Entity& entB, vector2_t& collisionVector)
+static bool projectionsOverlap(Entity& entA, Entity& entB, vector2_t& collisionVector)
 {
     vector2_t edge01, edge03;         // edges used for projection
-    vector2_t* corner = entA.getCorners();          // for ROTATED_BOX collision detection
+    const vector2_t* corner = entA.getCorners();          // for ROTATED_BOX collision detection
     // min and max projections for this entity
     float entA01min, entA01max, entA03min, entA03max;
     // min and max projections for other entity
@@ -1182,7 +1182,7 @@ bool projectionsOverlap(Entity& entA, Entity& entB, vector2_t& collisionVector)
 // of the collision. The magnitude of the collision vector is the
 // distance the entities are overlapping.
 //=============================================================================
-bool collideRotatedBox(Entity& ent0, Entity& ent1, vector2_t& collisionVector)
+static bool collideRotatedBox(Entity& ent0, Entity& ent1, vector2_t& collisionVector)
 {
     vector2_t collisionVect1, collisionVect2;         // temp collision vectors
 
@@ -1226,7 +1226,7 @@ bool collideRotatedBox(Entity& ent0, Entity& ent1, vector2_t& collisionVector)
 // of the collision. The magnitude of the collision vector is the
 // distance the entities are overlapping.
 //=============================================================================
-bool collideCornerCircle(int32_t corner, Entity& ent0, Entity& ent1, vector2_t& collisionVector)
+static bool collideCornerCircle(int32_t corner, Entity& ent0, Entity& ent1, vector2_t& collisionVector)
 {
     vector2_t distSquared = SubtractVector2(ent0.getCorner(corner), ent1.getCenter());            // corner - circle
     distSquared.x = distSquared.x * distSquared.x;          // difference squared
@@ -1277,10 +1277,10 @@ bool collideCornerCircle(int32_t corner, Entity& ent0, Entity& ent1, vector2_t& 
 // of the collision. The magnitude of the collision vector is the
 // distance the entities are overlapping.
 //=============================================================================
-bool collideRotatedBoxCircle(Entity& entA, Entity& entB, vector2_t& collisionVector)
+static bool collideRotatedBoxCircle(Entity& entA, Entity& entB, vector2_t& collisionVector)
 {
     vector2_t edge01, edge03;         // edges used for projection
-    vector2_t* corner = entA.getCorners();         // for ROTATED_BOX collision detection
+    const vector2_t* corner = entA.getCorners();         // for ROTATED_BOX collision detection
 
     // min and max projections for this entity
     float entA01min, entA01max, entA03min, entA03max;
@@ -1556,7 +1556,7 @@ bool collideRotatedBoxCircle(Entity& entA, Entity& entB, vector2_t& collisionVec
 // to this entity as a result of the collision. (e.g. If this entity is a ball
 // that is dropped onto a box, the collision vector would point up (-Y).
 //=============================================================================
-bool intersects(Entity& ent0, Entity& ent1, vector2_t& collisionVector)
+static bool intersects(Entity& ent0, Entity& ent1, vector2_t& collisionVector)
 {
     bool result = false;
 

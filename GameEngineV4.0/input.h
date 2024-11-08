@@ -148,7 +148,7 @@ public:
     void setTextIn(std::string str);
 
     // Return last character entered
-    char getCharIn();
+    char getCharIn() const;
 
     // Reads mouse screen position into mouseX, mouseY
     void mouseIn(int x, int y);
@@ -161,7 +161,7 @@ public:
     void mouseWheelIn(int w);
 
     // Return true if the specified VIRTUAL BUTTON has been pressed in the most recent frame.
-    bool wasMouseButtonPressed(unsigned char vbutton);
+    bool wasMouseButtonPressed(unsigned char vbutton) const;
 
     // Save state of mouse button
     void setMouseLButton(bool b);
@@ -218,112 +218,112 @@ public:
     void setTriggerDeadzone(unsigned char dz);
 
     // Get thumbstick deadzone
-    short getThumbstickDeadzone();
+    short getThumbstickDeadzone() const;
 
     // Get trigger deadzone
-    unsigned char getTriggerDeadzone();
+    unsigned char getTriggerDeadzone() const;
 
     // Return state of specified game controller.
     const ControllerState* getControllerState(unsigned int n);
 
     // Return connection state of specified game controller
-    bool getGamepadConnected(unsigned int n);
+    bool getGamepadConnected(unsigned int n) const;
 
     // Return state of controller n buttons.
-    const unsigned short getGamepadButtons(unsigned int n);
+    const unsigned short getGamepadButtons(unsigned int n) const;
 
     // Return state of controller n D-pad Up
-    bool getGamepadDPadUp(unsigned int n);
+    bool getGamepadDPadUp(unsigned int n) const;
 
     // Return state of controller n D-pad Down.
-    bool getGamepadDPadDown(unsigned int n);
+    bool getGamepadDPadDown(unsigned int n) const;
 
     // Return state of controller n D-pad Left.
-    bool getGamepadDPadLeft(unsigned int n);
+    bool getGamepadDPadLeft(unsigned int n) const;
 
     // Return state of controller n D-pad Right.
-    bool getGamepadDPadRight(unsigned int n);
+    bool getGamepadDPadRight(unsigned int n) const;
 
     // Return state of controller n Start button.
-    bool getGamepadStart(unsigned int n);
+    bool getGamepadStart(unsigned int n) const;
 
     // Return state of controller n Back button.
-    bool getGamepadBack(unsigned int n);
+    bool getGamepadBack(unsigned int n) const;
 
     // Return state of controller n Left Thumb button.
-    bool getGamepadLeftThumb(unsigned int n);
+    bool getGamepadLeftThumb(unsigned int n) const;
 
     // Return state of controller n Right Thumb button.
-    bool getGamepadRightThumb(unsigned int n);
+    bool getGamepadRightThumb(unsigned int n) const;
 
     // Return state of controller n Left Shoulder button.
-    bool getGamepadLeftShoulder(unsigned int n);
+    bool getGamepadLeftShoulder(unsigned int n) const;
 
     // Return state of controller n Right Shoulder button.
-    bool getGamepadRightShoulder(unsigned int n);
+    bool getGamepadRightShoulder(unsigned int n) const;
 
     // Return state of controller n A button.
-    bool getGamepadA(unsigned int n);
+    bool getGamepadA(unsigned int n) const;
 
     // Return state of controller n B button.
-    bool getGamepadB(unsigned int n);
+    bool getGamepadB(unsigned int n) const;
 
     // Return state of controller n X button.
-    bool getGamepadX(unsigned int n);
+    bool getGamepadX(unsigned int n) const;
 
     // Return state of controller n Y button.
-    bool getGamepadY(unsigned int n);
+    bool getGamepadY(unsigned int n) const;
 
     // Return value of controller n Left Trigger.
     // Deadzone is not applied.
     // Deadzone is not applied.
-    int getGamepadLeftTriggerUndead(unsigned int n);
+    int getGamepadLeftTriggerUndead(unsigned int n) const;
 
     // Return value of controller n Left Trigger (0 through 32767).
     // Trigger movement less than triggerDeadzone returns 0.
     // Return value is scaled to 0 through 32767
-    int getGamepadLeftTrigger(unsigned int n);
+    int getGamepadLeftTrigger(unsigned int n) const;
 
     // Return value of controller n Right Trigger.
-    int getGamepadRightTriggerUndead(unsigned int n);
+    int getGamepadRightTriggerUndead(unsigned int n) const;
 
 
     // Return value of controller n Right Trigger (0 through 32767).
     // Trigger movement less than triggerDeadzone returns 0.
     // Return value is scaled to 0 through 32767
-    int getGamepadRightTrigger(unsigned int n);
+    int getGamepadRightTrigger(unsigned int n) const;
 
     // Return value of controller n Left Thumbstick X.
-    int getGamepadThumbLXUndead(unsigned int n);
+    int getGamepadThumbLXUndead(unsigned int n) const;
 
     // Return value of controller n Left Thumbstick X (-32767 through 32767).
     // Stick movement less than thumbstickDeadzone returns 0.
     // Return value is scaled to -32768 through 32767
-    int getGamepadThumbLX(unsigned int n);
+    int getGamepadThumbLX(unsigned int n) const;
 
     // Return value of controller n Left Thumbstick Y.
-    int getGamepadThumbLYUndead(unsigned int n);
+    int getGamepadThumbLYUndead(unsigned int n) const;
 
     // Return value of controller n Left Thumbstick Y (-32768 through 32767).
     // Stick movement less than thumbstickDeadzone returns 0.
     // Return value is scaled to -32768 through 32767
-    int getGamepadThumbLY(unsigned int n);
+    int getGamepadThumbLY(unsigned int n) const;
 
     // Return value of controller n Right Thumbstick X.
-    int getGamepadThumbRXUndead(unsigned int n);
+    int getGamepadThumbRXUndead(unsigned int n) const;
 
     // Return value of controller n Right Thumbstick X (-32768 through 32767).
     // Stick movement less than thumbstickDeadzone returns 0.
     // Return value is scaled to -32768 through 32767
-    int getGamepadThumbRX(unsigned int n);
+    int getGamepadThumbRX(unsigned int n) const;
 
     // Return value of controller n Right Thumbstick Y.
-    int getGamepadThumbRYUndead(unsigned int n);
+    int getGamepadThumbRYUndead(unsigned int n) const;
 
     // Return value of controller n Right Thumbstick Y (-32768 through 32767).
     // Stick movement less than thumbstickDeadzone returns 0.
     // Return value is scaled to -32768 through 32767
-    int getGamepadThumbRY(unsigned int n);
+    int getGamepadThumbRY(unsigned int n) const;
 
     // Vibrate controller n left motor.
     // Left is low frequency vibration.

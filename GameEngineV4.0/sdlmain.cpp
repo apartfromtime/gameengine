@@ -75,7 +75,7 @@ int main(int argc, const char* argv[])
 //=============================================================================
 // Window event callback function
 //=============================================================================
-void SDLProc(const SDL_Window* hwnd, const SDL_Event* event)
+static void SDLProc(const SDL_Window* hwnd, const SDL_Event* event)
 {
     if (s_game != NULL)
     {

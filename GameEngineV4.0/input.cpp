@@ -295,7 +295,7 @@ void Input::setTextIn(std::string str)
 //=============================================================================
 // Return last character entered
 //=============================================================================
-char Input::getCharIn()
+char Input::getCharIn() const
 {
     return charIn;
 }
@@ -339,7 +339,7 @@ void Input::mouseWheelIn(int w)
 // Return true if the specified VIRTUAL BUTTON has been pressed in the most
 // recent frame.
 //=============================================================================
-bool Input::wasMouseButtonPressed(unsigned char vbutton)
+bool Input::wasMouseButtonPressed(unsigned char vbutton) const
 {
     bool result = false;
 
@@ -572,7 +572,7 @@ void Input::setTriggerDeadzone(unsigned char dz)
 //=============================================================================
 // Get thumbstick deadzone
 //=============================================================================
-short Input::getThumbstickDeadzone()
+short Input::getThumbstickDeadzone() const
 {
     return thumbstickDeadzone;
 }
@@ -580,7 +580,7 @@ short Input::getThumbstickDeadzone()
 //=============================================================================
 // Get trigger deadzone
 //=============================================================================
-unsigned char Input::getTriggerDeadzone()
+unsigned char Input::getTriggerDeadzone() const
 {
     return static_cast<unsigned char>(triggerDeadzone);
 }
@@ -598,7 +598,7 @@ const ControllerState* Input::getControllerState(unsigned int n)
 //=============================================================================
 // Return connection state of specified game controller
 //=============================================================================
-bool Input::getGamepadConnected(unsigned int n)
+bool Input::getGamepadConnected(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -608,7 +608,7 @@ bool Input::getGamepadConnected(unsigned int n)
 //=============================================================================
 // Return state of controller n buttons.
 //=============================================================================
-const unsigned short Input::getGamepadButtons(unsigned int n)
+const unsigned short Input::getGamepadButtons(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -618,7 +618,7 @@ const unsigned short Input::getGamepadButtons(unsigned int n)
 //=============================================================================
 // Return state of controller n D-pad Up
 //=============================================================================
-bool Input::getGamepadDPadUp(unsigned int n)
+bool Input::getGamepadDPadUp(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -629,7 +629,7 @@ bool Input::getGamepadDPadUp(unsigned int n)
 //=============================================================================
 // Return state of controller n D-pad Down.
 //=============================================================================
-bool Input::getGamepadDPadDown(unsigned int n)
+bool Input::getGamepadDPadDown(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -640,7 +640,7 @@ bool Input::getGamepadDPadDown(unsigned int n)
 //=============================================================================
 // Return state of controller n D-pad Left.
 //=============================================================================
-bool Input::getGamepadDPadLeft(unsigned int n)
+bool Input::getGamepadDPadLeft(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -651,7 +651,7 @@ bool Input::getGamepadDPadLeft(unsigned int n)
 //=============================================================================
 // Return state of controller n D-pad Right.
 //=============================================================================
-bool Input::getGamepadDPadRight(unsigned int n)
+bool Input::getGamepadDPadRight(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -662,7 +662,7 @@ bool Input::getGamepadDPadRight(unsigned int n)
 //=============================================================================
 // Return state of controller n Start button.
 //=============================================================================
-bool Input::getGamepadStart(unsigned int n)
+bool Input::getGamepadStart(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -673,7 +673,7 @@ bool Input::getGamepadStart(unsigned int n)
 //=============================================================================
 // Return state of controller n Back button.
 //=============================================================================
-bool Input::getGamepadBack(unsigned int n)
+bool Input::getGamepadBack(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -684,7 +684,7 @@ bool Input::getGamepadBack(unsigned int n)
 //=============================================================================
 // Return state of controller n Left Thumb button.
 //=============================================================================
-bool Input::getGamepadLeftThumb(unsigned int n)
+bool Input::getGamepadLeftThumb(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -695,7 +695,7 @@ bool Input::getGamepadLeftThumb(unsigned int n)
 //=============================================================================
 // Return state of controller n Right Thumb button.
 //=============================================================================
-bool Input::getGamepadRightThumb(unsigned int n)
+bool Input::getGamepadRightThumb(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -706,7 +706,7 @@ bool Input::getGamepadRightThumb(unsigned int n)
 //=============================================================================
 // Return state of controller n Left Shoulder button.
 //=============================================================================
-bool Input::getGamepadLeftShoulder(unsigned int n)
+bool Input::getGamepadLeftShoulder(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -717,7 +717,7 @@ bool Input::getGamepadLeftShoulder(unsigned int n)
 //=============================================================================
 // Return state of controller n Right Shoulder button.
 //=============================================================================
-bool Input::getGamepadRightShoulder(unsigned int n)
+bool Input::getGamepadRightShoulder(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -728,7 +728,7 @@ bool Input::getGamepadRightShoulder(unsigned int n)
 //=============================================================================
 // Return state of controller n A button.
 //=============================================================================
-bool Input::getGamepadA(unsigned int n)
+bool Input::getGamepadA(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -739,7 +739,7 @@ bool Input::getGamepadA(unsigned int n)
 //=============================================================================
 // Return state of controller n B button.
 //=============================================================================
-bool Input::getGamepadB(unsigned int n)
+bool Input::getGamepadB(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -750,7 +750,7 @@ bool Input::getGamepadB(unsigned int n)
 //=============================================================================
 // Return state of controller n X button.
 //=============================================================================
-bool Input::getGamepadX(unsigned int n)
+bool Input::getGamepadX(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -761,7 +761,7 @@ bool Input::getGamepadX(unsigned int n)
 //=============================================================================
 // Return state of controller n Y button.
 //=============================================================================
-bool Input::getGamepadY(unsigned int n)
+bool Input::getGamepadY(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -773,7 +773,7 @@ bool Input::getGamepadY(unsigned int n)
 // Return value of controller n Left Trigger.
 // Deadzone is not applied.
 //=============================================================================
-int Input::getGamepadLeftTriggerUndead(unsigned int n)
+int Input::getGamepadLeftTriggerUndead(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -784,7 +784,7 @@ int Input::getGamepadLeftTriggerUndead(unsigned int n)
 //=============================================================================
 // Return value of controller n Left Trigger (0 through 32767).
 //=============================================================================
-int Input::getGamepadLeftTrigger(unsigned int n)
+int Input::getGamepadLeftTrigger(unsigned int n) const
 {
     int value = getGamepadLeftTriggerUndead(n);
     if (value > triggerDeadzone)
@@ -799,7 +799,7 @@ int Input::getGamepadLeftTrigger(unsigned int n)
 //=============================================================================
 // Return value of controller n Right Trigger.
 //=============================================================================
-int Input::getGamepadRightTriggerUndead(unsigned int n)
+int Input::getGamepadRightTriggerUndead(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -812,7 +812,7 @@ int Input::getGamepadRightTriggerUndead(unsigned int n)
 // Trigger movement less than triggerDeadzone returns 0.
 // Return value is scaled to 0 through 32767
 //=============================================================================
-int Input::getGamepadRightTrigger(unsigned int n)
+int Input::getGamepadRightTrigger(unsigned int n) const
 {
     int value = getGamepadRightTriggerUndead(n);
     if (value > triggerDeadzone)
@@ -827,7 +827,7 @@ int Input::getGamepadRightTrigger(unsigned int n)
 //=============================================================================
 // Return value of controller n Left Thumbstick X.
 //=============================================================================
-int Input::getGamepadThumbLXUndead(unsigned int n)
+int Input::getGamepadThumbLXUndead(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -838,7 +838,7 @@ int Input::getGamepadThumbLXUndead(unsigned int n)
 //=============================================================================
 // Return value of controller n Left Thumbstick X (-32767 through 32767).
 //=============================================================================
-int Input::getGamepadThumbLX(unsigned int n)
+int Input::getGamepadThumbLX(unsigned int n) const
 {
     int x = getGamepadThumbLXUndead(n);
     if (x > thumbstickDeadzone)
@@ -857,7 +857,7 @@ int Input::getGamepadThumbLX(unsigned int n)
 //=============================================================================
 // Return value of controller n Left Thumbstick Y.
 //=============================================================================
-int Input::getGamepadThumbLYUndead(unsigned int n)
+int Input::getGamepadThumbLYUndead(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -868,7 +868,7 @@ int Input::getGamepadThumbLYUndead(unsigned int n)
 //=============================================================================
 // Return value of controller n Left Thumbstick Y (-32768 through 32767).
 //=============================================================================
-int Input::getGamepadThumbLY(unsigned int n)
+int Input::getGamepadThumbLY(unsigned int n) const
 {
     int y = getGamepadThumbLYUndead(n);
     if (y > thumbstickDeadzone)
@@ -887,7 +887,7 @@ int Input::getGamepadThumbLY(unsigned int n)
 //=============================================================================
 // Return value of controller n Right Thumbstick X.
 //=============================================================================
-int Input::getGamepadThumbRXUndead(unsigned int n)
+int Input::getGamepadThumbRXUndead(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -898,7 +898,7 @@ int Input::getGamepadThumbRXUndead(unsigned int n)
 //=============================================================================
 // Return value of controller n Right Thumbstick X (-32768 through 32767).
 //=============================================================================
-int Input::getGamepadThumbRX(unsigned int n)
+int Input::getGamepadThumbRX(unsigned int n) const
 {
     int x = getGamepadThumbRXUndead(n);
     if (x > thumbstickDeadzone)
@@ -917,7 +917,7 @@ int Input::getGamepadThumbRX(unsigned int n)
 //=============================================================================
 // Return value of controller n Right Thumbstick Y.
 //=============================================================================
-int Input::getGamepadThumbRYUndead(unsigned int n)
+int Input::getGamepadThumbRYUndead(unsigned int n) const
 {
     if (n > MAX_CONTROLLERS - 1)
         n = MAX_CONTROLLERS - 1;
@@ -928,7 +928,7 @@ int Input::getGamepadThumbRYUndead(unsigned int n)
 //=============================================================================
 // Return value of controller n Right Thumbstick Y (-32768 through 32767).
 //=============================================================================
-int Input::getGamepadThumbRY(unsigned int n)
+int Input::getGamepadThumbRY(unsigned int n) const
 {
     int y = getGamepadThumbRYUndead(n);
     if (y > thumbstickDeadzone)

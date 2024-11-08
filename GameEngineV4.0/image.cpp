@@ -66,7 +66,7 @@ const SpriteData& Image::getSpriteData()
 //=============================================================================
 // Return visible parameter.
 //=============================================================================
-bool Image::getVisible()
+bool Image::getVisible() const
 {
     return visible;
 }
@@ -74,7 +74,7 @@ bool Image::getVisible()
 //=============================================================================
 // Return X position.
 //=============================================================================
-float Image::getX()
+float Image::getX() const
 {
     return spriteData.x;
 }
@@ -82,7 +82,7 @@ float Image::getX()
 //=============================================================================
 // Return Y position.
 //=============================================================================
-float Image::getY()
+float Image::getY() const
 {
     return spriteData.y;
 }
@@ -90,7 +90,7 @@ float Image::getY()
 //=============================================================================
 // Return Z position.
 //=============================================================================
-float Image::getZ()
+float Image::getZ() const
 {
     return spriteData.z;
 }
@@ -98,7 +98,7 @@ float Image::getZ()
 //=============================================================================
 // Return scale factor.
 //=============================================================================
-float Image::getScale()
+float Image::getScale() const
 {
     return spriteData.scale;
 }
@@ -106,7 +106,7 @@ float Image::getScale()
 //=============================================================================
 // Return width.
 //=============================================================================
-int Image::getW()
+int Image::getW() const
 {
     return spriteData.w;
 }
@@ -114,7 +114,7 @@ int Image::getW()
 //=============================================================================
 // Return height.
 //=============================================================================
-int Image::getH()
+int Image::getH() const
 {
     return spriteData.h;
 }
@@ -122,23 +122,23 @@ int Image::getH()
 //=============================================================================
 // Return center X.
 //=============================================================================
-float Image::getCenterX()
+float Image::getCenterX() const
 {
-    return spriteData.w / 2 * getScale();
+    return (float)(spriteData.w / 2) * getScale();
 }
 
 //=============================================================================
 // Return center Y.
 //=============================================================================
-float Image::getCenterY()
+float Image::getCenterY() const
 {
-    return spriteData.h / 2 * getScale();
+    return (float)(spriteData.h / 2) * getScale();
 }
 
 //=============================================================================
 // Return rotation angle in degrees.
 //=============================================================================
-float Image::getDegrees()
+float Image::getDegrees() const
 {
     return spriteData.angle * (180.0f / (float)M_PI);
 }
@@ -146,7 +146,7 @@ float Image::getDegrees()
 //=============================================================================
 // Return rotation angle in radians.
 //=============================================================================
-float Image::getRadians()
+float Image::getRadians() const
 {
     return spriteData.angle;
 }
@@ -154,7 +154,7 @@ float Image::getRadians()
 //=============================================================================
 // Return delay between frames of animation.
 //=============================================================================
-float Image::getFrameDelay()
+float Image::getFrameDelay() const
 {
     return frameDelay;
 }
@@ -162,7 +162,7 @@ float Image::getFrameDelay()
 //=============================================================================
 // Return number of starting frame.
 //=============================================================================
-int Image::getStartFrame()
+int Image::getStartFrame() const
 {
     return startFrame;
 }
@@ -170,7 +170,7 @@ int Image::getStartFrame()
 //=============================================================================
 // Return number of ending frame.
 //=============================================================================
-int Image::getEndFrame()
+int Image::getEndFrame() const
 {
     return endFrame;
 }
@@ -178,7 +178,7 @@ int Image::getEndFrame()
 //=============================================================================
 // Return number of current frame.
 //=============================================================================
-int Image::getCurrentFrame()
+int Image::getCurrentFrame() const
 {
     return currentFrame;
 }
@@ -186,7 +186,7 @@ int Image::getCurrentFrame()
 //=============================================================================
 // Return RECT structure of Image.
 //=============================================================================
-rect_t Image::getSpriteDataRect()
+rect_t Image::getSpriteDataRect() const
 {
     return spriteData.rect;
 }
@@ -194,7 +194,7 @@ rect_t Image::getSpriteDataRect()
 //=============================================================================
 // Return state of animation complete.
 //=============================================================================
-bool Image::getAnimationComplete()
+bool Image::getAnimationComplete() const
 {
     return animComplete;
 }
@@ -202,7 +202,7 @@ bool Image::getAnimationComplete()
 //=============================================================================
 // Return colorFilter.
 //=============================================================================
-color_t Image::getColorFilter()
+color_t Image::getColorFilter() const
 {
     return colorFilter;
 }
@@ -218,7 +218,7 @@ TextureManager* Image::getTextureManager()
 //=============================================================================
 // Return animation timer.
 //=============================================================================
-float Image::getAnimTimer()
+float Image::getAnimTimer() const
 {
     return animTimer;
 }
@@ -280,7 +280,7 @@ void Image::setScale(float s)
 //=============================================================================
 void Image::setCenterX(float newX)
 {
-    spriteData.x = newX - (spriteData.w / 2 * getScale());
+    spriteData.x = newX - ((float)(spriteData.w / 2) * getScale());
 }
 
 //=============================================================================
@@ -288,7 +288,7 @@ void Image::setCenterX(float newX)
 //=============================================================================
 void Image::setCenterY(float newY)
 {
-    spriteData.y = newY - (spriteData.h / 2 * getScale());
+    spriteData.y = newY - ((float)(spriteData.h / 2) * getScale());
 }
 
 

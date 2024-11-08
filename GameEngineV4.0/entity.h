@@ -61,25 +61,25 @@ public:
     ////////////////////////////////////////
 
     // Return X position.
-    float getX();
+    float getX() const;
 
     // Return Y position.
-    float getY();
+    float getY() const;
 
     // Return Z position.
-    float getZ();
+    float getZ() const;
 
     // Return angle (in radians)
-    float getAngle();
+    float getAngle() const;
 
     // Return scale
-    float getScale();
+    float getScale() const;
 
     // Return center of scaled Entity as screen x,y.
     const vector2_t getCenter();
 
     // Return collision center
-    const vector2_t getCollisionCenter();
+    const vector2_t getCollisionCenter() const;
 
     // Return radius of collision circle.
     float getRadius() const;
@@ -91,22 +91,22 @@ public:
     const vector2_t getCorner(unsigned int c) const;
 
     // Return corners array
-    vector2_t* getCorners();
+    const vector2_t* getCorners() const;
 
     // Return projection overlaps used in rotated box collision
-    float getMinOverlap();
+    float getMinOverlap() const;
 
     // Return velocity vector.
     const vector2_t getVelocity() const;
 
     // Get delta velocity. Added to velocity in update().
-    vector2_t getDeltaV();
+    vector2_t getDeltaV() const;
 
     // Returns rotation rate
-    float getRotation();
+    float getRotation() const;
 
     // Get speed
-    float getSpeed();
+    float getSpeed() const;
 
     // Return active.
     bool  getActive() const;
@@ -116,7 +116,7 @@ public:
     bool getIntersecting() const;
 
     // Get collision
-    bool getCollision();
+    bool getCollision() const;
 
     // Return embedded
     // embedded is true if this entity is completely contained within the collision area of another entity.
@@ -132,7 +132,7 @@ public:
     bool getNoBounce() const;
 
     // Return collision type (NONE, CIRCLE, BOX, ROTATED_BOX, PIXEL_PERFECT)
-    entityNS::COLLISION_TYPE getCollisionType();
+    entityNS::COLLISION_TYPE getCollisionType() const;
 
     // Return number of pixels colliding in pixel perfect collision
     unsigned long getPixelsColliding() const;
@@ -144,7 +144,7 @@ public:
     float getOldY() const;
 
     // Set rotatedBoxReady. Set to false to force recalculation.
-    bool getRotatedBoxReady();
+    bool getRotatedBoxReady() const;
 
 
     ////////////////////////////////////////
@@ -391,7 +391,7 @@ public:
     // Is this Entity outside the specified rectangle
     // Post: returns true if outside rect, false otherwise
     //=============================================================================
-    bool outsideRect(rect_t rect);
+    bool outsideRect(rect_t rect) const;
 
     //=============================================================================
     // Entity bounces after collision with another entity
