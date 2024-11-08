@@ -403,7 +403,7 @@ bool Graphics::loadTexture(const char* filename, COLOR_ARGB transcolor,
         return false;
     }
 
-    LOCKED_RECT pLockedRect;
+    LOCKED_RECT pLockedRect = {};
 
     pLockedRect.pBits = image.data;
     pLockedRect.pitch = image.xsize * 4;
@@ -475,7 +475,7 @@ bool Graphics::loadTextureSystemMem(const char* filename, COLOR_ARGB transcolor,
         return false;
     }
 
-    LOCKED_RECT pLockedRect;
+    LOCKED_RECT pLockedRect = {};
 
     pLockedRect.pBits = image.data;
     pLockedRect.pitch = image.xsize * 4;
@@ -563,7 +563,7 @@ void Graphics::drawPoint(const vector2_t* pointList,
 
     SDL_SetRenderDrawColorFloat(renderer2d, color.r, color.g, color.b, color.a);
 
-    for (size_t i = 0; i < pointListCount - 1; i++)
+    for (unsigned long i = 0; i < pointListCount - 1; i++)
     {
         x = (int16_t)pointList[i + 0].x - (width >> 1);
         y = (int16_t)pointList[i + 0].y - (width >> 1);
@@ -651,7 +651,7 @@ void Graphics::drawLine(const vector2_t* vertexList,
     int16_t x2 = 0;
     int16_t y2 = 0;
 
-    for (size_t i = 0; i < vertexListCount - 1; i++)
+    for (unsigned long i = 0; i < vertexListCount - 1; i++)
     {
         x1 = (int16_t)vertexList[i + 0].x;
         y1 = (int16_t)vertexList[i + 0].y;
@@ -819,6 +819,7 @@ unsigned long Graphics::pixelCollision(const SpriteData& sprite1,
     }
 
     // TODO:
+    numberOfPixelsColliding = 0;
 
     return numberOfPixelsColliding;
 }
@@ -836,7 +837,7 @@ void Graphics::multiplyTransform()
 //=============================================================================
 // Return the windows client area in pixels.
 //=============================================================================
-SDL_Rect Graphics::getWindowRect()
+SDL_Rect Graphics::getWindowRect() const
 {
     return windowRect;
 }
@@ -844,7 +845,7 @@ SDL_Rect Graphics::getWindowRect()
 //=============================================================================
 // Return viewport.
 //=============================================================================
-viewport_t Graphics::get3DViewport()
+viewport_t Graphics::get3DViewport() const
 {
     return viewport3d;
 }
@@ -860,7 +861,7 @@ SDL_Renderer* Graphics::get2DRenderer()
 //=============================================================================
 // Return sprite.
 //=============================================================================
-LP_SPRITE Graphics::getSprite()
+LP_SPRITE Graphics::getSprite() const
 {
     return sprite;
 }
@@ -868,7 +869,7 @@ LP_SPRITE Graphics::getSprite()
 //=============================================================================
 // return width
 //=============================================================================
-int Graphics::getWidth()
+int Graphics::getWidth() const
 {
     return width;
 }
@@ -876,7 +877,7 @@ int Graphics::getWidth()
 //=============================================================================
 // return height
 //=============================================================================
-int Graphics::getHeight()
+int Graphics::getHeight() const
 {
     return height;
 }
@@ -884,7 +885,7 @@ int Graphics::getHeight()
 //=============================================================================
 // Return fullscreen
 //=============================================================================
-bool Graphics::getFullscreen()
+bool Graphics::getFullscreen() const
 {
     return fullscreen;
 }
@@ -892,7 +893,7 @@ bool Graphics::getFullscreen()
 //=============================================================================
 // Returns true if the graphics card supports a stencil buffer
 //=============================================================================
-bool Graphics::getStencilSupport()
+bool Graphics::getStencilSupport() const
 {
     return stencilSupport;
 }
@@ -900,7 +901,7 @@ bool Graphics::getStencilSupport()
 //=============================================================================
 // Returns transform
 //=============================================================================
-void Graphics::getTransform(matrix4_t& matrix, TRANSFORMTYPE type)
+void Graphics::getTransform(matrix4_t& matrix, TRANSFORMTYPE type) const
 {
     if (type == TRANSFORMTYPE_WORLD)
     {

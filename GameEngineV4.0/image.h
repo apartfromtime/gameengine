@@ -44,64 +44,64 @@ public:
     const SpriteData& getSpriteData();
 
     // Return visible parameter.
-    bool getVisible();
+    bool getVisible() const;
 
     // Return X position.
-    float getX();
+    float getX() const;
 
     // Return Y position.
-    float getY();
+    float getY() const;
 
     // Return Z position.
-    float getZ();
+    float getZ() const;
 
     // Return scale factor.
-    float getScale();
+    float getScale() const;
 
     // Return width.
-    int getW();
+    int getW() const;
 
     // Return height.
-    int getH();
+    int getH() const;
 
     // Return center X.
-    float getCenterX();
+    float getCenterX() const;
 
     // Return center Y.
-    float getCenterY();
+    float getCenterY() const;
 
     // Return rotation angle in degrees.
-    float getDegrees();
+    float getDegrees() const;
 
     // Return rotation angle in radians.
-    float getRadians();
+    float getRadians() const;
 
     // Return delay between frames of animation.
-    float getFrameDelay();
+    float getFrameDelay() const;
 
     // Return number of starting frame.
-    int getStartFrame();
+    int getStartFrame() const;
 
     // Return number of ending frame.
-    int getEndFrame();
+    int getEndFrame() const;
 
     // Return number of current frame.
-    int getCurrentFrame();
+    int getCurrentFrame() const;
 
     // Return RECT structure of Image.
-    rect_t getSpriteDataRect();
+    rect_t getSpriteDataRect() const;
 
     // Return state of animation complete.
-    bool getAnimationComplete();
+    bool getAnimationComplete() const;
 
     // Return colorFilter.
-    color_t getColorFilter();
+    color_t getColorFilter() const;
 
     // Set textureNumber
     TextureManager* getTextureManager();
 
     // Return animation timer.
-    float getAnimTimer();
+    float getAnimTimer() const;
 
     ////////////////////////////////////////
     //           Set functions            //

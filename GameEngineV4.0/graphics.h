@@ -244,32 +244,32 @@ public:
     // get functions
 
     // return the window client area in pixels
-    SDL_Rect getWindowRect();
+    SDL_Rect getWindowRect() const;
 
     // return 3d viewport
-    viewport_t get3DViewport();
+    viewport_t get3DViewport() const;
 
     // Return renderer3d.
     SDL_Renderer* get2DRenderer();
 
     // Return sprite
-    LP_SPRITE getSprite();
+    LP_SPRITE getSprite() const;
 
     // Test for lost device
     bool getDeviceState();
 
     // return width and height
-    int getWidth();
-    int getHeight();
+    int getWidth() const;
+    int getHeight() const;
 
     // Return fullscreen
-    bool getFullscreen();
+    bool getFullscreen() const;
 
     // Returns true if the graphics card supports a stencil buffer
-    bool getStencilSupport();
+    bool getStencilSupport() const;
 
     // Returns transform
-    void getTransform(matrix4_t& matrix, TRANSFORMTYPE type);
+    void getTransform(matrix4_t& matrix, TRANSFORMTYPE type) const;
 
     // Set VSync
     void setVSync(bool vsync);

@@ -589,7 +589,7 @@ int Net::getLocalIP(char* localIP)
 //=============================================================================
 // Return mode
 //=============================================================================
-char Net::getMode()
+char Net::getMode() const
 {
     return mode;
 }
@@ -597,7 +597,7 @@ char Net::getMode()
 //=============================================================================
 // Returns detailed error message from two part error code
 //=============================================================================
-std::string Net::getError(int error)
+std::string Net::getError(int error) const
 {
     std::string errorStr;
 

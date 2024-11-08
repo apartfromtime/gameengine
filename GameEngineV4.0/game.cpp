@@ -70,7 +70,7 @@ void Game::messageHandler(const SDL_Window* hwnd, const SDL_Event* msg)
         {
         case SDL_EVENT_WINDOW_CLOSE_REQUESTED:          // exit this program
         {
-            SDL_Event event;
+            SDL_Event event = {};
 
             event.quit.timestamp = SDL_GetTicksNS();
             event.quit.type = SDL_EVENT_QUIT;
@@ -459,8 +459,8 @@ void Game::consoleCommand()
     std::string command = console->getCommand();            // get command from console
     std::vector<std::string> argv;
     uint32_t argc = 0;
-    uint32_t offset = 0;
-    uint32_t extent = 0;
+    size_t offset = 0;
+    size_t extent = 0;
 
     if (command == "")
     {

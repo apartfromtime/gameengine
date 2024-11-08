@@ -181,10 +181,10 @@ public:
     // Return mode
     // Valid modes are: UNINITIALIZED, SERVER, CLIENT
     //=============================================================================
-    char getMode();
+    char getMode() const;
 
     //=============================================================================
     // Returns detailed error message from error code
     //=============================================================================
-    std::string getError(int error);
+    std::string getError(int error) const;
 };
