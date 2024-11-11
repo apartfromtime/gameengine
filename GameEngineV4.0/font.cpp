@@ -105,7 +105,7 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
         {
             const char ch = (row * GRID_C) + col + MIN_CHAR;
 
-            if (ch > MIN_CHAR && ch <= MAX_CHAR)
+            if (ch >= MIN_CHAR && ch <= MAX_CHAR)
             {
                 int index = row * GRID_C + col;
                 if (TTF_GlyphMetrics(font, ch,
@@ -159,7 +159,7 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
             SDL_Rect rect = {};
             const char ch = (row * GRID_C) + col + MIN_CHAR;
 
-            if (ch > MIN_CHAR && ch <= MAX_CHAR)
+            if (ch >= MIN_CHAR && ch <= MAX_CHAR)
             {
                 switch (Quality)
                 {
@@ -284,7 +284,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
     rect_t sprRect = {};
     int offset = 0;
     int extent = 0;
-    int line_num = (str != "") ? 1 : 0;
+    int lineNum = (str != "") ? 1 : 0;
     int rectW = pRect->max[0] - pRect->min[0];
     int rectH = pRect->max[1] - pRect->min[1];
     int lineW = 0;
@@ -299,17 +299,28 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
     float x = 0.0f;
     float y = 0.0f;
     unsigned char ch = 0, chN = 0;
+    unsigned char spaceW = 0;
 
     // TODO: RTLREADING
-    
+
+    if (proportional)
+    {
+        chN = ' ' - MIN_CHAR;
+        spaceW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
+    }
+    else            // fixed pitch
+    {
+        spaceW = cellW;
+    }
+
     // newline count
     for (std::string::const_iterator iter = str.begin(); iter != str.end();
         iter++)
     {
-        if (*iter == '\n') line_num++;
+        if (*iter == '\n') lineNum++;
     }
 
-    if (line_num > 1)
+    if (lineNum > 1)
     {
         strW = rectW;
     }
@@ -319,9 +330,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
     {
         // regular words
         while (extent < str.length() &&
-            (str.at(extent) != '\b' && str.at(extent) != '\t' &&
-             str.at(extent) != '\n' && str.at(extent) != '\v' &&
-             str.at(extent) != '\r' && str.at(extent) != ' '))
+            (str.at(extent) > MIN_CHAR && str.at(extent) <= MAX_CHAR))
         {
             extent++;
         }
@@ -334,24 +343,10 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
             ch = token.at(i);
             if (ch > MIN_CHAR && ch <= MAX_CHAR)            // displayable character
             {
-                chN = ch - MIN_CHAR;            // make min_char index 0
-
                 if (proportional)
                 {
-                    sprRect.min[0] = ((chN % GRID_C) * cellW) +
-                        metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
-                    sprRect.max[0] = ((chN % GRID_C) * cellW) +
-                        metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
-                    charW = (sprRect.max[0] - sprRect.min[0]);
-
-                    if (charW >= cellW)         // if full width character do not add spacing
-                    {
-                        charW = cellW;          // limit width
-                    }
-                    else            // not full width so add spacing between characters
-                    {
-                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
-                    }
+                    chN = ch - MIN_CHAR;            // make min_char index 0
+                    charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                 }
                 else            // fixed pitch
                 {
@@ -391,24 +386,10 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                         ch = token.at(i);
                         if (ch > MIN_CHAR && ch <= MAX_CHAR)
                         {
-                            chN = ch - MIN_CHAR;
-
                             if (proportional)
                             {
-                                sprRect.min[0] = ((chN % GRID_C) * cellW) +
-                                    metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
-                                sprRect.max[0] = ((chN % GRID_C) * cellW) +
-                                    metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
-                                charW = (sprRect.max[0] - sprRect.min[0]);
-
-                                if (charW >= cellW)
-                                {
-                                    charW = cellW;
-                                }
-                                else
-                                {
-                                    charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
-                                }
+                                chN = ch - MIN_CHAR;
+                                charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                             }
                             else            // fixed pitch
                             {
@@ -448,7 +429,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
         }
         else            // everything else
         {
-            if ((line_num == 1 || (wordW > rectW && rectW > 0)) && (Format & CALCRECT) == CALCRECT)
+            if ((lineNum == 1 || (wordW > rectW && rectW > 0)) && (Format & CALCRECT) == CALCRECT)
             {
                 if ((lineW + wordW) > rectW && rectW > 0)
                 {
@@ -466,10 +447,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
         // special characters
         if (extent < str.length())
         {
-            while (extent < str.length() &&
-                (str.at(extent) == '\b' || str.at(extent) == '\t' ||
-                 str.at(extent) == '\n' || str.at(extent) == '\v' ||
-                 str.at(extent) == '\r' || str.at(extent) == ' '))
+            while (extent < str.length() && str.at(extent) <= MIN_CHAR)
             {
                 extent++;
             }
@@ -485,31 +463,21 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
             case '\b':          // backspace
             {
                 ch = str2.at(str2.length()-1);
-                if (ch > MIN_CHAR && ch <= MAX_CHAR)            // displayable character
+                if (ch >= MIN_CHAR && ch <= MAX_CHAR)            // displayable character
                 {
-                    chN = ch - MIN_CHAR;            // make min_char index 0
-
                     if (proportional)
                     {
-                        sprRect.min[0] = ((chN % GRID_C) * cellW) +
-                            metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
-                        sprRect.max[0] = ((chN % GRID_C) * cellW) +
-                            metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
-                        charW = (sprRect.max[0] - sprRect.min[0]);
-
-                        if (charW >= cellW)         // if full width character do not add spacing
-                        {
-                            charW = cellW;          // limit width
-                        }
-                        else            // not full width so add spacing between characters
-                        {
-                            charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
-                        }
+                        chN = ch - MIN_CHAR;            // make min_char index 0
+                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                     }
                     else            // fixed pitch
                     {
                         charW = cellW;
                     }
+                }
+                else
+                {
+                    charW = spaceW;
                 }
 
                 str2.erase(str2.end()-1);
@@ -519,7 +487,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
             {
                 if ((Format & EXPANDTABS) == EXPANDTABS)
                 {
-                    charW = cellW;
+                    charW = spaceW;
 
                     int tabX = (lineW + wordW) / (charW * tabSize);
                     tabX = (tabX + 1) * charW * tabSize;
@@ -545,10 +513,8 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                 else            // space
                 {
                     str2 += ' ';
-                    if (proportional)
-                    {
-                        charW = cellW / 2;
-                    }
+
+                    charW = spaceW;
                     lineW += charW;
                 }
             } break;
@@ -576,10 +542,8 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                 else            // space
                 {
                     str2 += ' ';
-                    if (proportional)
-                    {
-                        charW = cellW / 2;
-                    }
+
+                    charW = spaceW;
                     lineW += charW;
                 }
             } break;
@@ -594,10 +558,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
             } break;
             case ' ':           // space
             {
-                if (proportional)
-                {
-                    charW = cellW / 2;
-                }
+                charW = spaceW;
                 if (lineW != 0)
                 {
                     str2 += ch;
@@ -670,24 +631,10 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
             ch = line.at(i);
             if (ch > MIN_CHAR && ch <= MAX_CHAR)            // displayable character
             {
-                chN = ch - MIN_CHAR;            // make min_char index 0
-
                 if (proportional)
                 {
-                    sprRect.min[0] = ((chN % GRID_C) * cellW) +
-                        metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
-                    sprRect.max[0] = ((chN % GRID_C) * cellW) +
-                        metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
-                    charW = (sprRect.max[0] - sprRect.min[0]);
-
-                    if (charW >= cellW)         // if full width character do not add spacing
-                    {
-                        charW = cellW;          // limit width
-                    }
-                    else            // not full width so add spacing between characters
-                    {
-                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
-                    }
+                    chN = ch - MIN_CHAR;            // make min_char index 0
+                    charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                 }
                 else            // fixed pitch
                 {
@@ -704,37 +651,20 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                     if ((Format & BOTTOM) == BOTTOM &&
                         (Format & SINGLELINE) == SINGLELINE)
                     {
-                        if (proportional)
-                        {
-                            charW = cellW / 2;
-                        }
+                        charW = spaceW;
                         lineW += charW;
                     }
                 } break;
                 case '\v':           // vertical tab
                 {
-                    if ((Format & EXPANDTABS) == EXPANDTABS)
+                    if ((Format & EXPANDTABS) == EXPANDTABS && ((Format & BOTTOM) != BOTTOM &&
+                        (Format & SINGLELINE) != SINGLELINE))
                     {
-                        if ((Format & BOTTOM) != BOTTOM &&
-                            (Format & SINGLELINE) != SINGLELINE)
-                        {
-                            lineH += charH;
-                        }
-                        else
-                        {
-                            if (proportional)
-                            {
-                                charW = cellW / 2;
-                            }
-                            lineW += charW;
-                        }
+                        lineH += charH;
                     }
                     else            // space
                     {
-                        if (proportional)
-                        {
-                            charW = cellW / 2;
-                        }
+                        charW = spaceW;
                         lineW += charW;
                     }
                 } break;
@@ -743,19 +673,13 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                     if ((Format & BOTTOM) == BOTTOM &&
                         (Format & SINGLELINE) == SINGLELINE)
                     {
-                        if (proportional)
-                        {
-                            charW = cellW / 2;
-                        }
+                        charW = spaceW;
                         lineW += charW;
                     }
                 } break;
                 case ' ':           // space
                 {
-                    if (proportional)
-                    {
-                        charW = cellW / 2;
-                    }
+                    charW = spaceW;
                     lineW += charW;
                 } break;
                 }
@@ -791,18 +715,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                         metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
                     sprRect.max[0] = ((chN % GRID_C) * cellW) +
                         metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
-                    charW = (sprRect.max[0] - sprRect.min[0]);
-
-                    if (charW >= cellW)         // if full width character do not add spacing
-                    {
-                        charW = cellW;          // limit width
-                        sprRect.min[0] = (chN % GRID_C) * cellW;
-                        sprRect.max[0] = sprRect.min[0] + cellW;
-                    }
-                    else            // not full width so add spacing between characters
-                    {
-                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
-                    }
+                    charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                 }
                 else            // fixed pitch
                 {
@@ -831,40 +744,21 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                         x = 0;
                         y += charH;
                     }
-                    else            // space
+                    else
                     {
-                        if (proportional)
-                        {
-                            charW = cellW / 2;
-                        }
-                        x += charW;
+                        x += spaceW;
                     }
                 } break;
                 case '\v':           // vertical tab
                 {
-                    if ((Format & EXPANDTABS) == EXPANDTABS)
+                    if ((Format & EXPANDTABS) == EXPANDTABS && ((Format & BOTTOM) != BOTTOM &&
+                        (Format & SINGLELINE) != SINGLELINE))
                     {
-                        if ((Format & BOTTOM) != BOTTOM &&
-                            (Format & SINGLELINE) != SINGLELINE)
-                        {
-                            y += charH;
-                        }
-                        else            // space
-                        {
-                            if (proportional)
-                            {
-                                charW = cellW / 2;
-                            }
-                            x += charW;
-                        }
+                        y += charH;
                     }
-                    else            // space
+                    else
                     {
-                        if (proportional)
-                        {
-                            charW = cellW / 2;
-                        }
-                        x += charW;
+                        x += spaceW;
                     }
                 } break;
                 case '\r':          // carriage return
@@ -874,22 +768,14 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                     {
                         x = 0;
                     }
-                    else            // space
+                    else
                     {
-                        if (proportional)
-                        {
-                            charW = cellW / 2;
-                        }
-                        x += charW;
+                        x += spaceW;
                     }
                 } break;
                 case ' ':           // space
                 {
-                    if (proportional)
-                    {
-                        charW = cellW / 2;
-                    }
-                    x += charW;
+                    x += spaceW;
                 } break;
                 }
             }
