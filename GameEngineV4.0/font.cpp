@@ -284,7 +284,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
     rect_t sprRect = {};
     int offset = 0;
     int extent = 0;
-    int line_num = (str != "") ? 1 : 0;
+    int lineNum = (str != "") ? 1 : 0;
     int rectW = pRect->max[0] - pRect->min[0];
     int rectH = pRect->max[1] - pRect->min[1];
     int lineW = 0;
@@ -306,10 +306,10 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
     for (std::string::const_iterator iter = str.begin(); iter != str.end();
         iter++)
     {
-        if (*iter == '\n') line_num++;
+        if (*iter == '\n') lineNum++;
     }
 
-    if (line_num > 1)
+    if (lineNum > 1)
     {
         strW = rectW;
     }
@@ -342,16 +342,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                         metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
                     sprRect.max[0] = ((chN % GRID_C) * cellW) +
                         metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
-                    charW = (sprRect.max[0] - sprRect.min[0]);
-
-                    if (charW >= cellW)         // if full width character do not add spacing
-                    {
-                        charW = cellW;          // limit width
-                    }
-                    else            // not full width so add spacing between characters
-                    {
-                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
-                    }
+                    charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                 }
                 else            // fixed pitch
                 {
@@ -399,16 +390,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                                     metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
                                 sprRect.max[0] = ((chN % GRID_C) * cellW) +
                                     metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
-                                charW = (sprRect.max[0] - sprRect.min[0]);
-
-                                if (charW >= cellW)
-                                {
-                                    charW = cellW;
-                                }
-                                else
-                                {
-                                    charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
-                                }
+                                charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                             }
                             else            // fixed pitch
                             {
@@ -448,7 +430,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
         }
         else            // everything else
         {
-            if ((line_num == 1 || (wordW > rectW && rectW > 0)) && (Format & CALCRECT) == CALCRECT)
+            if ((lineNum == 1 || (wordW > rectW && rectW > 0)) && (Format & CALCRECT) == CALCRECT)
             {
                 if ((lineW + wordW) > rectW && rectW > 0)
                 {
@@ -495,16 +477,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                             metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
                         sprRect.max[0] = ((chN % GRID_C) * cellW) +
                             metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
-                        charW = (sprRect.max[0] - sprRect.min[0]);
-
-                        if (charW >= cellW)         // if full width character do not add spacing
-                        {
-                            charW = cellW;          // limit width
-                        }
-                        else            // not full width so add spacing between characters
-                        {
-                            charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
-                        }
+                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                     }
                     else            // fixed pitch
                     {
@@ -678,16 +651,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                         metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
                     sprRect.max[0] = ((chN % GRID_C) * cellW) +
                         metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
-                    charW = (sprRect.max[0] - sprRect.min[0]);
-
-                    if (charW >= cellW)         // if full width character do not add spacing
-                    {
-                        charW = cellW;          // limit width
-                    }
-                    else            // not full width so add spacing between characters
-                    {
-                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
-                    }
+                    charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                 }
                 else            // fixed pitch
                 {
@@ -791,18 +755,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                         metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
                     sprRect.max[0] = ((chN % GRID_C) * cellW) +
                         metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
-                    charW = (sprRect.max[0] - sprRect.min[0]);
-
-                    if (charW >= cellW)         // if full width character do not add spacing
-                    {
-                        charW = cellW;          // limit width
-                        sprRect.min[0] = (chN % GRID_C) * cellW;
-                        sprRect.max[0] = sprRect.min[0] + cellW;
-                    }
-                    else            // not full width so add spacing between characters
-                    {
-                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
-                    }
+                    charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                 }
                 else            // fixed pitch
                 {
