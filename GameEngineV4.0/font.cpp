@@ -163,14 +163,18 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
             {
                 switch (Quality)
                 {
-                case HIGH_QUALITY:
+                case PRECISION_QUALITY:
                 {
                     glyph = TTF_RenderGlyph_LCD(font, ch, fcolor, bcolor);
+                } break;
+                case HIGH_QUALITY:
+                {
+                    glyph = TTF_RenderGlyph_Shaded(font, ch, fcolor, bcolor);
                 } break;
                 case DEFAULT_QUALITY:
                 default:
                 {
-                    glyph = TTF_RenderGlyph_Shaded(font, ch, fcolor, bcolor);
+                    glyph = TTF_RenderGlyph_Solid(font, ch, fcolor);
                 }
                 }
 
@@ -314,8 +318,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
     }
 
     // newline count
-    for (std::string::const_iterator iter = str.begin(); iter != str.end();
-        iter++)
+    for (std::string::const_iterator iter = str.begin(); iter != str.end(); iter++)
     {
         if (*iter == '\n') lineNum++;
     }
@@ -374,6 +377,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                         }
                         str2 += '\n';
                     }
+
                     lineW = 0;
                     lineH += charH;
                 }
@@ -389,7 +393,8 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                             if (proportional)
                             {
                                 chN = ch - MIN_CHAR;
-                                charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
+                                charW = advance[((chN >> 4) * GRID_C) +
+                                    (chN % GRID_C)] + 1;
                             }
                             else            // fixed pitch
                             {
@@ -429,7 +434,8 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
         }
         else            // everything else
         {
-            if ((lineNum == 1 || (wordW > rectW && rectW > 0)) && (Format & CALCRECT) == CALCRECT)
+            if ((lineNum == 1 || (wordW > rectW && rectW > 0)) &&
+                (Format & CALCRECT) == CALCRECT)
             {
                 if ((lineW + wordW) > rectW && rectW > 0)
                 {
@@ -507,6 +513,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                             charW = tabW;
                             lineW += tabW;
                         }
+
                         tabW -= charW;
                     }
                 }
@@ -576,6 +583,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
         {
             strH = lineH;
         }
+
         offset = extent;
     }
 
@@ -640,6 +648,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                 {
                     charW = cellW;
                 }
+
                 lineW += charW;
             }
             else
@@ -657,7 +666,8 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                 } break;
                 case '\v':           // vertical tab
                 {
-                    if ((Format & EXPANDTABS) == EXPANDTABS && ((Format & BOTTOM) != BOTTOM &&
+                    if ((Format & EXPANDTABS) == EXPANDTABS &&
+                        ((Format & BOTTOM) != BOTTOM &&
                         (Format & SINGLELINE) != SINGLELINE))
                     {
                         lineH += charH;
@@ -730,6 +740,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                     pSprite->Draw(texture, &sprRect, NULL,
                         &Vector3(l + x, t + y, 1.0f), Color);
                 }
+
                 x += charW;
             }
             else
@@ -751,7 +762,8 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                 } break;
                 case '\v':           // vertical tab
                 {
-                    if ((Format & EXPANDTABS) == EXPANDTABS && ((Format & BOTTOM) != BOTTOM &&
+                    if ((Format & EXPANDTABS) == EXPANDTABS &&
+                        ((Format & BOTTOM) != BOTTOM &&
                         (Format & SINGLELINE) != SINGLELINE))
                     {
                         y += charH;
@@ -780,6 +792,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                 }
             }
         }
+
         offset = extent;
     }
 

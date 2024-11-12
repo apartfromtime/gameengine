@@ -11,6 +11,7 @@
 
 #define DEFAULT_QUALITY         0
 #define HIGH_QUALITY            1
+#define PRECISION_QUALITY       2
 
 enum ALIGNMENT
 {
