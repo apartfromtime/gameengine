@@ -469,60 +469,54 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
             case '\b':          // backspace
             {
                 ch = str2.at(str2.length()-1);
-                if (ch >= MIN_CHAR && ch <= MAX_CHAR)            // displayable character
+                str2.erase(str2.end()-1);
+
+                if (ch > MIN_CHAR && ch <= MAX_CHAR)            // displayable character
                 {
                     if (proportional)
                     {
                         chN = ch - MIN_CHAR;            // make min_char index 0
-                        charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
+                        lineW -= advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                     }
                     else            // fixed pitch
                     {
-                        charW = cellW;
+                        lineW -= cellW;
                     }
                 }
                 else
                 {
-                    charW = spaceW;
+                    lineW -= spaceW;
                 }
-
-                str2.erase(str2.end()-1);
-                lineW -= charW;
             } break;
             case '\t':          // horizontal tab
             {
                 if ((Format & EXPANDTABS) == EXPANDTABS)
                 {
-                    charW = spaceW;
-
-                    int tabX = (lineW + wordW) / (charW * tabSize);
-                    tabX = (tabX + 1) * charW * tabSize;
+                    int tabX = (lineW + wordW) / (spaceW * tabSize);
+                    tabX = (tabX + 1) * spaceW * tabSize;
                     int tabW = tabX - (lineW + wordW);
 
                     while (tabW > 0)
                     {
-                        if (tabW >= charW)
+                        if (tabW >= spaceW)
                         {
                             str2 += ' ';
-                            lineW += charW;
+                            tabW -= spaceW;
+                            lineW += spaceW;
                         }
                         else
                         {
                             // fractional part of character to align with tab stop
                             str2 += ' ';
-                            charW = tabW;
                             lineW += tabW;
+                            tabW = 0;
                         }
-
-                        tabW -= charW;
                     }
                 }
                 else            // space
                 {
                     str2 += ' ';
-
-                    charW = spaceW;
-                    lineW += charW;
+                    lineW += spaceW;
                 }
             } break;
             case '\n':          // linefeed
@@ -549,9 +543,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                 else            // space
                 {
                     str2 += ' ';
-
-                    charW = spaceW;
-                    lineW += charW;
+                    lineW += spaceW;
                 }
             } break;
             case '\r':          // carriage return
@@ -565,11 +557,10 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
             } break;
             case ' ':           // space
             {
-                charW = spaceW;
                 if (lineW != 0)
                 {
                     str2 += ch;
-                    lineW += charW;
+                    lineW += spaceW;
                 }
             } break;
             }
@@ -660,8 +651,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                     if ((Format & BOTTOM) == BOTTOM &&
                         (Format & SINGLELINE) == SINGLELINE)
                     {
-                        charW = spaceW;
-                        lineW += charW;
+                        lineW += spaceW;
                     }
                 } break;
                 case '\v':           // vertical tab
@@ -674,8 +664,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                     }
                     else            // space
                     {
-                        charW = spaceW;
-                        lineW += charW;
+                        lineW += spaceW;
                     }
                 } break;
                 case '\r':          // carriage return
@@ -683,14 +672,12 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                     if ((Format & BOTTOM) == BOTTOM &&
                         (Format & SINGLELINE) == SINGLELINE)
                     {
-                        charW = spaceW;
-                        lineW += charW;
+                        lineW += spaceW;
                     }
                 } break;
                 case ' ':           // space
                 {
-                    charW = spaceW;
-                    lineW += charW;
+                    lineW += spaceW;
                 } break;
                 }
             }
