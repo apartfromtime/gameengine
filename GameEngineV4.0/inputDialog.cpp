@@ -6,7 +6,7 @@
 InputDialog::InputDialog()
 {
     textIn = "";
-    SDL_memset(&inTextVerts, 0, 4 * sizeof(VERTEX));
+    SDL_memset(&inTextVerts, 0, 4 * sizeof(vector4_t));
     textBackColor = inputDialogNS::TEXT_BACK_COLOR;
     textFontColor = inputDialogNS::TEXT_COLOR;
     inTextRect = Rectangle();
@@ -36,31 +36,26 @@ void InputDialog::prepareVerts()
     MessageDialog::prepareVerts();
 
     // inText top left
-    inTextVerts[0].position.x = offset.x + b * 2;
-    inTextVerts[0].position.y = offset.y + extent.y - b - m - messageDialogNS::BUTTON_HEIGHT * 2.5f;
-    inTextVerts[0].color = textBackColor;
+    inTextVerts[0].x = offset.x + b * 2;
+    inTextVerts[0].y = offset.y + extent.y - b - m - messageDialogNS::BUTTON_HEIGHT * 2.5f;
 
     // inText top right
-    inTextVerts[1].position.x = offset.x + extent.x - b * 2;
-    inTextVerts[1].position.y = inTextVerts[0].position.y;
-    inTextVerts[1].color = textBackColor;
+    inTextVerts[1].x = offset.x + extent.x - b * 2;
+    inTextVerts[1].y = inTextVerts[0].y;
 
     // inText bottom right
-    inTextVerts[2].position.x = inTextVerts[1].position.x;
-    inTextVerts[2].position.y = inTextVerts[0].position.y +
-        messageDialogNS::BUTTON_HEIGHT;
-    inTextVerts[2].color = textBackColor;
+    inTextVerts[2].x = inTextVerts[1].x;
+    inTextVerts[2].y = inTextVerts[0].y + messageDialogNS::BUTTON_HEIGHT;
 
     // inText bottom left
-    inTextVerts[3].position.x = inTextVerts[0].position.x;
-    inTextVerts[3].position.y = inTextVerts[2].position.y;
-    inTextVerts[3].color = textBackColor;
+    inTextVerts[3].x = inTextVerts[0].x;
+    inTextVerts[3].y = inTextVerts[2].y;
 
     // set inTextRect
-    inTextRect.min[0] = (long)inTextVerts[0].position.x;
-    inTextRect.max[0] = (long)inTextVerts[2].position.x;
-    inTextRect.min[1] = (long)inTextVerts[0].position.y;
-    inTextRect.max[1] = (long)inTextVerts[2].position.y;
+    inTextRect.min[0] = (long)inTextVerts[0].x;
+    inTextRect.max[0] = (long)inTextVerts[2].x;
+    inTextRect.min[1] = (long)inTextVerts[0].y;
+    inTextRect.max[1] = (long)inTextVerts[2].y;
 }
 
 //=============================================================================
@@ -73,16 +68,16 @@ const void InputDialog::draw()
         return;
     }
 
-    graphics->drawQuad(borderVerts[0].position, borderVerts[1].position,
-        borderVerts[2].position, borderVerts[3].position, borderColor);         // border
-    graphics->drawQuad(dialogVerts[0].position, dialogVerts[1].position,
-        dialogVerts[2].position, dialogVerts[3].position, backColor);           // backdrop
-    graphics->drawQuad(button1Verts[0].position, button1Verts[1].position,
-        button1Verts[2].position, button1Verts[3].position, buttonColor);       // button1
-    graphics->drawQuad(button2Verts[0].position, button2Verts[1].position,
-        button2Verts[2].position, button2Verts[3].position, buttonColor);       // button2
-    graphics->drawQuad(inTextVerts[0].position, inTextVerts[1].position,
-        inTextVerts[2].position, inTextVerts[3].position, textBackColor);       // input text area
+    graphics->drawQuad(borderVerts[0], borderVerts[1], borderVerts[2], borderVerts[3],
+        borderColor);           // border
+    graphics->drawQuad(dialogVerts[0], dialogVerts[1], dialogVerts[2], dialogVerts[3],
+        backColor);         // backdrop
+    graphics->drawQuad(button1Verts[0], button1Verts[1], button1Verts[2],
+        button1Verts[3], buttonColor);          // button1
+    graphics->drawQuad(button2Verts[0], button2Verts[1], button2Verts[2],
+        button2Verts[3], buttonColor);          // button2
+    graphics->drawQuad(inTextVerts[0], inTextVerts[1], inTextVerts[2], inTextVerts[3],
+        textBackColor);         // input text area
 
     graphics->spriteBegin();
 
