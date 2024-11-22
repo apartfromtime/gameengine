@@ -24,7 +24,7 @@ Console::Console()
     textRect.max[0] = (int)((x + w) - m);
     textRect.min[1] = (int)(y + m);
 
-    SDL_memset(&vtx, 0, 4 * sizeof(VERTEX));
+    SDL_memset(&vtx, 0, 4 * sizeof(vector4_t));
 
     textIn = "";
     rows = 0;
@@ -48,24 +48,20 @@ bool Console::initialize(Graphics* pGraphics, Input* pInput)
     input = pInput;
 
     // top left
-    vtx[0].position.x = x;
-    vtx[0].position.y = y;
-    vtx[0].color = backColor;
+    vtx[0].x = x;
+    vtx[0].y = y;
 
     // top right
-    vtx[1].position.x = x + w;
-    vtx[1].position.y = y;
-    vtx[1].color = backColor;
+    vtx[1].x = x + w;
+    vtx[1].y = y;
 
     // bottom right
-    vtx[2].position.x = x + w;
-    vtx[2].position.y = y + h;
-    vtx[2].color = backColor;
+    vtx[2].x = x + w;
+    vtx[2].y = y + h;
 
     // bottom left
-    vtx[3].position.x = x;
-    vtx[3].position.y = y + h;
-    vtx[3].color = backColor;
+    vtx[3].x = x;
+    vtx[3].y = y + h;
 
     // initialize SDL font
     if (font.initialize(graphics, consoleNS::FONT_HEIGHT, false, false,
@@ -92,8 +88,7 @@ void Console::draw()
         return;
     }
 
-    graphics->drawQuad(vtx[0].position, vtx[1].position, vtx[2].position,
-        vtx[3].position, backColor);            // draw backdrop
+    graphics->drawQuad(vtx[0], vtx[1], vtx[2], vtx[3], backColor);            // draw backdrop
 
     if (text.size() == 0)
     {

@@ -28,10 +28,10 @@ MessageDialog::MessageDialog()
     backColor = messageDialogNS::BACK_COLOR;
     buttonColor = messageDialogNS::BUTTON_COLOR;
     buttonFontColor = messageDialogNS::BUTTON_FONT_COLOR;
-    SDL_memset(&dialogVerts,  0, 4 * sizeof(VERTEX));
-    SDL_memset(&borderVerts,  0, 4 * sizeof(VERTEX));
-    SDL_memset(&button1Verts, 0, 4 * sizeof(VERTEX));
-    SDL_memset(&button2Verts, 0, 4 * sizeof(VERTEX));
+    SDL_memset(&dialogVerts,  0, 4 * sizeof(vector4_t));
+    SDL_memset(&borderVerts,  0, 4 * sizeof(vector4_t));
+    SDL_memset(&button1Verts, 0, 4 * sizeof(vector4_t));
+    SDL_memset(&button2Verts, 0, 4 * sizeof(vector4_t));
     format = TOP | LEFT;
     buttonClicked = 0;
     buttonType = 0;     // OK/Cancel
@@ -79,96 +79,80 @@ bool MessageDialog::initialize(Graphics* pGraphics, Input* pInput)
 void MessageDialog::prepareVerts()
 {
     // border top left
-    borderVerts[0].position.x = offset.x;
-    borderVerts[0].position.y = offset.y;
-    borderVerts[0].color = borderColor;
+    borderVerts[0].x = offset.x;
+    borderVerts[0].y = offset.y;
 
     // border top right
-    borderVerts[1].position.x = offset.x + extent.x;
-    borderVerts[1].position.y = offset.y;
-    borderVerts[1].color = borderColor;
+    borderVerts[1].x = offset.x + extent.x;
+    borderVerts[1].y = offset.y;
 
     // border bottom right
-    borderVerts[2].position.x = offset.x + extent.x;
-    borderVerts[2].position.y = offset.y + extent.y;
-    borderVerts[2].color = borderColor;
+    borderVerts[2].x = offset.x + extent.x;
+    borderVerts[2].y = offset.y + extent.y;
 
     // border bottom left
-    borderVerts[3].position.x = offset.x;
-    borderVerts[3].position.y = offset.y + extent.y;
-    borderVerts[3].color = borderColor;
+    borderVerts[3].x = offset.x;
+    borderVerts[3].y = offset.y + extent.y;
 
     // background top left
-    dialogVerts[0].position.x = offset.x + b;
-    dialogVerts[0].position.y = offset.y + b;
-    dialogVerts[0].color = backColor;
+    dialogVerts[0].x = offset.x + b;
+    dialogVerts[0].y = offset.y + b;
 
     // background top right
-    dialogVerts[1].position.x = offset.x + extent.x - b;
-    dialogVerts[1].position.y = offset.y + b;
-    dialogVerts[1].color = backColor;
+    dialogVerts[1].x = offset.x + extent.x - b;
+    dialogVerts[1].y = offset.y + b;
 
     // background bottom right
-    dialogVerts[2].position.x = offset.x + extent.x - b;
-    dialogVerts[2].position.y = offset.y + extent.y - b;
-    dialogVerts[2].color = backColor;
+    dialogVerts[2].x = offset.x + extent.x - b;
+    dialogVerts[2].y = offset.y + extent.y - b;
 
     // background bottom left
-    dialogVerts[3].position.x = offset.x + b;
-    dialogVerts[3].position.y = offset.y + extent.y - b;
-    dialogVerts[3].color = backColor;
+    dialogVerts[3].x = offset.x + b;
+    dialogVerts[3].y = offset.y + extent.y - b;
 
     // button top left
-    button1Verts[0].position.x = offset.x + (extent.x / 2.0f) - (messageDialogNS::BUTTON_WIDTH / 2.0f) - m;
-    button1Verts[0].position.y = offset.y + extent.y - b - m - messageDialogNS::BUTTON_HEIGHT;
-    button1Verts[0].color = buttonColor;
+    button1Verts[0].x = offset.x + (extent.x / 2.0f) - (messageDialogNS::BUTTON_WIDTH / 2.0f) - m;
+    button1Verts[0].y = offset.y + extent.y - b - m - messageDialogNS::BUTTON_HEIGHT;
 
     // button top right
-    button1Verts[1].position.x = offset.x + (extent.x / 2.0f) + (messageDialogNS::BUTTON_WIDTH / 2.0f);
-    button1Verts[1].position.y = button1Verts[0].position.y;
-    button1Verts[1].color = buttonColor;
+    button1Verts[1].x = offset.x + (extent.x / 2.0f) + (messageDialogNS::BUTTON_WIDTH / 2.0f);
+    button1Verts[1].y = button1Verts[0].y;
 
     // button bottom right
-    button1Verts[2].position.x = button1Verts[1].position.x;
-    button1Verts[2].position.y = button1Verts[0].position.y + messageDialogNS::BUTTON_HEIGHT;
-    button1Verts[2].color = buttonColor;
+    button1Verts[2].x = button1Verts[1].x;
+    button1Verts[2].y = button1Verts[0].y + messageDialogNS::BUTTON_HEIGHT;
 
     // button bottom left
-    button1Verts[3].position.x = button1Verts[0].position.x;
-    button1Verts[3].position.y = button1Verts[2].position.y;
-    button1Verts[3].color = buttonColor;
+    button1Verts[3].x = button1Verts[0].x;
+    button1Verts[3].y = button1Verts[2].y;
 
     // set buttonRect
-    button1Rect.min[0] = (long)button1Verts[0].position.x;
-    button1Rect.max[0] = (long)button1Verts[2].position.x;
-    button1Rect.min[1] = (long)button1Verts[0].position.y;
-    button1Rect.max[1] = (long)button1Verts[2].position.y;
+    button1Rect.min[0] = (long)button1Verts[0].x;
+    button1Rect.max[0] = (long)button1Verts[2].x;
+    button1Rect.min[1] = (long)button1Verts[0].y;
+    button1Rect.max[1] = (long)button1Verts[2].y;
 
     // button2 top left
-    button2Verts[0].position.x = offset.x + extent.x - messageDialogNS::BUTTON_WIDTH * 1.2f;
-    button2Verts[0].position.y = offset.y + extent.y - b - m - messageDialogNS::BUTTON_HEIGHT;
-    button2Verts[0].color = buttonColor;
+    button2Verts[0].x = offset.x + extent.x - messageDialogNS::BUTTON_WIDTH * 1.2f;
+    button2Verts[0].y = offset.y + extent.y - b - m - messageDialogNS::BUTTON_HEIGHT;
 
     // button2 top right
-    button2Verts[1].position.x = button2Verts[0].position.x + messageDialogNS::BUTTON_WIDTH;
-    button2Verts[1].position.y = button2Verts[0].position.y;
-    button2Verts[1].color = buttonColor;
+    button2Verts[1].x = button2Verts[0].x + messageDialogNS::BUTTON_WIDTH;
+    button2Verts[1].y = button2Verts[0].y;
 
     // button2 bottom right
-    button2Verts[2].position.x = button2Verts[1].position.x;
-    button2Verts[2].position.y = button2Verts[0].position.y + messageDialogNS::BUTTON_HEIGHT;
-    button2Verts[2].color = buttonColor;
+    button2Verts[2].x = button2Verts[1].x;
+    button2Verts[2].y = button2Verts[0].y + messageDialogNS::BUTTON_HEIGHT;
 
     // button2 bottom left
-    button2Verts[3].position.x = button2Verts[0].position.x;
-    button2Verts[3].position.y = button2Verts[2].position.y;
-    button2Verts[3].color = buttonColor;
+    button2Verts[3].x = button2Verts[0].x;
+    button2Verts[3].y = button2Verts[2].y;
 
     // set button2Rect
-    button2Rect.min[0] = (long)button2Verts[0].position.x;
-    button2Rect.max[0] = (long)button2Verts[2].position.x;
-    button2Rect.min[1] = (long)button2Verts[0].position.y;
-    button2Rect.max[1] = (long)button2Verts[2].position.y;
+    button2Rect.min[0] = (long)button2Verts[0].x;
+    button2Rect.max[0] = (long)button2Verts[2].x;
+    button2Rect.min[1] = (long)button2Verts[0].y;
+    button2Rect.max[1] = (long)button2Verts[2].y;
 }
 
 //=============================================================================
@@ -181,14 +165,14 @@ const void MessageDialog::draw()
         return;
     }
 
-    graphics->drawQuad(borderVerts[0].position, borderVerts[1].position,
-        borderVerts[2].position, borderVerts[3].position, borderColor);         // draw border
-    graphics->drawQuad(dialogVerts[0].position, dialogVerts[1].position,
-        dialogVerts[2].position, dialogVerts[3].position, backColor);           // draw backdrop
-    graphics->drawQuad(button1Verts[0].position, button1Verts[1].position,
-        button1Verts[2].position, button1Verts[3].position, buttonColor);           // draw button1
-    graphics->drawQuad(button2Verts[0].position, button2Verts[1].position,
-        button2Verts[2].position, button2Verts[3].position, buttonColor);           // draw button2
+    graphics->drawQuad(borderVerts[0], borderVerts[1], borderVerts[2], borderVerts[3],
+        borderColor);           // draw border
+    graphics->drawQuad(dialogVerts[0], dialogVerts[1], dialogVerts[2], dialogVerts[3],
+        backColor);         // draw backdrop
+    graphics->drawQuad(button1Verts[0], button1Verts[1], button1Verts[2],
+        button1Verts[3], buttonColor);          // draw button1
+    graphics->drawQuad(button2Verts[0], button2Verts[1], button2Verts[2],
+        button2Verts[3], buttonColor);          // draw button2
 
     graphics->spriteBegin();
 

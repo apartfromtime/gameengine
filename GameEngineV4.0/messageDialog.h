@@ -55,10 +55,10 @@ protected:
     color_t     backColor;          // background color (a,r,g,b)
     color_t     buttonColor;            // button color
     color_t     buttonFontColor;            // button font color
-    VERTEX      dialogVerts[4];         // dialog vertex buffer
-    VERTEX      borderVerts[4];         // border vertex buffer
-    VERTEX      button1Verts[4];            // button vertex buffer
-    VERTEX      button2Verts[4];            // button2 vertex buffer
+    vector4_t   dialogVerts[4];         // dialog vertex buffer
+    vector4_t   borderVerts[4];         // border vertex buffer
+    vector4_t   button1Verts[4];            // button vertex buffer
+    vector4_t   button2Verts[4];            // button2 vertex buffer
     uint32_t    format;
     int         buttonClicked;          // which button was clicked (1 or 2)
     int         buttonType;         // 0 = OK/Cancel, 1 = Yes/No
