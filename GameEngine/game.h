@@ -138,14 +138,27 @@ public:
 
 class NullGame : public Game
 {
+    float currentTime;
+    float r, g, b, a;
+
 public:
     // Constructor
     NullGame() {}
     // Destructor
     virtual ~NullGame() {}
-    bool init() { return true; }
+    bool init() { currentTime = 0.0f; return true; }
     void destroy() {}
-    void update() {}      // must override pure virtual from Game
+    void update()
+    {
+        currentTime += frameTime;
+
+        r = (float)(0.5f + 0.5f * SDL_sin(currentTime));
+        g = (float)(0.5f + 0.5f * SDL_sin(currentTime + M_PI * 2 / 3));
+        b = (float)(0.5f + 0.5f * SDL_sin(currentTime + M_PI * 4 / 3));
+        a = 1.0f;
+
+        graphics->setBackColor(Color(r, g, b, a));
+    }      // must override pure virtual from Game
     void ai() {}          // "
     void collisions() {}  // "
     void render() {}      // "
