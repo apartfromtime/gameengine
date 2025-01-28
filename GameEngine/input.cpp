@@ -49,7 +49,7 @@ Input::~Input()
     // Mouse
     if (mouseCaptured)
     {
-        SDL_CaptureMouse(SDL_FALSE);
+        SDL_CaptureMouse(false);
     }
 
     // Controller
@@ -70,7 +70,7 @@ Input::~Input()
 //=============================================================================
 bool Input::initialize(SDL_Window* hwnd, bool capture)
 {
-    if (SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD) != SDL_TRUE)
+    if (SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD) == false)
     {
         throw(std::runtime_error(SDL_GetError()));
         return false;
@@ -81,7 +81,7 @@ bool Input::initialize(SDL_Window* hwnd, bool capture)
 
     if (mouseCaptured)
     {
-        SDL_CaptureMouse(SDL_TRUE);
+        SDL_CaptureMouse(true);
     }
 
     // Controller
@@ -511,15 +511,15 @@ void Input::checkControllers()
 
     for (int i = 0, n = 0; i < joystickCount; ++i)
     {
-        if (SDL_IsGamepad(joysticks[i]) == SDL_TRUE && n < MAX_CONTROLLERS)
+        if (SDL_IsGamepad(joysticks[i]) == true && n < MAX_CONTROLLERS)
         {
             SDL_Gamepad* controller = SDL_OpenGamepad(joysticks[i]);
 
             if (controller != NULL)
             {
                 SDL_PropertiesID properties = SDL_GetGamepadProperties(controller);
-                SDL_bool hasRumble = SDL_GetBooleanProperty(properties,
-                    SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN, SDL_FALSE);
+                bool hasRumble = SDL_GetBooleanProperty(properties,
+                    SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN, false);
                 controllers[n].controller = controller;
                 controllers[n].hasRumble = hasRumble;
                 controllers[n].connected = true;

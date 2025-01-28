@@ -1,4 +1,4 @@
-#include <SDL3\SDL_ttf.h>
+#include <SDL3_ttf\SDL_ttf.h>
 #include "font.h"
 
 static const int GRID_C = 16;          // number of columns in font image
@@ -14,7 +14,7 @@ public:
     FontBase() noexcept;
     FontBase(SDL_Renderer* pRenderer, SDL_Surface* pSurface, SDL_Texture* pTexture,
         rect_t* pMetrics, int* pAdvance, int cellWidth, int cellHeight,
-        unsigned int tabSize, SDL_bool proportional) noexcept;
+        unsigned int tabSize, bool proportional) noexcept;
     ~FontBase();
     int DrawText(LP_SPRITE pSprite, const char* pString, int Count,
         rect_t* pRect, unsigned int Format, COLOR_ARGB Color);
@@ -42,7 +42,7 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
     }
 
     // Initialize the TTF library
-    if (TTF_Init() == SDL_FALSE)
+    if (TTF_Init() == false)
     {
         GameError(gameErrorNS::FATAL_ERROR,
             "Couldn't initialize TTF: %s\n", SDL_GetError());
@@ -63,7 +63,7 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
     }
 
     // create TTF font
-    TTF_Font* font = TTF_OpenFont(pFaceName, Height);
+    TTF_Font* font = TTF_OpenFont(pFaceName, (float)Height);
 
     if (font == NULL)
     {
@@ -73,7 +73,7 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
     }
 
     TTF_SetFontStyle(font, weight);
-    SDL_bool proportional = !TTF_FontFaceIsFixedWidth(font);
+    bool proportional = !TTF_FontIsFixedWidth(font);
 
     rect_t* metrics = (rect_t*)SDL_malloc(GRID_R * GRID_C * sizeof(rect_t));
     int* advance = (int*)SDL_malloc(GRID_R * GRID_C * sizeof(int));
@@ -97,7 +97,7 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
     SDL_memset(advance, 0, GRID_C * GRID_R * sizeof(int   ));
 
     int cellW = 0;
-    int cellH = TTF_FontHeight(font);
+    int cellH = TTF_GetFontHeight(font);
 
     for (int row = 0; row < GRID_R; row++)
     {
@@ -108,12 +108,12 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
             if (ch >= MIN_CHAR && ch <= MAX_CHAR)
             {
                 int index = row * GRID_C + col;
-                if (TTF_GlyphMetrics(font, ch,
+                if (TTF_GetGlyphMetrics(font, ch,
                     (int*)&metrics[index].min[0],
                     (int*)&metrics[index].max[0],
                     (int*)&metrics[index].min[1],
                     (int*)&metrics[index].max[1],
-                    &advance[index]) == SDL_TRUE)
+                    &advance[index]) == true)
                 {
                     const int w = (metrics[index].max[0] - metrics[index].min[0]);
                     if (cellW < w)
@@ -147,7 +147,7 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
         SDL_GetSurfacePalette(surface), bcolor.r, bcolor.g, bcolor.b, bcolor.a);
     SDL_FillSurfaceRect(surface, NULL, surfaceRGBA);
 
-    SDL_SetSurfaceColorKey(surface, SDL_TRUE,
+    SDL_SetSurfaceColorKey(surface, true,
         SDL_MapRGBA(SDL_GetPixelFormatDetails(surface->format),
             SDL_GetSurfacePalette(surface),
             bcolor.r, bcolor.g, bcolor.b, bcolor.a));
@@ -240,7 +240,7 @@ FontBase::FontBase() noexcept
 
 FontBase::FontBase(SDL_Renderer* pRenderer2d, SDL_Surface* pSurface,
     SDL_Texture* pTexture, rect_t* pMetrics, int* pAdvance, int cellWidth,
-    int cellHeight, unsigned int tabSize, SDL_bool proportional) noexcept
+    int cellHeight, unsigned int tabSize, bool proportional) noexcept
     : renderer2d(pRenderer2d), surface(pSurface), texture(pTexture),
     metrics(pMetrics), advance(pAdvance), cellW(cellWidth), cellH(cellHeight),
     tabSize(tabSize), proportional(proportional)
