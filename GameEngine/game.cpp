@@ -56,7 +56,7 @@ Game::~Game()
 void Game::shutdown()
 {
     deleteAll();            // free all reserved memory
-    SDL_QuitSubSystem(SDL_INIT_EVENTS | SDL_INIT_TIMER);
+    SDL_QuitSubSystem(SDL_INIT_EVENTS);
 }
 
 //=============================================================================
@@ -200,7 +200,7 @@ void Game::messageHandler(const SDL_Window* hwnd, const SDL_Event* msg)
 //=============================================================================
 bool Game::initialize(SDL_Window* phwnd)
 {
-    if (SDL_Init(SDL_INIT_EVENTS | SDL_INIT_TIMER) != SDL_TRUE)
+    if (SDL_Init(SDL_INIT_EVENTS) == false)
     {
         throw(std::runtime_error(SDL_GetError()));
         return false;

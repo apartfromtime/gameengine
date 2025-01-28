@@ -74,7 +74,7 @@ void Graphics::releaseAll()
 //=============================================================================
 bool Graphics::initialize(SDL_Window* phwnd, int w, int h, bool full, bool vsync)
 {
-    if (SDL_Init(SDL_INIT_VIDEO) != SDL_TRUE)
+    if (SDL_Init(SDL_INIT_VIDEO) != true)
     {
         throw(std::runtime_error(SDL_GetError()));
         return false;
@@ -260,8 +260,7 @@ bool Graphics::reset()
     displayMode.h = backBufferHeight;
     displayMode.refresh_rate = fullScreenRefreshRateInHz;
 
-    const bool result = SDL_SetWindowFullscreenMode(hwnd, &displayMode) ==
-        SDL_TRUE ? true : false;
+    const bool result = SDL_SetWindowFullscreenMode(hwnd, &displayMode);
     SDL_SetRenderVSync(renderer2d, presentationInterval);
 
     SDL_GetRenderViewport(renderer2d, &viewport2d);
@@ -315,13 +314,13 @@ void Graphics::changeDisplayMode(graphicsNS::DISPLAY_MODE mode)
 
     if (fullscreen)         // fullscreen
     {
-        SDL_SetWindowFullscreen(hwnd, SDL_TRUE);            // borderless window fullscreen
+        SDL_SetWindowFullscreen(hwnd, true);            // borderless window fullscreen
         windowRect.w = displayMode.w;
         windowRect.h = displayMode.h;
     }
     else            // windowed
     {
-        SDL_SetWindowFullscreen(hwnd, SDL_FALSE);
+        SDL_SetWindowFullscreen(hwnd, true);
         SDL_GetWindowSizeInPixels(hwnd, &windowRect.w, &windowRect.h);
     }
 
@@ -409,7 +408,7 @@ bool Graphics::loadTexture(const char* filename, COLOR_ARGB transcolor,
     pLockedRect.pitch = image.xsize * 4;
 
     if (SDL_UpdateTexture(texture, NULL, pLockedRect.pBits, pLockedRect.pitch) ==
-        SDL_FALSE)
+        false)
     {
         SDL_DestroyTexture(texture);
 
@@ -481,7 +480,7 @@ bool Graphics::loadTextureSystemMem(const char* filename, COLOR_ARGB transcolor,
     pLockedRect.pitch = image.xsize * 4;
 
     if (SDL_UpdateTexture(texture, NULL, pLockedRect.pBits, pLockedRect.pitch) ==
-        SDL_FALSE)
+        false)
     {
         SDL_DestroyTexture(texture);
 
@@ -508,7 +507,7 @@ bool Graphics::lockRect(LP_TEXTURE& texture, LOCKED_RECT* pLockedRect,
     }
 
     if (SDL_LockTexture(texture, &rect, &pLockedRect->pBits,
-        &pLockedRect->pitch) == SDL_FALSE)
+        &pLockedRect->pitch) == false)
     {
         return false;
     }
