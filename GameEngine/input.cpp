@@ -992,10 +992,12 @@ void Input::vibrateControllers(float frameTime)
                 controllers[i].vibrateMotorSpeedRight = 0;
             }
 
-            // FIXME: SDL doesn't allow independant motor rumble
             SDL_RumbleGamepad(controllers[i].controller,
-                controllers[i].vibrateMotorSpeedLeft,
-                controllers[i].vibrateMotorSpeedRight,
+                controllers[i].vibrateMotorSpeedLeft, 0,
+                (uint32_t)(controllers[i].vibrateTimeLeft * 1000));
+
+            SDL_RumbleGamepad(controllers[i].controller,
+                0, controllers[i].vibrateMotorSpeedRight,
                 (uint32_t)(controllers[i].vibrateTimeRight * 1000));
         }
     }
