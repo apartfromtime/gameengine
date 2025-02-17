@@ -291,6 +291,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
     int lineNum = (str != "") ? 1 : 0;
     int rectW = pRect->max[0] - pRect->min[0];
     int rectH = pRect->max[1] - pRect->min[1];
+    int saveW = 0;
     int lineW = 0;
     int lineH = cellH;
     int wordW = 0;
@@ -468,24 +469,73 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
             {
             case '\b':          // backspace
             {
-                ch = str2.at(str2.length()-1);
-                str2.erase(str2.end()-1);
+                if (str2.length() > 0)
+                {
+                    ch = str2.at(str2.length() - 1);
+                    str2.erase(str2.end() - 1);
+                }
 
                 if (ch > MIN_CHAR && ch <= MAX_CHAR)            // displayable character
                 {
-                    if (proportional)
+                    if (lineW > 0)
                     {
-                        chN = ch - MIN_CHAR;            // make min_char index 0
-                        lineW -= advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
-                    }
-                    else            // fixed pitch
-                    {
-                        lineW -= cellW;
+                        if (proportional)
+                        {
+                            chN = ch - MIN_CHAR;            // make min_char index 0
+                            lineW -= advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
+                        }
+                        else            // fixed pitch
+                        {
+                            lineW -= cellW;
+                        }
                     }
                 }
                 else
                 {
-                    lineW -= spaceW;
+                    switch (ch)
+                    {
+                    case '\n':          // linefeed
+                    {
+                        if ((Format & BOTTOM) != BOTTOM &&
+                            (Format & SINGLELINE) != SINGLELINE)
+                        {
+                            lineH -= charH;
+                            lineW = saveW;
+                            saveW = 0;
+                        }
+                    } break;
+                    case '\v':          // vertical tab
+                    {
+                        if ((Format & EXPANDTABS) == EXPANDTABS)
+                        {
+                            if ((Format & BOTTOM) != BOTTOM &&
+                                (Format & SINGLELINE) != SINGLELINE)
+                            {
+                                lineH -= charH;
+                            }
+                        }
+                        else            // space
+                        {
+                            lineW -= spaceW;
+                        }
+                    } break;
+                    case '\r':          // carriage return
+                    {
+                        if ((Format & BOTTOM) != BOTTOM &&
+                            (Format & SINGLELINE) != SINGLELINE)
+                        {
+                            lineW = saveW;
+                            saveW = 0;
+                        }
+                    } break;
+                    case ' ':           // space
+                    {
+                        if (lineW > 0)
+                        {
+                            lineW -= spaceW;
+                        }
+                    } break;
+                    }
                 }
             } break;
             case '\t':          // horizontal tab
@@ -525,6 +575,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                 if ((Format & BOTTOM) != BOTTOM &&
                     (Format & SINGLELINE) != SINGLELINE)
                 {
+                    saveW = lineW;
                     lineW = 0;
                     lineH += charH;
                 }
@@ -552,6 +603,7 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                 if ((Format & BOTTOM) != BOTTOM &&
                     (Format & SINGLELINE) != SINGLELINE)
                 {
+                    saveW = lineW;
                     lineW = 0;
                 }
             } break;
