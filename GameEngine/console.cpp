@@ -72,6 +72,24 @@ bool Console::initialize(Graphics* pGraphics, Input* pInput)
 
     font.setFontColor(fontColor);
 
+    // sets textRect bottom to height of 1 row
+    rowH = font.print("|", textRect, ALIGNMENT::CALCRECT);
+    rowH += 2;         // height of 1 row (+2 is row spacing)
+
+    if (rowH <= 0)         // this should never be true
+    {
+        rowH = 20;
+    }
+
+    // number of rows that will fit on console
+    rows = (int)((h - (2 * m)) / (float)rowH);
+    rows -= 2;          // room for input prompt at bottom
+
+    if (rows <= 0)          // this should never be true
+    {
+        rows = 5;
+    }
+
     initialized = true;
 
     return true;
@@ -101,46 +119,28 @@ void Console::draw()
     textRect.min[0] = 0;
     textRect.min[1] = 0;
 
-    // sets textRect bottom to height of 1 row
-    font.print("|", textRect, ALIGNMENT::CALCRECT);
-    int rowHeight = (textRect.max[1] - textRect.min[1]) + 2;         // height of 1 row (+2 is row spacing)
-
-    if (rowHeight <= 0)         // this should never be true
-    {
-        rowHeight = 20;         // force a workable result
-    }
-
-    // number of rows that will fit on console
-    rows = (int)((h - (2 * m)) / (float)rowHeight);
-    rows -= 2;          // room for input prompt at bottom
-
-    if (rows <= 0)          // this should never be true
-    {
-        rows = 5;           // force a workable result
-    }
-
     // set text display rect for one row
     textRect.min[0] = (long)(x + m);
     textRect.max[0] = (long)(x + (w - m));
     // -2*rowHeight is room for input prompt
-    textRect.max[1] = (long)(y + ((h - (2 * m)) - (2 * rowHeight)));
-    textRect.min[1] = (long)(textRect.max[1] - rowHeight);
+    textRect.max[1] = (long)(y + ((h - (2 * m)) - (2 * rowH)));
+    textRect.min[1] = (long)(textRect.max[1] - rowH);
 
     // for all rows (max text.size()) from bottom to top
     for (int r = scrollAmount; r < rows + scrollAmount && r < (int)(text.size()); r++)
     {
         // set text display rect top for this row
-        textRect.min[1] = (long)(textRect.max[1] - rowHeight);
+        textRect.min[1] = (long)(textRect.max[1] - rowH);
         // display one row of text
         font.print(text[r], textRect, ALIGNMENT::LEFT);
         // adjust text display rect bottom for next row
-        textRect.max[1] -= rowHeight;
+        textRect.max[1] -= rowH;
     }
 
     // display command prompt and current command string
     // set text display rect for prompt
     textRect.max[1] = (long)(y + (h - m));
-    textRect.min[1] = (long)(textRect.max[1] - rowHeight);
+    textRect.min[1] = (long)(textRect.max[1] - rowH);
     std::string prompt = ">";           // build prompt string
     prompt += textIn;
     font.print(prompt, textRect, ALIGNMENT::LEFT);         // display prompt and command

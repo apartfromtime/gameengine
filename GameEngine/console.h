@@ -32,6 +32,7 @@ private:
     float       x, y;           // console location (dynamic)
     float       w, h;           // width and height
     float       b, m;           // border and margin
+    int         rowH;           // row height
     int         rows;           // number of rows of text that will fit on console
     std::string textIn;         // console command
     std::string inputStr;           // console text input
