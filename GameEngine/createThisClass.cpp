@@ -17,8 +17,6 @@ CreateThis::CreateThis() : Game()
 //=============================================================================
 CreateThis::~CreateThis()
 {
-    releaseAll();           // call onLostDevice() for every graphics item
-    safeDelete(sdlFont);
 }
 
 //=============================================================================
