@@ -160,7 +160,7 @@ void Console::showHide()
 
     visible = !visible;
     textIn.clear();
-    input->clear(inputNS::KEYS_PRESSED | inputNS::TEXT_IN);
+    input->clear(CLEAR_KEYS_PRESSED | CLEAR_TEXT_IN);
 }
 
 //=============================================================================
@@ -332,8 +332,8 @@ std::string Console::getCommand()
     }
 
     // do not pass keys through to game
-    input->clear(inputNS::KEYS_DOWN | inputNS::KEYS_PRESSED
-        | inputNS::MOUSE);
+    input->clear(CLEAR_KEYS_DOWN | CLEAR_KEYS_PRESSED
+        | CLEAR_MOUSE);
 
     inputStr = textIn;
     textIn.clear();

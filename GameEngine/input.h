@@ -10,20 +10,17 @@
 //
 //-----------------------------------------------------------------------------
 
-namespace inputNS
-{
-    const int KEYS_ARRAY_LEN = 512;         // size of key arrays
+const int KEYS_ARRAY_LEN = 512;         // size of key arrays
 
-    // what values for clear(), bit flag
-    const unsigned char KEYS_DOWN = 0x01;
-    const unsigned char KEYS_PRESSED = 0x02;
-    const unsigned char MOUSE = 0x04;
-    const unsigned char MOUSE_BUTTONS_PRESSED = 0x08;
-    const unsigned char TEXT_IN = 0x10;
-    const unsigned char GAMEPAD = 0x20;
-    const unsigned char KEYS_MOUSE_TEXT_GAMEPAD = KEYS_DOWN + KEYS_PRESSED +
-        MOUSE + MOUSE_BUTTONS_PRESSED + TEXT_IN + GAMEPAD;
-}
+// what values for clear(), bit flag
+const unsigned char CLEAR_KEYS_DOWN = 0x01;
+const unsigned char CLEAR_KEYS_PRESSED = 0x02;
+const unsigned char CLEAR_MOUSE = 0x04;
+const unsigned char CLEAR_MOUSE_BUTTONS_PRESSED = 0x08;
+const unsigned char CLEAR_TEXT_IN = 0x10;
+const unsigned char CLEAR_GAMEPAD = 0x20;
+const unsigned char CLEAR_KEYS_MOUSE_TEXT_GAMEPAD = CLEAR_KEYS_DOWN + CLEAR_KEYS_PRESSED +
+    CLEAR_MOUSE + CLEAR_MOUSE_BUTTONS_PRESSED + CLEAR_TEXT_IN + CLEAR_GAMEPAD;
 
 const unsigned int GAMEPAD_THUMBSTICK_DEADZONE = (unsigned int)(0.20f * 0X7FFF);            // default to 20% of range as deadzone
 const unsigned int GAMEPAD_TRIGGER_DEADZONE = (unsigned int)(0.08f * 0X7FFF);               // trigger range 0-32767
@@ -69,15 +66,15 @@ class Input
     // Input properties
 private:
     // Keyboard
-    bool keysDown[inputNS::KEYS_ARRAY_LEN];
-    bool keysPressed[inputNS::KEYS_ARRAY_LEN];
+    bool keysDown[KEYS_ARRAY_LEN];
+    bool keysPressed[KEYS_ARRAY_LEN];
     std::string textIn;
     char charIn;
     bool newLine;
     // Mouse
     int mouseX, mouseY;         // mouse screen coordinates
     int mouseRawX, mouseRawY;           // high-definition mouse data
-    int  mouseWheel;            // mouse wheel movement
+    int mouseWheel;            // mouse wheel movement
     bool mouseCaptured;         // true if mouse captured
     bool mouseLButtonPressed;           // true if mouse left button down
     bool mouseMButtonPressed;           // true if mouse middle button down
