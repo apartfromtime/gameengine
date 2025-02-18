@@ -28,7 +28,10 @@ public:
     // Start up game
     bool init();
     // Shutdown game
-    void destroy() {};
+    void destroy() {
+        releaseAll();           // call onLostDevice() for every graphics item
+        safeDelete(sdlFont);
+    };
     void update();      // must override pure virtual from Game
     void ai();          // "
     void collisions();  // "
