@@ -58,6 +58,9 @@ public:
     // Display the Console.
     void draw();
 
+    // update the console
+    void update(float frameTime);
+
     // Show/Hide the Console.
     void showHide();
 
