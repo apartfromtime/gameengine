@@ -25,6 +25,15 @@ int main(int argc, const char* argv[])
 
     try
     {
+        const SDL_InitFlags initFlags = SDL_INIT_AUDIO | SDL_INIT_VIDEO |
+            SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS;
+        
+        if (SDL_Init(initFlags) == false)
+        {
+            throw(std::runtime_error(SDL_GetError()));
+            return 2;
+        }
+
         s_game->initialize(s_hwnd);
 
         SDL_StartTextInput(s_hwnd);
@@ -67,6 +76,8 @@ int main(int argc, const char* argv[])
 
     SDL_StopTextInput(s_hwnd);
     s_game->shutdown();
+    SDL_QuitSubSystem(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_HAPTIC |
+        SDL_INIT_GAMEPAD | SDL_INIT_EVENTS);
     SAFE_DELETE(s_game);          // free memory before exit
 
     return 0;

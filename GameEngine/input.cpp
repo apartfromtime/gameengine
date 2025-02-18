@@ -60,8 +60,6 @@ Input::~Input()
             SDL_CloseGamepad(controllers[i].controller);
         }
     }
-
-    SDL_QuitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD);
 }
 
 //=============================================================================
@@ -70,12 +68,6 @@ Input::~Input()
 //=============================================================================
 bool Input::initialize(SDL_Window* hwnd, bool capture)
 {
-    if (SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD) == false)
-    {
-        throw(std::runtime_error(SDL_GetError()));
-        return false;
-    }
-
     // Mouse
     mouseCaptured = capture;
 
