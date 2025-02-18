@@ -97,7 +97,6 @@ bool Console::initialize(Graphics* pGraphics, Input* pInput)
 
 //=============================================================================
 // draw console
-// Pre: Inside BeginScene/EndScene
 //=============================================================================
 void Console::draw()
 {
@@ -149,6 +148,79 @@ void Console::draw()
 }
 
 //=============================================================================
+// update
+//=============================================================================
+void Console::update(float frameTime)
+{
+    if (!initialized)
+    {
+        return;
+    }
+
+    // check for console key
+    if (input->wasKeyPressed(CONSOLE_KEY))
+    {
+        input->clearCharIn();       // clear last char
+        showHide();
+        return;
+    }
+
+    // check for Esc key
+    if (input->wasKeyPressed(ESC_KEY))
+    {
+        textIn.clear();
+    }
+
+    // check for scroll
+    if (input->wasKeyPressed(UPARROW_KEY))
+    {
+        scrollAmount++;
+    }
+    else if (input->wasKeyPressed(DNARROW_KEY))
+    {
+        scrollAmount--;
+    }
+    else if (input->wasKeyPressed(PGUP_KEY))
+    {
+        scrollAmount += rows;
+    }
+    else if (input->wasKeyPressed(PGDN_KEY))
+    {
+        scrollAmount -= rows;
+    }
+
+    if (scrollAmount < 0)
+    {
+        scrollAmount = 0;
+    }
+
+    if (scrollAmount > consoleNS::MAX_LINES - 1)
+    {
+        scrollAmount = consoleNS::MAX_LINES - 1;
+    }
+
+    if (scrollAmount > (int)(text.size()) - 1)
+    {
+        scrollAmount = (int)(text.size()) - 1;
+    }
+
+    if (input->wasKeyPressed(BACKSPACE_KEY) == true)            // backspace
+    {
+        textIn.erase(textIn.size() - 1);
+    }
+
+    if (input->wasKeyPressed(ENTER_KEY) == true)           // if 'Enter' key not pressed
+    {
+        // do not pass keys through to game
+        input->clear(CLEAR_KEYS_DOWN | CLEAR_KEYS_PRESSED
+            | CLEAR_MOUSE);
+
+        inputStr = textIn;
+        textIn.clear();
+    }
+}
+
+//=============================================================================
 // show/hide console
 //=============================================================================
 void Console::showHide()
@@ -160,7 +232,6 @@ void Console::showHide()
 
     visible = !visible;
     textIn.clear();
-    input->clear(CLEAR_KEYS_PRESSED | CLEAR_TEXT_IN);
 }
 
 //=============================================================================
@@ -271,74 +342,11 @@ std::string Console::getCommand()
         return "";
     }
 
-    // check for console key
-    if (input->wasKeyPressed(CONSOLE_KEY))
-    {
-        hide();         // turn off console
-    }
+    std::string str = inputStr;
 
-    // check for Esc key
-    if (input->wasKeyPressed(ESC_KEY))
-    {
-        return "";
-    }
+    inputStr = "";
 
-    // check for scroll
-    if (input->wasKeyPressed(UPARROW_KEY))
-    {
-        scrollAmount++;
-    }
-    else if (input->wasKeyPressed(DNARROW_KEY))
-    {
-        scrollAmount--;
-    }
-    else if (input->wasKeyPressed(PGUP_KEY))
-    {
-        scrollAmount += rows;
-    }
-    else if (input->wasKeyPressed(PGDN_KEY))
-    {
-        scrollAmount -= rows;
-    }
-
-    if (scrollAmount < 0)
-    {
-        scrollAmount = 0;
-    }
-
-    if (scrollAmount > consoleNS::MAX_LINES - 1)
-    {
-        scrollAmount = consoleNS::MAX_LINES - 1;
-    }
-
-    if (scrollAmount > (int)(text.size()) - 1)
-    {
-        scrollAmount = (int)(text.size()) - 1;
-    }
-
-    if (textIn.length() == 0)
-    {
-        return "";
-    }
-
-    if (input->wasKeyPressed(BACKSPACE_KEY) == true)            // backspace
-    {
-        textIn.erase(textIn.size() - 1);
-    }
-
-    if (input->wasKeyPressed(ENTER_KEY) == false)           // if 'Enter' key not pressed
-    {
-        return "";
-    }
-
-    // do not pass keys through to game
-    input->clear(CLEAR_KEYS_DOWN | CLEAR_KEYS_PRESSED
-        | CLEAR_MOUSE);
-
-    inputStr = textIn;
-    textIn.clear();
-
-    return inputStr;
+    return str;
 }
 
 //=============================================================================

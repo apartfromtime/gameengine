@@ -408,13 +408,7 @@ void Game::run()
         paused = !paused;
     }
 
-    // check for console key
-    if (input->wasKeyPressed(CONSOLE_KEY))
-    {
-        input->clearCharIn();       // clear last char
-        console->showHide();
-        paused = console->getVisible();         // pause game when console is visible
-    }
+    console->update(frameTime);         // update console
 
     consoleCommand();           // process user entered console command
 
