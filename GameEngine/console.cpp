@@ -206,7 +206,10 @@ void Console::update(float frameTime)
 
     if (input->wasKeyPressed(BACKSPACE_KEY) == true)            // backspace
     {
-        textIn.erase(textIn.size() - 1);
+        if (textIn.size() > 0)
+        {
+            textIn.erase(textIn.size() - 1);
+        }
     }
 
     if (input->wasKeyPressed(ENTER_KEY) == true)           // if 'Enter' key not pressed
