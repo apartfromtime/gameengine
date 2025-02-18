@@ -6,10 +6,10 @@
 Input::Input()
 {
     // Keyboard
-    for (size_t i = 0; i < inputNS::KEYS_ARRAY_LEN; i++)
+    for (size_t i = 0; i < KEYS_ARRAY_LEN; i++)
         keysDown[i] = false;
 
-    for (size_t i = 0; i < inputNS::KEYS_ARRAY_LEN; i++)
+    for (size_t i = 0; i < KEYS_ARRAY_LEN; i++)
         keysPressed[i] = false;
 
     newLine = true;
@@ -99,7 +99,7 @@ bool Input::initialize(SDL_Window* hwnd, bool capture)
 //=============================================================================
 void Input::keyDown(unsigned int key)
 {
-    if (key < inputNS::KEYS_ARRAY_LEN)
+    if (key < KEYS_ARRAY_LEN)
     {
         keysDown[key] = true;
         keysPressed[key] = true;
@@ -111,7 +111,7 @@ void Input::keyDown(unsigned int key)
 //=============================================================================
 void Input::keyUp(unsigned int key)
 {
-    if (key < inputNS::KEYS_ARRAY_LEN)
+    if (key < KEYS_ARRAY_LEN)
         keysDown[key] = false;
 }
 
@@ -160,7 +160,7 @@ void Input::keyIn(unsigned int key)
 //=============================================================================
 bool Input::isKeyDown(unsigned char vkey) const
 {
-    if (vkey < inputNS::KEYS_ARRAY_LEN)
+    if (vkey < KEYS_ARRAY_LEN)
         return keysDown[vkey];
     else
         return false;
@@ -172,7 +172,7 @@ bool Input::isKeyDown(unsigned char vkey) const
 //=============================================================================
 bool Input::wasKeyPressed(unsigned char vkey) const
 {
-    if (vkey < inputNS::KEYS_ARRAY_LEN)
+    if (vkey < KEYS_ARRAY_LEN)
         return keysPressed[vkey];
     else
         return false;
@@ -183,7 +183,7 @@ bool Input::wasKeyPressed(unsigned char vkey) const
 //=============================================================================
 bool Input::anyKeyPressed() const
 {
-    for (size_t i = 0; i < inputNS::KEYS_ARRAY_LEN; i++)
+    for (size_t i = 0; i < KEYS_ARRAY_LEN; i++)
         if (keysPressed[i] == true)
             return true;
     return false;
@@ -194,7 +194,7 @@ bool Input::anyKeyPressed() const
 //=============================================================================
 void Input::clearKeyPress(unsigned char vkey)
 {
-    if (vkey < inputNS::KEYS_ARRAY_LEN)
+    if (vkey < KEYS_ARRAY_LEN)
         keysPressed[vkey] = false;
 }
 
@@ -203,19 +203,19 @@ void Input::clearKeyPress(unsigned char vkey)
 //=============================================================================
 void Input::clear(unsigned char what)
 {
-    if (what & inputNS::KEYS_DOWN)
+    if (what & CLEAR_KEYS_DOWN)
     {
-        for (size_t i = 0; i < inputNS::KEYS_ARRAY_LEN; i++)
+        for (size_t i = 0; i < KEYS_ARRAY_LEN; i++)
             keysDown[i] = false;
     }
 
-    if (what & inputNS::KEYS_PRESSED)
+    if (what & CLEAR_KEYS_PRESSED)
     {
-        for (size_t i = 0; i < inputNS::KEYS_ARRAY_LEN; i++)
+        for (size_t i = 0; i < KEYS_ARRAY_LEN; i++)
             keysPressed[i] = false;
     }
 
-    if (what & inputNS::MOUSE_BUTTONS_PRESSED)
+    if (what & CLEAR_MOUSE_BUTTONS_PRESSED)
     {
         mouseLButtonPressed = false;
         mouseMButtonPressed = false;
@@ -224,7 +224,7 @@ void Input::clear(unsigned char what)
         mouse5ButtonPressed = false;
     }
 
-    if (what & inputNS::MOUSE)
+    if (what & CLEAR_MOUSE)
     {
         mouseRawX = 0;
         mouseRawY = 0;
@@ -232,12 +232,12 @@ void Input::clear(unsigned char what)
         mouseY = 0;
     }
 
-    if (what & inputNS::TEXT_IN)
+    if (what & CLEAR_TEXT_IN)
     {
         clearTextIn();
     }
 
-    if (what & inputNS::GAMEPAD)
+    if (what & CLEAR_GAMEPAD)
     {
         for (int i = 0; i < MAX_CONTROLLERS; i++)
         {
@@ -257,7 +257,7 @@ void Input::clear(unsigned char what)
 //=============================================================================
 void Input::clearAll()
 {
-    clear(inputNS::KEYS_MOUSE_TEXT_GAMEPAD);
+    clear(CLEAR_KEYS_MOUSE_TEXT_GAMEPAD);
 }
 
 //=============================================================================

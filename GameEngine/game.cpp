@@ -448,7 +448,7 @@ void Game::run()
 
     // Clear input
     // Call this after all key checks are done
-    input->clear(inputNS::KEYS_PRESSED | inputNS::MOUSE_BUTTONS_PRESSED);
+    input->clear(CLEAR_KEYS_PRESSED | CLEAR_MOUSE_BUTTONS_PRESSED);
 }
 
 //=============================================================================
