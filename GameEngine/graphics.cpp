@@ -50,7 +50,6 @@ Graphics::Graphics()
 Graphics::~Graphics()
 {
     releaseAll();
-    SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
 //=============================================================================
@@ -65,8 +64,6 @@ void Graphics::releaseAll()
         SDL_DestroyTexture(depthStencilBuffer);
         depthStencilBuffer = NULL;
     }
-
-    SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
 //=============================================================================
@@ -74,12 +71,6 @@ void Graphics::releaseAll()
 //=============================================================================
 bool Graphics::initialize(SDL_Window* phwnd, int w, int h, bool full, bool vsync)
 {
-    if (SDL_Init(SDL_INIT_VIDEO) != true)
-    {
-        throw(std::runtime_error(SDL_GetError()));
-        return false;
-    }
-
     this->hwnd = phwnd;
     this->vsync = vsync;
 

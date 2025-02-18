@@ -51,7 +51,7 @@ bool Audio::initialize(const char* globalSettingsFile)
     }
 
     // Load the global settings file and pass it into FACTInitialize
-    void* pGlobalSettingsData = 0;
+    void* pGlobalSettingsData = NULL;
     bool bSuccess = false;
 
     hFile = SDL_IOFromFile(globalSettingsFile, "rb");
@@ -83,7 +83,7 @@ bool Audio::initialize(const char* globalSettingsFile)
             safeDeleteArray(pGlobalSettingsData);
         }
 
-        pGlobalSettingsData = 0;
+        pGlobalSettingsData = NULL;
         fileSize = 0;
     }
 
