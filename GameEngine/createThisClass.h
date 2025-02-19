@@ -16,7 +16,7 @@ private:
     TextureManager menuTexture, backgroundTexture; // textures
     Image       menu;               // menu image
     Image       background;         // background image
-    TextSDL*    sdlFont;            // DirectX font
+    TextSDL*    sdlFont;            // SDL font
     std::string  message;
     float messageY;
 
@@ -29,14 +29,11 @@ public:
     bool init();
     // Shutdown game
     void destroy() {
-        releaseAll();           // call onLostDevice() for every graphics item
         safeDelete(sdlFont);
     };
     void update();      // must override pure virtual from Game
     void ai();          // "
     void collisions();  // "
     void render();      // "
-    void releaseAll();
-    void resetAll();
 };
 

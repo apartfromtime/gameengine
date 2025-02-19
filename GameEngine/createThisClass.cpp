@@ -140,25 +140,3 @@ void CreateThis::render()
 
     graphics->spriteEnd();                  // end drawing sprites
 }
-
-//=============================================================================
-// The graphics device was lost.
-// Release all reserved video memory so graphics device may be reset.
-//=============================================================================
-void CreateThis::releaseAll()
-{
-    menuTexture.onLostDevice();
-    Game::releaseAll();
-    return;
-}
-
-//=============================================================================
-// The grahics device has been reset.
-// Recreate all surfaces.
-//=============================================================================
-void CreateThis::resetAll()
-{
-    menuTexture.onResetDevice();
-    Game::resetAll();
-    return;
-}

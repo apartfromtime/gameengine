@@ -76,13 +76,6 @@ public:
     // Call run repeatedly by the main message loop in main
     void run();
 
-    // Call when the graphics device was lost.
-    // Release all reserved video memory so graphics device may be reset.
-    void releaseAll();
-
-    // Recreate all surfaces and reset all entities.
-    void resetAll();
-
     // Delete all reserved memory.
     void deleteAll();
 
@@ -129,10 +122,6 @@ public:
     virtual void collisions() = 0;
 
     // Render graphics.
-    // Call graphics->spriteBegin();
-    //   draw sprites
-    // Call graphics->spriteEnd();
-    //   draw non-sprites
     virtual void render() = 0;
 };
 
