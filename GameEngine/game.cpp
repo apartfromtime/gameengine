@@ -308,10 +308,8 @@ void Game::renderGame()
 //=============================================================================
 void Game::setDisplayMode(graphicsNS::DISPLAY_MODE mode)
 {
-    releaseAll();
     graphics->changeDisplayMode(mode);
     viewport3d = graphics->get3DViewport();
-    resetAll();
 }
 
 //=============================================================================
@@ -397,7 +395,7 @@ void Game::run()
         update();                   // update all game items
         ai();                       // artificial intelligence
         collisions();               // handle collisions
-        input->vibrateControllers(frameTime); // handle controller vibration
+        input->vibrateControllers(frameTime);           // handle controller vibration
     }
 
     renderGame();           // draw all game items
@@ -524,22 +522,6 @@ void Game::consoleCommand()
             console->print(name + " - " + "invalid value");
         }
     }
-}
-
-//=============================================================================
-// The graphics device was lost.
-//=============================================================================
-void Game::releaseAll()
-{
-    return;
-}
-
-//=============================================================================
-// Recreate all surfaces and reset all entities.
-//=============================================================================
-void Game::resetAll()
-{
-    return;
 }
 
 //=============================================================================
