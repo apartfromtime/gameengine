@@ -31,9 +31,9 @@ public:
     void destroy() {
         safeDelete(sdlFont);
     };
-    void update();      // must override pure virtual from Game
-    void ai();          // "
-    void collisions();  // "
+    void update(float frameTime);      // must override pure virtual from Game
+    void ai(float frameTime);          // "
+    void collisions(float frameTime);  // "
     void render();      // "
 };
 

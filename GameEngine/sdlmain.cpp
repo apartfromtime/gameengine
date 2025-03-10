@@ -7,6 +7,13 @@ bool CreateMainWindow(SDL_Window** window, int show);
 static Game* s_game = NULL;
 static SDL_Window* s_hwnd = NULL;
 
+// Timer
+uint64_t timeStart = 0;         // Performance Counter start value
+uint64_t timeEnd = 0;           // Performance Counter end value
+uint64_t timerFreq = 0;         // Performance Counter frequency
+uint32_t sleepTime = 0;         // number of milli-seconds to sleep between frames
+float frameTime = 0.0f;         // time required for last frame
+
 //=============================================================================
 // Starting point for application
 //=============================================================================
@@ -34,6 +41,15 @@ int main(int argc, const char* argv[])
             return 2;
         }
 
+        // attempt to set up high resolution timer
+        if ((timerFreq = SDL_GetPerformanceFrequency()) == 0)
+        {
+            throw(std::runtime_error(SDL_GetError()));
+            return 4;
+        }
+
+        timeStart = SDL_GetPerformanceCounter();            // get starting time
+
         s_game->initialize(s_hwnd);
 
         SDL_StartTextInput(s_hwnd);
@@ -43,22 +59,38 @@ int main(int argc, const char* argv[])
 
         while (!done)
         {
+            // real timer
+            // calculate elapsed time of last frame, save in frameTime
+            timeEnd = SDL_GetPerformanceCounter();
+            frameTime = (float)(timeEnd - timeStart) / (float)timerFreq;
+
+            // not enough time has elapsed for desired frame rate
+            if (frameTime < MIN_FRAME_TIME) {
+                sleepTime = (uint32_t)((MIN_FRAME_TIME - frameTime) * 1000000);
+                SDL_DelayNS(sleepTime);         // release cpu for sleepTime
+
+                continue;
+            }
+
+            if (frameTime > MAX_FRAME_TIME) {           // frame rate is very slow
+                frameTime = MAX_FRAME_TIME;         // limit maximum frameTime
+            }
+
+            timeStart = timeEnd;
+
             SDL_PumpEvents();
 
-            if (SDL_PeepEvents(&msg, 1, SDL_GETEVENT, SDL_EVENT_FIRST,
-                SDL_EVENT_LAST) > 0)
-            {
-                if (msg.type == SDL_EVENT_QUIT)
-                {
+            while (SDL_PeepEvents(&msg, 1, SDL_GETEVENT, SDL_EVENT_FIRST,
+                SDL_EVENT_LAST) > 0) {
+
+                if (msg.type == SDL_EVENT_QUIT) {
                     done = 1;
                 }
 
                 TranslateAndDispatchEvent(&msg);
             }
-            else
-            {
-                s_game->run();          // run the game loop
-            }
+            
+            s_game->run(frameTime);         // run the game loop
         }
     }
     catch (const std::runtime_error& err)
