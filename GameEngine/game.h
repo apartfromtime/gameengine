@@ -33,12 +33,7 @@ protected:
     MessageDialog* messageDialog;
     InputDialog* inputDialog;
     // Time
-    uint64_t timeStart;         // Performance Counter start value
-    uint64_t timeEnd;           // Performance Counter end value
-    uint64_t timerFreq;         // Performance Counter frequency
-    uint32_t sleepTime;         // number of milli-seconds to sleep between frames
-    float frameTime;            // time required for last frame
-    float   fps;            // frames per second
+    float fps;          // frames per second
     // View
     viewport_t viewport3d;
     matrix4_t wrldMatrix;
@@ -74,7 +69,7 @@ public:
     void shutdown();
 
     // Call run repeatedly by the main message loop in main
-    void run();
+    void run(float frameTime);
 
     // Delete all reserved memory.
     void deleteAll();
@@ -113,13 +108,13 @@ public:
     virtual void destroy() = 0;
 
     // Update game items.
-    virtual void update() = 0;
+    virtual void update(float frameTime) = 0;
 
     // Perform AI calculations.
-    virtual void ai() = 0;
+    virtual void ai(float frameTime) = 0;
 
     // Check for collisions.
-    virtual void collisions() = 0;
+    virtual void collisions(float frameTime) = 0;
 
     // Render graphics.
     virtual void render() = 0;
@@ -137,7 +132,7 @@ public:
     virtual ~NullGame() {}
     bool init() { currentTime = 0.0f; return true; }
     void destroy() {}
-    void update()
+    void update(float frameTime)
     {
         currentTime += frameTime;
 
@@ -148,8 +143,8 @@ public:
 
         graphics->setBackColor(Color(r, g, b, a));
     }      // must override pure virtual from Game
-    void ai() {}          // "
-    void collisions() {}  // "
+    void ai(float frameTime) {}          // "
+    void collisions(float frameTime) {}  // "
     void render() {}      // "
 };
 

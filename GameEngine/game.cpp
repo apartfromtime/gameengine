@@ -16,11 +16,6 @@ Game::Game()
     messageDialog = 0;
     inputDialog = 0;
     // Time
-    timeStart = 0;
-    timeEnd = 0;
-    timerFreq = 0;
-    sleepTime = 0;
-    frameTime = 0.0f;
     fps = 100;
     // View
     viewport3d = Viewport();
@@ -235,14 +230,6 @@ bool Game::initialize(SDL_Window* phwnd)
 
     font.setFontColor(gameNS::FONT_COLOR);
 
-    // attempt to set up high resolution timer
-    if ((timerFreq = SDL_GetPerformanceFrequency()) == 0)
-    {
-        throw(std::runtime_error("Error initializing high resolution timer"));
-    }
-
-    timeStart = SDL_GetPerformanceCounter();            // get starting time
-
     // initialize console
     console = new Console();
 
@@ -355,54 +342,31 @@ Audio* Game::getAudio()
 //=============================================================================
 // Call repeatedly by the main message loop in main
 //=============================================================================
-void Game::run()
+void Game::run(float frameTime)
 {
-    if (graphics == NULL)
-    {
+    if (graphics == NULL) {
         return;
     }
 
-    // real timer
-    // calculate elapsed time of last frame, save in frameTime
-    timeEnd = SDL_GetPerformanceCounter();
-    frameTime = (float)(timeEnd - timeStart) / (float)timerFreq;
-
-    // not enough time has elapsed for desired frame rate
-    if (frameTime < MIN_FRAME_TIME)
-    {
-        sleepTime = (uint32_t)((MIN_FRAME_TIME - frameTime) * 1000000);
-        SDL_DelayNS(sleepTime);           // release cpu for sleepTime
-
-        return;
-    }
-
-    if (frameTime > MAX_FRAME_TIME)         // frame rate is very slow
-    {
-        frameTime = MAX_FRAME_TIME;         // limit maximum frameTime
-    }
-
-    timeStart = timeEnd;
-
-    if (frameTime > 0.0)
-    {
+    // game timer
+    if (frameTime > 0.0) {
         fps = (fps * 0.99f) + (0.01f / frameTime);          // average fps
     }
 
     // update(), ai(), and collisions() are pure virtual functions.
     // These functions must be provided in the class that inherits from Game.
-    if (!paused)
-    {
-        update();                   // update all game items
-        ai();                       // artificial intelligence
-        collisions();               // handle collisions
+    if (!paused) {
+
+        update(frameTime);                   // update all game items
+        ai(frameTime);                       // artificial intelligence
+        collisions(frameTime);               // handle collisions
         input->vibrateControllers(frameTime);           // handle controller vibration
     }
 
     renderGame();           // draw all game items
 
     // toggle pause
-    if (input->wasKeyPressed(PAUSE_KEY))
-    {
+    if (input->wasKeyPressed(PAUSE_KEY)) {
         paused = !paused;
     }
 
@@ -419,15 +383,13 @@ void Game::run()
 
     // if Alt+Enter toggle fullscreen/window
     if ((input->isKeyDown(LALT_KEY) || input->isKeyDown(RALT_KEY))
-        && input->wasKeyPressed(ENTER_KEY))
-    {
+        && input->wasKeyPressed(ENTER_KEY)) {
         setDisplayMode(graphicsNS::DISPLAYMODE_TOGGLE);         // toggle fullscreen/window
     }
 
     // if Alt+F4 exit game
     if ((input->isKeyDown(LALT_KEY) || input->isKeyDown(RALT_KEY))
-        && input->wasKeyPressed(F4_KEY))
-    {
+        && input->wasKeyPressed(F4_KEY)) {
         exitGame();
     }
 

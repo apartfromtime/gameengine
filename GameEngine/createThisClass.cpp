@@ -85,7 +85,7 @@ bool CreateThis::init()
 //=============================================================================
 // Update all game items
 //=============================================================================
-void CreateThis::update()
+void CreateThis::update(float frameTime)
 {
     static float delay = 0;
     delay += frameTime;
@@ -117,13 +117,13 @@ void CreateThis::update()
 //=============================================================================
 // Artificial Intelligence
 //=============================================================================
-void CreateThis::ai()
+void CreateThis::ai(float frameTime)
 {}
 
 //=============================================================================
 // Handle collisions
 //=============================================================================
-void CreateThis::collisions()
+void CreateThis::collisions(float frameTime)
 {}
 
 //=============================================================================
