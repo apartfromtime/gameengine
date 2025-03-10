@@ -64,9 +64,9 @@ int TextSDL::print(const std::string& str, rect_t& rect, unsigned int format)
     // Setup matrix to not rotate text
     const matrix4_t matrix = Transformation2DMatrix4(Vector2(),
         Vector2(1.0f, 1.0f), Vector2(), 0.0f, Vector2());
-    graphics->getSprite()->SetTransform(&matrix);
+    graphics->setTransform(matrix, TRANSFORMTYPE_TRANSFORM);
 
-    return font->DrawText(graphics->getSprite(), str.c_str(), (int)str.length(),
+    return font->DrawText(graphics, str.c_str(), (int)str.length(),
         &rect, format, fontColor);
 }
 
@@ -87,7 +87,7 @@ int TextSDL::print(const std::string& str, int x, int y)
     // Setup matrix to rotate text by angle
     const matrix4_t matrix = Transformation2DMatrix4(Vector2(),
         Vector2(1.0f, 1.0f), rCenter, angle, Vector2());
-    graphics->getSprite()->SetTransform(&matrix);
+    graphics->setTransform(matrix, TRANSFORMTYPE_TRANSFORM);
 
     viewport3d = graphics->get3DViewport();
     rect.min[0] = x;
@@ -95,7 +95,7 @@ int TextSDL::print(const std::string& str, int x, int y)
     rect.max[0] = (viewport3d.w - viewport3d.x);
     rect.max[1] = (viewport3d.h - viewport3d.y);
 
-    return font->DrawText(graphics->getSprite(), str.c_str(), (int)str.length(),
+    return font->DrawText(graphics, str.c_str(), (int)str.length(),
         &rect, format, fontColor);
 }
 
