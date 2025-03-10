@@ -20,7 +20,8 @@ Graphics::Graphics()
     viewport2d.y = 0;
     viewport2d.w = 0;
     viewport2d.h = 0;
-    sprite = NULL;
+    prevBlendMode = SDL_BLENDMODE_NONE;
+    flags = SPRITE_DONOTSAVESTATE;
     // Presentation parameters
     backBufferWidth = 0;
     backBufferHeight = 0;
@@ -57,8 +58,6 @@ Graphics::~Graphics()
 //=============================================================================
 void Graphics::releaseAll()
 {
-    safeDelete(sprite);
-
     if (depthStencilBuffer != NULL)
     {
         SDL_DestroyTexture(depthStencilBuffer);
@@ -149,8 +148,6 @@ bool Graphics::initialize(SDL_Window* phwnd, int w, int h, bool full, bool vsync
     matrix3d[1] = Matrix4();
     matrix3d[2] = Matrix4();
     transform3d = Matrix4();
-
-    Create(renderer2d, &sprite);
 
     return true;
 }
@@ -718,6 +715,110 @@ void Graphics::drawQuad(const vector4_t* quadList[4], uint32_t quadListCount,
 }
 
 //=============================================================================
+// Display a quad (rectangle) textured.
+//=============================================================================
+bool Graphics::drawTetxuredQuad(SDL_Texture* pTexture, const rect_t* pSrcRect,
+    const vector3_t* pCenter, const vector3_t* pPosition, COLOR_ARGB Color)
+{
+    rect_t rect = Rectangle();
+    float tw = 0.0f;
+    float th = 0.0f;
+    float x0 = 0.0f;
+    float y0 = 0.0f;
+    float z0 = 0.0f;
+    float x1 = 0.0f;
+    float y1 = 0.0f;
+
+    if (pTexture == NULL) {
+        return false;
+    }
+
+    SDL_GetTextureSize(pTexture, &tw, &th);
+
+    if (pSrcRect != NULL) {
+        rect = Rectangle(pSrcRect->min[0], pSrcRect->min[1],
+            pSrcRect->max[0], pSrcRect->max[1]);
+    } else {
+        rect = Rectangle(0, 0, (long)tw, (long)th);
+    }
+
+    if (pPosition != NULL) {
+        x0 = pPosition->x;
+        y0 = pPosition->y;
+        z0 = pPosition->z;
+    }
+
+    if (pCenter != NULL) {
+        x0 = x0 - pCenter->x;
+        y0 = y0 - pCenter->y;
+        z0 = z0 - pCenter->z;
+    }
+
+    x1 = x0 + (float)(rect.max[0] - rect.min[0]);
+    y1 = y0 + (float)(rect.max[1] - rect.min[1]);
+
+    // world, view and projection transform
+    vector4_t v0 = Vector4(x0, y0, z0, 1.0f);
+    vector4_t v1 = Vector4(x1, y0, z0, 1.0f);
+    vector4_t v2 = Vector4(x1, y1, z0, 1.0f);
+    vector4_t v3 = Vector4(x0, y1, z0, 1.0f);
+
+    if ((flags & SPRITE_OBJECTSPACE) != SPRITE_OBJECTSPACE) {
+        v0 = TransformVector4(v0, transform3d);
+        v1 = TransformVector4(v1, transform3d);
+        v2 = TransformVector4(v2, transform3d);
+        v3 = TransformVector4(v3, transform3d);
+    }
+
+    const float s = 1.0f / tw;
+    const float t = 1.0f / th;
+    const float s1 = s * (float)(rect.max[0]);
+    const float t1 = t * (float)(rect.max[1]);
+    const float s0 = s * (float)(rect.min[0]);
+    const float t0 = t * (float)(rect.min[1]);
+
+    SDL_FColor c = {
+        Color.r,
+        Color.g,
+        Color.b,
+        Color.a
+    };
+
+    SDL_Vertex vertex0 = {
+        { v0.x, v0.y },
+        { c          },
+        { s0, t0     }
+    };
+
+    SDL_Vertex vertex1 = {
+        { v1.x, v1.y },
+        { c          },
+        { s1, t0     }
+    };
+
+    SDL_Vertex vertex2 = {
+        { v2.x, v2.y },
+        { c          },
+        { s1, t1     }
+    };
+
+    SDL_Vertex vertex3 = {
+        { v3.x, v3.y },
+        { c          },
+        { s0, t1     }
+    };
+
+    const SDL_Vertex vertice[4] = { vertex0, vertex1, vertex2, vertex3 };
+    static const int indices[6] = { 0, 1, 2, 2, 3, 0 };
+
+    SDL_RenderGeometry(renderer2d, pTexture,
+        vertice, sizeof(vertice) / sizeof(vertice[0]),
+        indices, sizeof(indices) / sizeof(indices[0]));
+
+    return true;
+}
+
+//=============================================================================
 // Draw the sprite described in SpriteData structure
 // Color is optional, it is applied like a filter, WHITE is default (no change)
 //=============================================================================
@@ -768,8 +869,8 @@ void Graphics::drawSprite(const SpriteData& spriteData, COLOR_ARGB color)
         spriteData.angle,           // rotation angle
         translate);         // X,Y location
 
-    sprite->SetTransform(&matrix);
-    sprite->Draw(spriteData.texture, &spriteData.rect, NULL, NULL, color);
+    setTransform(matrix, TRANSFORMTYPE_TRANSFORM);
+    drawTetxuredQuad(spriteData.texture, &spriteData.rect, NULL, NULL, color);
 }
 
 //=============================================================================
@@ -846,14 +947,6 @@ viewport_t Graphics::get3DViewport() const
 SDL_Renderer* Graphics::get2DRenderer()
 {
     return renderer2d;
-}
-
-//=============================================================================
-// Return sprite.
-//=============================================================================
-LP_SPRITE Graphics::getSprite() const
-{
-    return sprite;
 }
 
 //=============================================================================
@@ -935,7 +1028,7 @@ void Graphics::setBackColor(COLOR_ARGB c)
 //=============================================================================
 bool Graphics::beginScene()
 {
-    if (renderer2d == 0)
+    if (renderer2d == NULL)
     {
         return false;
     }
@@ -991,15 +1084,44 @@ void Graphics::setTransform(const matrix4_t& matrix, TRANSFORMTYPE type)
 //=============================================================================
 // Sprite Begin
 //=============================================================================
-void Graphics::spriteBegin()
+bool Graphics::spriteBegin(long Flags)
 {
-    sprite->Begin(SPRITE_ALPHABLEND);
+    transform3d = Matrix4();
+
+    if ((Flags & SPRITE_DONOTSAVESTATE) != SPRITE_DONOTSAVESTATE) {
+        SDL_GetRenderDrawBlendMode(renderer2d, &prevBlendMode);
+    }
+
+    if ((Flags & SPRITE_DONOTMODIFY_RENDERSTATE) !=
+        SPRITE_DONOTMODIFY_RENDERSTATE) {
+        if ((Flags & SPRITE_ALPHABLEND) == SPRITE_ALPHABLEND) {
+            SDL_SetRenderDrawBlendMode(renderer2d, SDL_BLENDMODE_BLEND);
+        }
+    }
+
+    flags = Flags;
+
+    return true;
+}
+
+//=============================================================================
+// Flush
+//=============================================================================
+bool Graphics::flush()
+{
+    return SDL_FlushRenderer(renderer2d);
 }
 
 //=============================================================================
 // Sprite End
 //=============================================================================
-void Graphics::spriteEnd()
+bool Graphics::spriteEnd()
 {
-    sprite->End();
+    const bool result = flush();
+
+    if ((flags & SPRITE_DONOTSAVESTATE) != SPRITE_DONOTSAVESTATE) {
+        SDL_SetRenderDrawBlendMode(renderer2d, prevBlendMode);
+    }
+
+    return result;
 }

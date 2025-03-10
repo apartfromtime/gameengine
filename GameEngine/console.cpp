@@ -112,7 +112,7 @@ void Console::draw()
         return;
     }
 
-    graphics->spriteBegin();
+    graphics->spriteBegin(SPRITE_ALPHABLEND);
 
     // display text on console
     textRect.min[0] = 0;

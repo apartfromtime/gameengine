@@ -49,6 +49,30 @@ const unsigned int MOUSE_R_BUTTON = 0x0004;
 const unsigned int MOUSE_4_BUTTON = 0x0008;
 const unsigned int MOUSE_5_BUTTON = 0x0010;
 
+struct KeyboardState
+{
+    bool keysDown[KEYS_ARRAY_LEN];
+    bool keysPressed[KEYS_ARRAY_LEN];
+};
+
+struct MouseState
+{
+    int mouseX, mouseY;         // mouse screen coordinates
+    int mouseRawX, mouseRawY;           // high-definition mouse data
+    int mouseWheel;         // mouse wheel movement
+    bool mouseCaptured;         // true if mouse captured
+    bool mouseLButtonPressed;           // true if mouse left button down
+    bool mouseMButtonPressed;           // true if mouse middle button down
+    bool mouseRButtonPressed;           // true if mouse right button down
+    bool mouse4ButtonPressed;           // true if mouse 4th button down
+    bool mouse5ButtonPressed;           // true if mouse 5th button down
+    bool mouseLButton;          // true if mouse left button down
+    bool mouseMButton;          // true if mouse middle button down
+    bool mouseRButton;          // true if mouse right button down
+    bool mouse4Button;          // true if mouse 4th button down
+    bool mouse5Button;          // true if mouse 5th button down
+};
+
 struct ControllerState
 {
     SDL_Gamepad*        controller;
