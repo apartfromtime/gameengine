@@ -32,7 +32,7 @@ Graphics::Graphics()
     fullScreenRefreshRateInHz = 0;
     presentationInterval = 0;
     // View
-    viewport3d = Viewport();
+    viewport3d = Viewport3d();
     matrix3d[0] = Matrix4();
     matrix3d[1] = Matrix4();
     matrix3d[2] = Matrix4();
@@ -138,7 +138,7 @@ bool Graphics::initialize(SDL_Window* phwnd, int w, int h, bool full, bool vsync
     }
 
     SDL_GetRenderViewport(renderer2d, &viewport2d);
-    viewport3d = Viewport(viewport2d.x, viewport2d.y, viewport2d.w,
+    viewport3d = Viewport3d(viewport2d.x, viewport2d.y, viewport2d.w,
         viewport2d.h, 0.0f, 1.0f);
 
     SDL_SetRenderDrawBlendMode(renderer2d, SDL_BLENDMODE_BLEND);
@@ -252,7 +252,7 @@ bool Graphics::reset()
     SDL_SetRenderVSync(renderer2d, presentationInterval);
 
     SDL_GetRenderViewport(renderer2d, &viewport2d);
-    viewport3d = Viewport(viewport2d.x, viewport2d.y, viewport2d.w,
+    viewport3d = Viewport3d(viewport2d.x, viewport2d.y, viewport2d.w,
         viewport2d.h, 0.0f, 1.0f);
 
     SDL_SetRenderDrawBlendMode(renderer2d, SDL_BLENDMODE_BLEND);
