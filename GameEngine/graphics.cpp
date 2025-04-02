@@ -138,8 +138,8 @@ bool Graphics::initialize(SDL_Window* phwnd, int w, int h, bool full, bool vsync
     }
 
     SDL_GetRenderViewport(renderer2d, &viewport2d);
-    viewport3d = Viewport3d(viewport2d.x, viewport2d.y, viewport2d.w,
-        viewport2d.h, 0.0f, 1.0f);
+    viewport3d = Viewport3d((float)viewport2d.x, (float)viewport2d.y, (float)viewport2d.w,
+        (float)viewport2d.h, 0.0f, 1.0f);
 
     SDL_SetRenderDrawBlendMode(renderer2d, SDL_BLENDMODE_BLEND);
     SDL_SetRenderScale(renderer2d, 1.0f, 1.0f);
@@ -252,8 +252,8 @@ bool Graphics::reset()
     SDL_SetRenderVSync(renderer2d, presentationInterval);
 
     SDL_GetRenderViewport(renderer2d, &viewport2d);
-    viewport3d = Viewport3d(viewport2d.x, viewport2d.y, viewport2d.w,
-        viewport2d.h, 0.0f, 1.0f);
+    viewport3d = Viewport3d((float)viewport2d.x, (float)viewport2d.y, (float)viewport2d.w,
+        (float)viewport2d.h, 0.0f, 1.0f);
 
     SDL_SetRenderDrawBlendMode(renderer2d, SDL_BLENDMODE_BLEND);
 
@@ -488,10 +488,10 @@ bool Graphics::lockRect(LP_TEXTURE& texture, LOCKED_RECT* pLockedRect,
 
     if (pRect != NULL)
     {
-        rect.x = pRect->min[0];
-        rect.y = pRect->min[1];
-        rect.w = pRect->max[0] - pRect->min[0];
-        rect.h = pRect->max[1] - pRect->min[1];
+        rect.x = (int)pRect->min.x;
+        rect.y = (int)pRect->min.y;
+        rect.w = (int)pRect->max.x - (int)pRect->min.x;
+        rect.h = (int)pRect->max.y - (int)pRect->min.y;
     }
 
     if (SDL_LockTexture(texture, &rect, &pLockedRect->pBits,
@@ -736,10 +736,10 @@ bool Graphics::drawTetxuredQuad(SDL_Texture* pTexture, const rect_t* pSrcRect,
     SDL_GetTextureSize(pTexture, &tw, &th);
 
     if (pSrcRect != NULL) {
-        rect = Rectangle(pSrcRect->min[0], pSrcRect->min[1],
-            pSrcRect->max[0], pSrcRect->max[1]);
+        rect = Rectangle(pSrcRect->min.x, pSrcRect->min.y,
+            pSrcRect->max.x, pSrcRect->max.y);
     } else {
-        rect = Rectangle(0, 0, (long)tw, (long)th);
+        rect = Rectangle(0.0f, 0.0f, tw, th);
     }
 
     if (pPosition != NULL) {
@@ -754,8 +754,8 @@ bool Graphics::drawTetxuredQuad(SDL_Texture* pTexture, const rect_t* pSrcRect,
         z0 = z0 - pCenter->z;
     }
 
-    x1 = x0 + (float)(rect.max[0] - rect.min[0]);
-    y1 = y0 + (float)(rect.max[1] - rect.min[1]);
+    x1 = x0 + (float)(rect.max.x - rect.min.x);
+    y1 = y0 + (float)(rect.max.y - rect.min.y);
 
     // world, view and projection transform
     vector4_t v0 = Vector4(x0, y0, z0, 1.0f);
@@ -772,10 +772,10 @@ bool Graphics::drawTetxuredQuad(SDL_Texture* pTexture, const rect_t* pSrcRect,
 
     const float s = 1.0f / tw;
     const float t = 1.0f / th;
-    const float s1 = s * (float)(rect.max[0]);
-    const float t1 = t * (float)(rect.max[1]);
-    const float s0 = s * (float)(rect.min[0]);
-    const float t0 = t * (float)(rect.min[1]);
+    const float s1 = s * (float)(rect.max.x);
+    const float t1 = t * (float)(rect.max.y);
+    const float s0 = s * (float)(rect.min.x);
+    const float t0 = t * (float)(rect.min.y);
 
     SDL_FColor c = {
         Color.r,

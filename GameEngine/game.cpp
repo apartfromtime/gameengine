@@ -18,7 +18,7 @@ Game::Game()
     // Time
     fps = 100;
     // View
-    viewport3d = Viewport();
+    viewport3d = Viewport3d();
     wrldMatrix = Matrix4();
     viewMatrix = Matrix4();
     projMatrix = Matrix4();
@@ -272,8 +272,8 @@ void Game::renderGame()
         {
             // convert fps to string
             _snprintf_s(buffer, gameNS::BUF_SIZE, "fps %d ", (int)fps);
-            font.print(buffer, (viewport3d.w - viewport3d.x) - 100,
-                (viewport3d.h - viewport3d.y) - 28);
+            font.print(buffer, (int)(viewport3d.w - viewport3d.x) - 100,
+                (int)(viewport3d.h - viewport3d.y) - 28);
         }
 
         graphics->spriteEnd();

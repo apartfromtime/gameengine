@@ -52,10 +52,10 @@ void InputDialog::prepareVerts()
     inTextVerts[3].y = inTextVerts[2].y;
 
     // set inTextRect
-    inTextRect.min[0] = (long)inTextVerts[0].x;
-    inTextRect.max[0] = (long)inTextVerts[2].x;
-    inTextRect.min[1] = (long)inTextVerts[0].y;
-    inTextRect.max[1] = (long)inTextVerts[2].y;
+    inTextRect.min.x = inTextVerts[0].x;
+    inTextRect.max.x = inTextVerts[2].x;
+    inTextRect.min.y = inTextVerts[0].y;
+    inTextRect.max.y = inTextVerts[2].y;
 }
 
 //=============================================================================
@@ -100,11 +100,11 @@ const void InputDialog::draw()
     // display input text
     font.setFontColor(textFontColor);
     tempRect = inTextRect;          // save
-    // No text is printed with CALDRECT option. It moves rect.max[0]
+    // No text is printed with CALDRECT option. It moves rect.max.x
     font.print(textIn, tempRect, ALIGNMENT::SINGLELINE | ALIGNMENT::LEFT |
         ALIGNMENT::VCENTER | ALIGNMENT::CALCRECT);
 
-    if (tempRect.max[0] > inTextRect.max[0])            // if text too long, right justify
+    if (tempRect.max.x > inTextRect.max.x)            // if text too long, right justify
     {
         font.print(textIn, inTextRect, ALIGNMENT::SINGLELINE | ALIGNMENT::RIGHT |
             ALIGNMENT::VCENTER);
@@ -215,24 +215,24 @@ void InputDialog::print(const std::string& str, rect_t& rect, unsigned int forma
         return;
     }
 
-    offset.x = (float)(rect.min[0]);
-    offset.y = (float)(rect.min[1]);
-    extent.x = (float)(rect.max[0] - rect.min[0]);
-    extent.y = (float)(rect.max[1] - rect.min[1]);
+    offset.x = (float)(rect.min.x);
+    offset.y = (float)(rect.min.y);
+    extent.x = (float)(rect.max.x - rect.min.x);
+    extent.y = (float)(rect.max.y - rect.min.y);
 
     text = str + "\n\n\n\n\n";          // leave some room for input text and buttons
 
     // set textRect to text area of dialog
-    textRect.min[0] = (long)(offset.x + m);
-    textRect.max[0] = (long)((offset.x + extent.x) - m);
-    textRect.min[1] = (long)(offset.y + m);
-    textRect.max[1] = (long)((offset.y + extent.y) - m);
+    textRect.min.x = (offset.x + m);
+    textRect.max.x = ((offset.x + extent.x) - m);
+    textRect.min.y = (offset.y + m);
+    textRect.max.y = ((offset.y + extent.y) - m);
 
-    // set textRect.max[1] to precise height required for text
+    // set textRect.max.y to precise height required for text
     // no text is printed with CALDRECT option.
     this->format = format;
     font.print(text, textRect, format | ALIGNMENT::CALCRECT);
-    extent.y = (textRect.max[1] - textRect.min[1]) - (float)(b + m);
+    extent.y = (textRect.max.y - textRect.min.y) - (float)(b + m);
 
     InputDialog::prepareVerts();
 
@@ -249,10 +249,10 @@ void InputDialog::print(const std::string& str, int x, int y)
 {
     rect_t rect = {};            // text rectangle
 
-    rect.min[0] = (long)(x);
-    rect.max[0] = (long)(x + messageDialogNS::W);
-    rect.min[1] = (long)(y);
-    rect.max[1] = (long)(y + messageDialogNS::H);
+    rect.min.x = (float)(x);
+    rect.max.x = (float)(x + messageDialogNS::W);
+    rect.min.y = (float)(y);
+    rect.max.y = (float)(y + messageDialogNS::H);
 
     InputDialog::print(str, rect, ALIGNMENT::HCENTER | ALIGNMENT::WORDBOUNDS);
 }
@@ -266,14 +266,12 @@ void InputDialog::print(const std::string& str)
 
     viewport3d = graphics->get3DViewport();
 
-    rect.min[0] = (long)((float)((viewport3d.w - viewport3d.x) / 2) -
-        (float)(messageDialogNS::X));
-    rect.max[0] = (long)((float)((viewport3d.w - viewport3d.x) / 2) -
-        (float)(messageDialogNS::X)+messageDialogNS::W);
-    rect.min[1] = (long)((float)((viewport3d.h - viewport3d.y) / 4) -
-        (float)(messageDialogNS::Y));
-    rect.max[1] = (long)((float)((viewport3d.h - viewport3d.y) / 4) -
-        (float)(messageDialogNS::Y)+messageDialogNS::H);
+    rect.min.x = (((viewport3d.w - viewport3d.x) / 2) - (messageDialogNS::X));
+    rect.max.x = (((viewport3d.w - viewport3d.x) / 2) - (messageDialogNS::X) +
+        messageDialogNS::W);
+    rect.min.y = (((viewport3d.h - viewport3d.y) / 4) - (messageDialogNS::Y));
+    rect.max.y = (((viewport3d.h - viewport3d.y) / 4) - (messageDialogNS::Y) +
+        messageDialogNS::H);
 
     InputDialog::print(str, rect, ALIGNMENT::HCENTER | ALIGNMENT::WORDBOUNDS);
 }

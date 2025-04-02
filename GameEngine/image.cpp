@@ -28,10 +28,10 @@ Image::Image()
     spriteData.depth = 1.0f;
     spriteData.scale = 1.0f;
     spriteData.angle = 0.0f;
-    spriteData.rect.min[0] = 0;
-    spriteData.rect.min[1] = 0;
-    spriteData.rect.max[1] = spriteData.w;
-    spriteData.rect.max[1] = spriteData.h;
+    spriteData.rect.min.x = 0;
+    spriteData.rect.min.y = 0;
+    spriteData.rect.max.y = (float)spriteData.w;
+    spriteData.rect.max.y = (float)spriteData.h;
     spriteData.texture = NULL;
     cols = 1;
     rows = 1;
@@ -352,10 +352,10 @@ void Image::setCurrentFrame(int c)
 //=============================================================================
 inline void Image::setRect()
 {
-    spriteData.rect.min[0] = (currentFrame % cols) * spriteData.w;
-    spriteData.rect.max[0] = spriteData.w;
-    spriteData.rect.min[1] = (currentFrame / rows) * spriteData.h;
-    spriteData.rect.max[1] = spriteData.h;
+    spriteData.rect.min.x = (float)(currentFrame % cols) * spriteData.w;
+    spriteData.rect.max.x = (float)spriteData.w;
+    spriteData.rect.min.y = (float)(currentFrame / rows) * spriteData.h;
+    spriteData.rect.max.y = (float)spriteData.h;
 }
 
 //=============================================================================

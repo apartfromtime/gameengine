@@ -34,10 +34,10 @@ Entity::Entity()
     collisionCenter = Vector2();
     minOverlap = 1.0f;
     radius = (entityNS::W + entityNS::H) / 4;
-    edge.min[0] = -(long)(entityNS::W / 2.0f);
-    edge.min[1] = -(long)(entityNS::H / 2.0f);
-    edge.max[0] =  (long)(entityNS::W / 2.0f);
-    edge.max[1] =  (long)(entityNS::H / 2.0f);
+    edge.min.x = -(entityNS::W / 2.0f);
+    edge.min.y = -(entityNS::H / 2.0f);
+    edge.max.x =  (entityNS::W / 2.0f);
+    edge.max.y =  (entityNS::H / 2.0f);
     rotatedBoxReady = false;
     intersecting = false;
     collision = false;
@@ -722,10 +722,10 @@ void Entity::ai(float frameTime, Entity& ent)
 //=============================================================================
 bool Entity::outsideRect(rect_t rect) const
 {
-    if (curX + (edge.max[0]) * getScale() < rect.min[0] ||
-        curX - (edge.min[0]) * getScale() > rect.max[0] ||
-        curY + (edge.max[1]) * getScale() < rect.min[1] ||
-        curY - (edge.min[1]) * getScale() > rect.max[1])
+    if (curX + (edge.max.x) * getScale() < rect.min.x ||
+        curX - (edge.min.x) * getScale() > rect.max.x ||
+        curY + (edge.max.y) * getScale() < rect.min.y ||
+        curY - (edge.min.y) * getScale() > rect.max.y)
     {
         return true;
     }
@@ -859,14 +859,14 @@ static void computeRotatedBox(Entity& ent)
     const vector2_t center = ent.getCenter();
     vector2_t corner[4] = { 0 };          // for ROTATED_BOX collision detection
 
-    corner[0] = AddVector2(center, AddVector2(ScaleVector2(rotatedX, ((float)bbox.min[0] * scale)),
-        ScaleVector2(rotatedY, ((float)bbox.min[1] * scale))));
-    corner[1] = AddVector2(center, AddVector2(ScaleVector2(rotatedX, ((float)bbox.max[0] * scale)),
-        ScaleVector2(rotatedY, ((float)bbox.min[1] * scale))));
-    corner[2] = AddVector2(center, AddVector2(ScaleVector2(rotatedX, ((float)bbox.max[0] * scale)),
-        ScaleVector2(rotatedY, ((float)bbox.max[1] * scale))));
-    corner[3] = AddVector2(center, AddVector2(ScaleVector2(rotatedX, ((float)bbox.min[0] * scale)),
-        ScaleVector2(rotatedY, ((float)bbox.max[1] * scale))));
+    corner[0] = AddVector2(center, AddVector2(ScaleVector2(rotatedX, ((float)bbox.min.x * scale)),
+        ScaleVector2(rotatedY, ((float)bbox.min.y * scale))));
+    corner[1] = AddVector2(center, AddVector2(ScaleVector2(rotatedX, ((float)bbox.max.x * scale)),
+        ScaleVector2(rotatedY, ((float)bbox.min.y * scale))));
+    corner[2] = AddVector2(center, AddVector2(ScaleVector2(rotatedX, ((float)bbox.max.x * scale)),
+        ScaleVector2(rotatedY, ((float)bbox.max.y * scale))));
+    corner[3] = AddVector2(center, AddVector2(ScaleVector2(rotatedX, ((float)bbox.min.x * scale)),
+        ScaleVector2(rotatedY, ((float)bbox.max.y * scale))));
 
     ent.setCorner(corner[0], 0);
     ent.setCorner(corner[1], 1);
@@ -934,10 +934,10 @@ static bool collideBox(Entity& ent0, Entity& ent1, vector2_t& collisionVector)
     float ent1Scale = ent1.getScale();
 
     // Check for collision using Axis Aligned Bounding Box.
-    if ((ent0Center.x + ent0Edge.max[0] * ent0Scale >= ent1Center.x + ent1Edge.min[0] * ent1Scale) &&
-        (ent0Center.x + ent0Edge.min[0] * ent0Scale <= ent1Center.x + ent1Edge.max[0] * ent1Scale) &&
-        (ent0Center.y + ent0Edge.max[1] * ent0Scale >= ent1Center.y + ent1Edge.min[1] * ent1Scale) &&
-        (ent0Center.y + ent0Edge.min[1] * ent0Scale <= ent1Center.y + ent1Edge.max[1] * ent1Scale))
+    if ((ent0Center.x + ent0Edge.max.x * ent0Scale >= ent1Center.x + ent1Edge.min.x * ent1Scale) &&
+        (ent0Center.x + ent0Edge.min.x * ent0Scale <= ent1Center.x + ent1Edge.max.x * ent1Scale) &&
+        (ent0Center.y + ent0Edge.max.y * ent0Scale >= ent1Center.y + ent1Edge.min.y * ent1Scale) &&
+        (ent0Center.y + ent0Edge.min.y * ent0Scale <= ent1Center.y + ent1Edge.max.y * ent1Scale))
     {
         // If we get to here the entities are colliding. The edge with the smallest
         // overlapping section is the edge where the collision is occurring.
@@ -949,21 +949,21 @@ static bool collideBox(Entity& ent0, Entity& ent1, vector2_t& collisionVector)
 
         if (ent0Center.x < ent1Center.x)          // if this entity left of other entity
         {
-            overlapX = (ent0Center.x + ent0Edge.max[0] * ent0Scale) -
-                (ent1Center.x + ent1Edge.min[0] * ent1Scale);
+            overlapX = (ent0Center.x + ent0Edge.max.x * ent0Scale) -
+                (ent1Center.x + ent1Edge.min.x * ent1Scale);
             collisionVector = Vector2(-overlapX, 0);            // collison vector points left
         }
         else            // this entity right of other entity
         {
-            overlapX = (ent1Center.x + ent1Edge.max[0] * ent1Scale) -
-                (ent0Center.x + ent0Edge.min[0] * ent0Scale);
+            overlapX = (ent1Center.x + ent1Edge.max.x * ent1Scale) -
+                (ent0Center.x + ent0Edge.min.x * ent0Scale);
             collisionVector = Vector2(overlapX, 0);         // collison vector points right
         }
 
         if (ent0Center.y < ent1Center.y)          // if this entity above other entity
         {
-            overlapY = (ent0Center.y + ent0Edge.max[1] * ent0Scale) -
-                (ent1Center.y + ent1Edge.min[1] * ent1Scale);
+            overlapY = (ent0Center.y + ent0Edge.max.y * ent0Scale) -
+                (ent1Center.y + ent1Edge.min.y * ent1Scale);
 
             if (overlapY < overlapX)            // if Y overlap is smaller
             {
@@ -972,8 +972,8 @@ static bool collideBox(Entity& ent0, Entity& ent1, vector2_t& collisionVector)
         }
         else            // this entity below other entity
         {
-            overlapY = (ent1Center.y + ent1Edge.max[1] * ent1Scale) -
-                (ent0Center.y + ent0Edge.min[1] * ent0Scale);
+            overlapY = (ent1Center.y + ent1Edge.max.y * ent1Scale) -
+                (ent0Center.y + ent0Edge.min.y * ent0Scale);
 
             if (overlapY < overlapX)            // if Y overlap is smaller
             {

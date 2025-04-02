@@ -19,10 +19,10 @@ Console::Console()
     b = consoleNS::BORDER;
     m = consoleNS::MARGIN;
 
-    textRect.max[1] = (int)((y + h) - m);
-    textRect.min[0] = (int)(x + m);
-    textRect.max[0] = (int)((x + w) - m);
-    textRect.min[1] = (int)(y + m);
+    textRect.max.y = (y + h) - m;
+    textRect.max.x = (x + w) - m;
+    textRect.min.x = (x + m);
+    textRect.min.y = (y + m);
 
     SDL_memset(&vtx, 0, 4 * sizeof(vector4_t));
 
@@ -115,31 +115,31 @@ void Console::draw()
     graphics->spriteBegin(SPRITE_ALPHABLEND);
 
     // display text on console
-    textRect.min[0] = 0;
-    textRect.min[1] = 0;
+    textRect.min.x = 0;
+    textRect.min.y = 0;
 
     // set text display rect for one row
-    textRect.min[0] = (long)(x + m);
-    textRect.max[0] = (long)(x + (w - m));
+    textRect.min.x = (x + m);
+    textRect.max.x = (x + (w - m));
     // -2*rowHeight is room for input prompt
-    textRect.max[1] = (long)(y + ((h - (2 * m)) - (2 * rowH)));
-    textRect.min[1] = (long)(textRect.max[1] - rowH);
+    textRect.max.y = (y + ((h - (2 * m)) - (2 * rowH)));
+    textRect.min.y = (textRect.max.y - rowH);
 
     // for all rows (max text.size()) from bottom to top
     for (int r = scrollAmount; r < rows + scrollAmount && r < (int)(text.size()); r++)
     {
         // set text display rect top for this row
-        textRect.min[1] = (long)(textRect.max[1] - rowH);
+        textRect.min.y = (textRect.max.y - rowH);
         // display one row of text
         font.print(text[r], textRect, ALIGNMENT::LEFT);
         // adjust text display rect bottom for next row
-        textRect.max[1] -= rowH;
+        textRect.max.y -= rowH;
     }
 
     // display command prompt and current command string
     // set text display rect for prompt
-    textRect.max[1] = (long)(y + (h - m));
-    textRect.min[1] = (long)(textRect.max[1] - rowH);
+    textRect.max.y = (y + (h - m));
+    textRect.min.y = (textRect.max.y - rowH);
     std::string prompt = ">";           // build prompt string
     prompt += textIn;
     font.print(prompt, textRect, ALIGNMENT::LEFT);         // display prompt and command

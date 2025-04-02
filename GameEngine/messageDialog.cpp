@@ -9,7 +9,7 @@ MessageDialog::MessageDialog()
     graphics = NULL;
     input = NULL;
     // View
-    viewport3d = Viewport();
+    viewport3d = Viewport3d();
     // Dialog
     offset.x = messageDialogNS::X;
     offset.y = messageDialogNS::Y;
@@ -127,10 +127,10 @@ void MessageDialog::prepareVerts()
     button1Verts[3].y = button1Verts[2].y;
 
     // set buttonRect
-    button1Rect.min[0] = (long)button1Verts[0].x;
-    button1Rect.max[0] = (long)button1Verts[2].x;
-    button1Rect.min[1] = (long)button1Verts[0].y;
-    button1Rect.max[1] = (long)button1Verts[2].y;
+    button1Rect.min.x = button1Verts[0].x;
+    button1Rect.max.x = button1Verts[2].x;
+    button1Rect.min.y = button1Verts[0].y;
+    button1Rect.max.y = button1Verts[2].y;
 
     // button2 top left
     button2Verts[0].x = offset.x + extent.x - messageDialogNS::BUTTON_WIDTH * 1.2f;
@@ -149,10 +149,10 @@ void MessageDialog::prepareVerts()
     button2Verts[3].y = button2Verts[2].y;
 
     // set button2Rect
-    button2Rect.min[0] = (long)button2Verts[0].x;
-    button2Rect.max[0] = (long)button2Verts[2].x;
-    button2Rect.min[1] = (long)button2Verts[0].y;
-    button2Rect.max[1] = (long)button2Verts[2].y;
+    button2Rect.min.x = button2Verts[0].x;
+    button2Rect.max.x = button2Verts[2].x;
+    button2Rect.min.y = button2Verts[0].y;
+    button2Rect.max.y = button2Verts[2].y;
 }
 
 //=============================================================================
@@ -303,10 +303,10 @@ void MessageDialog::update()
     if (input->getMouseLButton() == true && input->wasMouseButtonPressed(MOUSE_L_BUTTON) == true)
     {
         // if mouse clicked inside button1 (OK)
-        if (input->getMouseX() * screenRatioX >= button1Rect.min[0] &&
-            input->getMouseX() * screenRatioX <= button1Rect.max[0] &&
-            input->getMouseY() * screenRatioY >= button1Rect.min[1] &&
-            input->getMouseY() * screenRatioY <= button1Rect.max[1])
+        if (input->getMouseX() * screenRatioX >= button1Rect.min.x &&
+            input->getMouseX() * screenRatioX <= button1Rect.max.x &&
+            input->getMouseY() * screenRatioY >= button1Rect.min.y &&
+            input->getMouseY() * screenRatioY <= button1Rect.max.y)
         {
             visible = false;            // hide message dialog
             buttonClicked = 1;          // button1 was clicked
@@ -314,10 +314,10 @@ void MessageDialog::update()
         }
 
         // if mouse clicked inside button2 (cancel)
-        if (input->getMouseX() * screenRatioX >= button2Rect.min[0] &&
-            input->getMouseX() * screenRatioX <= button2Rect.max[0] &&
-            input->getMouseY() * screenRatioY >= button2Rect.min[1] &&
-            input->getMouseY() * screenRatioY <= button2Rect.max[1])
+        if (input->getMouseX() * screenRatioX >= button2Rect.min.x &&
+            input->getMouseX() * screenRatioX <= button2Rect.max.x &&
+            input->getMouseY() * screenRatioY >= button2Rect.min.y &&
+            input->getMouseY() * screenRatioY <= button2Rect.max.y)
         {
             visible = false;            // hide message dialog
             buttonClicked = 2;          // button2 was clicked
@@ -354,24 +354,24 @@ void MessageDialog::print(const std::string& str, rect_t& rect, unsigned int for
         return;
     }
 
-    offset.x = (float)(rect.min[0]);
-    offset.y = (float)(rect.min[1]);
-    extent.x = (float)(rect.max[0] - rect.min[0]);
-    extent.y = (float)(rect.max[1] - rect.min[1]);
+    offset.x = rect.min.x;
+    offset.y = rect.min.y;
+    extent.x = rect.max.x - rect.min.x;
+    extent.y = rect.max.y - rect.min.y;
 
     text = str + "\n\n\n\n";        // leave some room for buttons
 
     // Set textRect to text area of dialog
-    textRect.min[0] = (long)(offset.x + m);
-    textRect.max[0] = (long)((offset.x + extent.x) - m);
-    textRect.min[1] = (long)(offset.y + m);
-    textRect.max[1] = (long)((offset.y + extent.y) - m);
+    textRect.min.x = offset.x + m;
+    textRect.max.x = (offset.x + extent.x) - m;
+    textRect.min.y = offset.y + m;
+    textRect.max.y = (offset.y + extent.y) - m;
 
-    // set rect.min[1] to precise height required for text
+    // set rect.min.y to precise height required for text
     // no text is printed with CALDRECT option.
     this->format = format;
     font.print(text, textRect, format | ALIGNMENT::CALCRECT);
-    extent.y = (textRect.max[1] - textRect.min[1]) - (float)(b + m);
+    extent.y = (textRect.max.y - textRect.min.y) - (b + m);
 
     prepareVerts();
 
@@ -387,10 +387,10 @@ void MessageDialog::print(const std::string& str, int x, int y)
 {
     rect_t rect = {};            // text rectangle
 
-    rect.min[0] = (long)(x);
-    rect.max[0] = (long)(x + messageDialogNS::W);
-    rect.min[1] = (long)(y);
-    rect.max[1] = (long)(y + messageDialogNS::H);
+    rect.min.x = (float)(x);
+    rect.max.x = (float)(x + messageDialogNS::W);
+    rect.min.y = (float)(y);
+    rect.max.y = (float)(y + messageDialogNS::H);
 
     MessageDialog::print(str, rect, ALIGNMENT::HCENTER | ALIGNMENT::WORDBOUNDS);
 }
@@ -404,14 +404,12 @@ void MessageDialog::print(const std::string& str)
 
     viewport3d = graphics->get3DViewport();
 
-    rect.min[0] = (long)((float)((viewport3d.w - viewport3d.x) / 2) -
-        (float)(messageDialogNS::X));
-    rect.max[0] = (long)((float)((viewport3d.w - viewport3d.x) / 2) -
-        (float)(messageDialogNS::X)+ messageDialogNS::W);
-    rect.min[1] = (long)((float)((viewport3d.h - viewport3d.y) / 4) -
-        (float)(messageDialogNS::Y));
-    rect.max[1] = (long)((float)((viewport3d.h - viewport3d.y) / 4) -
-        (float)(messageDialogNS::Y)+ messageDialogNS::H);
+    rect.min.x = (((viewport3d.w - viewport3d.x) / 2) - (messageDialogNS::X));
+    rect.max.x = (((viewport3d.w - viewport3d.x) / 2) - (messageDialogNS::X) +
+        messageDialogNS::W);
+    rect.min.y = (((viewport3d.h - viewport3d.y) / 4) - (messageDialogNS::Y));
+    rect.max.y = (((viewport3d.h - viewport3d.y) / 4) - (messageDialogNS::Y) +
+        messageDialogNS::H);
 
     MessageDialog::print(str, rect, ALIGNMENT::HCENTER | ALIGNMENT::WORDBOUNDS);
 }

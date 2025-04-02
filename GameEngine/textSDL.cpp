@@ -8,7 +8,7 @@ TextSDL::TextSDL()
     // System
     graphics = NULL;
     // View
-    viewport3d = Viewport();
+    viewport3d = Viewport3d();
     // Font
     font = NULL;
     fontName = "";
@@ -90,10 +90,10 @@ int TextSDL::print(const std::string& str, int x, int y)
     graphics->setTransform(matrix, TRANSFORMTYPE_TRANSFORM);
 
     viewport3d = graphics->get3DViewport();
-    rect.min[0] = x;
-    rect.min[1] = y;
-    rect.max[0] = (viewport3d.w - viewport3d.x);
-    rect.max[1] = (viewport3d.h - viewport3d.y);
+    rect.min.x = (float)x;
+    rect.min.y = (float)y;
+    rect.max.x = (viewport3d.w - viewport3d.x);
+    rect.max.y = (viewport3d.h - viewport3d.y);
 
     return font->DrawText(graphics, str.c_str(), (int)str.length(),
         &rect, format, fontColor);

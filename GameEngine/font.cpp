@@ -13,7 +13,7 @@ struct FontBase : public Font
 public:
     FontBase() noexcept;
     FontBase(SDL_Renderer* pRenderer, SDL_Surface* pSurface, SDL_Texture* pTexture,
-        rect_t* pMetrics, int* pAdvance, int cellWidth, int cellHeight,
+        SDL_Rect* pMetrics, int* pAdvance, int cellWidth, int cellHeight,
         unsigned int tabSize, bool proportional) noexcept;
     ~FontBase();
     int DrawText(Graphics* pGraphics, const char* pString, int Count,
@@ -24,7 +24,7 @@ private:
     SDL_Renderer* renderer2d;
     SDL_Surface* surface;
     SDL_Texture* texture;
-    rect_t* metrics;
+    SDL_Rect* metrics;
     int* advance;
     int cellW;
     int cellH;
@@ -75,7 +75,7 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
     TTF_SetFontStyle(font, weight);
     bool proportional = !TTF_FontIsFixedWidth(font);
 
-    rect_t* metrics = (rect_t*)SDL_malloc(GRID_R * GRID_C * sizeof(rect_t));
+    SDL_Rect* metrics = (SDL_Rect*)SDL_malloc(GRID_R * GRID_C * sizeof(SDL_Rect));
     int* advance = (int*)SDL_malloc(GRID_R * GRID_C * sizeof(int));
 
     if (metrics == NULL)
@@ -93,7 +93,7 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
         return false;
     }
 
-    SDL_memset(metrics, 0, GRID_C * GRID_R * sizeof(rect_t));
+    SDL_memset(metrics, 0, GRID_C * GRID_R * sizeof(SDL_Rect));
     SDL_memset(advance, 0, GRID_C * GRID_R * sizeof(int   ));
 
     int cellW = 0;
@@ -109,13 +109,13 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
             {
                 int index = row * GRID_C + col;
                 if (TTF_GetGlyphMetrics(font, ch,
-                    (int*)&metrics[index].min[0],
-                    (int*)&metrics[index].max[0],
-                    (int*)&metrics[index].min[1],
-                    (int*)&metrics[index].max[1],
+                    (int*)&metrics[index].x,
+                    (int*)&metrics[index].w,
+                    (int*)&metrics[index].y,
+                    (int*)&metrics[index].h,
                     &advance[index]) == true)
                 {
-                    const int w = (metrics[index].max[0] - metrics[index].min[0]);
+                    const int w = (int)(metrics[index].w - metrics[index].x);
                     if (cellW < w)
                     {
                         cellW = w;
@@ -239,7 +239,7 @@ FontBase::FontBase() noexcept
 }
 
 FontBase::FontBase(SDL_Renderer* pRenderer2d, SDL_Surface* pSurface,
-    SDL_Texture* pTexture, rect_t* pMetrics, int* pAdvance, int cellWidth,
+    SDL_Texture* pTexture, SDL_Rect* pMetrics, int* pAdvance, int cellWidth,
     int cellHeight, unsigned int tabSize, bool proportional) noexcept
     : renderer2d(pRenderer2d), surface(pSurface), texture(pTexture),
     metrics(pMetrics), advance(pAdvance), cellW(cellWidth), cellH(cellHeight),
@@ -289,8 +289,8 @@ int FontBase::DrawText(Graphics* pGraphics, const char* pString, int Count,
     int offset = 0;
     int extent = 0;
     int lineNum = (str != "") ? 1 : 0;
-    int rectW = pRect->max[0] - pRect->min[0];
-    int rectH = pRect->max[1] - pRect->min[1];
+    int rectW = (int)(pRect->max.x - pRect->min.x);
+    int rectH = (int)(pRect->max.y - pRect->min.y);
     int saveW = 0;
     int lineW = 0;
     int lineH = cellH;
@@ -633,8 +633,8 @@ int FontBase::DrawText(Graphics* pGraphics, const char* pString, int Count,
     // calculate rectangle
     if ((Format & CALCRECT) == CALCRECT)
     {
-        pRect->max[0] = pRect->min[0] + strW;
-        pRect->max[1] = pRect->min[1] + strH;
+        pRect->max.x = pRect->min.x + strW;
+        pRect->max.y = pRect->min.y + strH;
 
         return strH;
     }
@@ -643,16 +643,16 @@ int FontBase::DrawText(Graphics* pGraphics, const char* pString, int Count,
     offset = 0;
     extent = 0;
 
-    t = static_cast<float>(pRect->min[1]);
+    t = static_cast<float>(pRect->min.y);
 
     if ((Format & VCENTER) == VCENTER)
     {
-        t = (float)((pRect->min[1] + pRect->max[1]) - lineH) / 2.0f;
+        t = (float)((pRect->min.y + pRect->max.y) - lineH) / 2.0f;
         t = ceilf(t);
     }
     else if ((Format & BOTTOM) == BOTTOM)
     {
-        t = (float)(pRect->max[1] - lineH);
+        t = (float)(pRect->max.y - lineH);
     }
 
     while (offset < str2.length())
@@ -735,16 +735,13 @@ int FontBase::DrawText(Graphics* pGraphics, const char* pString, int Count,
             }
         }
 
-        l = static_cast<float>(pRect->min[0]);
+        l = static_cast<float>(pRect->min.x);
 
-        if ((Format & HCENTER) == HCENTER)
-        {
-            l = (float)((pRect->min[0] + pRect->max[0]) - lineW) / 2.0f;
+        if ((Format & HCENTER) == HCENTER) {
+            l = (float)((pRect->min.x + pRect->max.x) - lineW) / 2.0f;
             l = ceilf(l);
-        }
-        else if ((Format & RIGHT) == RIGHT)
-        {
-            l = (float)(pRect->max[0] - lineW);
+        } else if ((Format & RIGHT) == RIGHT) {
+            l = (float)(pRect->max.x - lineW);
             l = ceilf(l);
         }
 
@@ -755,26 +752,26 @@ int FontBase::DrawText(Graphics* pGraphics, const char* pString, int Count,
             if (ch > MIN_CHAR && ch <= MAX_CHAR)            // displayable character
             {
                 chN = ch - MIN_CHAR;            // make min_char index 0
-                sprRect.min[1] = (chN >> 4) * cellH;
-                sprRect.max[1] = sprRect.min[1] + cellH;
+                sprRect.min.y = (float)((chN >> 4) * cellH);
+                sprRect.max.y = (float)(sprRect.min.y + cellH);
 
                 if (proportional)
                 {
-                    sprRect.min[0] = ((chN % GRID_C) * cellW) +
-                        metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].min[0];
-                    sprRect.max[0] = ((chN % GRID_C) * cellW) +
-                        metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].max[0] + 1;
+                    sprRect.min.x = (float)((chN % GRID_C) * cellW) +
+                        metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].x;
+                    sprRect.max.x = (float)((chN % GRID_C) * cellW) +
+                        metrics[((chN >> 4) * GRID_C) + (chN % GRID_C)].w + 1;
                     charW = advance[((chN >> 4) * GRID_C) + (chN % GRID_C)] + 1;
                 }
                 else            // fixed pitch
                 {
                     charW = cellW;
-                    sprRect.min[0] = (chN % GRID_C) * cellW;
-                    sprRect.max[0] = sprRect.min[0] + cellW;
+                    sprRect.min.x = (float)((chN % GRID_C) * cellW);
+                    sprRect.max.x = (float)(sprRect.min.x + cellW);
                 }
 
-                if (l + x >= pRect->min[0] && l + x < pRect->max[0] &&
-                    t + y >= pRect->min[1] && t + y < pRect->max[1])
+                if (l + x >= pRect->min.x && l + x < pRect->max.x &&
+                    t + y >= pRect->min.y && t + y < pRect->max.y)
                 {
                     pGraphics->drawTetxuredQuad(texture, &sprRect, NULL,
                         &Vector3(l + x, t + y, 1.0f), Color);
