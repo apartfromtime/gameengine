@@ -216,7 +216,7 @@ bool MessageDialog::getVisible() const
 //=============================================================================
 // Set font color
 //=============================================================================
-void MessageDialog::setFontColor(color_t fc)
+void MessageDialog::setFontColor(vector4_t fc)
 {
     fontColor = fc;
 }
@@ -224,7 +224,7 @@ void MessageDialog::setFontColor(color_t fc)
 //=============================================================================
 // Set border color
 //=============================================================================
-void MessageDialog::setBorderColor(color_t bc)
+void MessageDialog::setBorderColor(vector4_t bc)
 {
     borderColor = bc;
 }
@@ -232,7 +232,7 @@ void MessageDialog::setBorderColor(color_t bc)
 //=============================================================================
 // Set background color
 //=============================================================================
-void MessageDialog::setBackColor(color_t bc)
+void MessageDialog::setBackColor(vector4_t bc)
 {
     backColor = bc;
 }
@@ -240,7 +240,7 @@ void MessageDialog::setBackColor(color_t bc)
 //=============================================================================
 // Set button color
 //=============================================================================
-void MessageDialog::setButtonColor(color_t bc)
+void MessageDialog::setButtonColor(vector4_t bc)
 {
     buttonColor = bc;
 }
@@ -248,7 +248,7 @@ void MessageDialog::setButtonColor(color_t bc)
 //=============================================================================
 // Set buitton font color
 //=============================================================================
-void MessageDialog::setButtonFontColor(color_t bfc)
+void MessageDialog::setButtonFontColor(vector4_t bfc)
 {
     buttonFontColor = bfc;
 }

@@ -140,7 +140,7 @@ float Image::getCenterY() const
 //=============================================================================
 float Image::getDegrees() const
 {
-    return spriteData.angle * (180.0f / (float)M_PI);
+    return spriteData.angle * (180.0f / (float)G_PI);
 }
 
 //=============================================================================
@@ -202,7 +202,7 @@ bool Image::getAnimationComplete() const
 //=============================================================================
 // Return colorFilter.
 //=============================================================================
-color_t Image::getColorFilter() const
+vector4_t Image::getColorFilter() const
 {
     return colorFilter;
 }
@@ -297,7 +297,7 @@ void Image::setCenterY(float newY)
 //=============================================================================
 void Image::setDegrees(float deg)
 {
-    spriteData.angle = deg * ((float)M_PI / 180.0f);
+    spriteData.angle = deg * ((float)G_PI / 180.0f);
 }
 
 //=============================================================================
@@ -385,7 +385,7 @@ void Image::setAnimationComplete(bool a)
 //=============================================================================
 // Set color filter. (use WHITE for no change)
 //=============================================================================
-void Image::setColorFilter(color_t color)
+void Image::setColorFilter(vector4_t color)
 {
     colorFilter = color;
 }

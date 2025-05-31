@@ -4,8 +4,8 @@
 
 namespace inputDialogNS
 {
-    const color_t TEXT_BACK_COLOR = graphicsNS::WHITE;   // input text background
-    const color_t TEXT_COLOR = graphicsNS::BLACK;        // input text color
+    const vector4_t TEXT_BACK_COLOR = graphicsNS::WHITE;   // input text background
+    const vector4_t TEXT_COLOR = graphicsNS::BLACK;        // input text color
 }
 
 // Input Dialog, inherits from Message Dialog
@@ -16,8 +16,8 @@ private:
     // Dialog
     std::string textIn;         // input text
     vector4_t   inTextVerts[4];         // text area vertex buffer
-    color_t textBackColor;          // text area background color
-    color_t textFontColor;          // text area font color
+    vector4_t textBackColor;          // text area background color
+    vector4_t textFontColor;          // text area font color
     rect_t  inTextRect;
     rect_t  tempRect;
 
@@ -46,10 +46,10 @@ public:
     std::string getText();
 
     // Set input text font color
-    void setTextFontColor(color_t fc);
+    void setTextFontColor(vector4_t fc);
 
     // Set input text background color
-    void setTextBackColor(color_t bc);
+    void setTextBackColor(vector4_t bc);
 
     // Display text str inside rectangle using format in MessageDialog
     void print(const std::string& str, rect_t& rect, unsigned int format);

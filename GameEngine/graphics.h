@@ -16,9 +16,9 @@
 #define LP_VERTEX           SDL_Vertex*
 
 // Color defines
-#define COLOR_ARGB color_t
+#define COLOR_ARGB vector4_t
 
-#define SETCOLOR_ARGB(a,r,g,b) (Color((r & 0xff) / 255.0f, (g & 0xff) / 255.0f, \
+#define SETCOLOR_ARGB(a,r,g,b) (Vector4((r & 0xff) / 255.0f, (g & 0xff) / 255.0f, \
     (b & 0xff) / 255.0f, (a & 0xff) / 255.0f))
 
 namespace graphicsNS
@@ -67,7 +67,7 @@ typedef struct _VERTEX
     vector4_t     position;         // Vertex position
     vector4_t     texcoord;         // Texture coordinates
     vector3_t     normal;           // Vertex normal
-    color_t       color;            // Vertex color
+    vector4_t     color;            // Vertex color
 } VERTEX;
 
 //-----------------------------------------------------------------------------

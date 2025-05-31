@@ -554,13 +554,13 @@ float Entity::angleToTarget(float x, float y)
     float angleDifference = angle - getAngle();         // Angle difference
 
     // normalize angleDifference to [-PI,PI] range so we turn shortest direction toward target
-    if (angleDifference >= M_PI)
+    if (angleDifference >= G_PI)
     {
-        angleDifference -= 2 * (float)M_PI;
+        angleDifference -= 2 * (float)G_PI;
     }
-    else if (angleDifference < -M_PI)
+    else if (angleDifference < -G_PI)
     {
-        angleDifference += 2 * (float)M_PI;
+        angleDifference += 2 * (float)G_PI;
     }
 
     return angleDifference;         // Angle to target in radians

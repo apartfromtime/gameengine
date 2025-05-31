@@ -163,7 +163,7 @@ std::string InputDialog::getText()
 //=============================================================================
 // Set input text font color
 //=============================================================================
-void InputDialog::setTextFontColor(color_t fc)
+void InputDialog::setTextFontColor(vector4_t fc)
 {
     textFontColor = fc;
 }
@@ -171,7 +171,7 @@ void InputDialog::setTextFontColor(color_t fc)
 //=============================================================================
 // Set input text background color
 //=============================================================================
-void InputDialog::setTextBackColor(color_t bc)
+void InputDialog::setTextBackColor(vector4_t bc)
 {
     textBackColor = bc;
 }

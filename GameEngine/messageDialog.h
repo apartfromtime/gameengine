@@ -14,9 +14,9 @@ namespace messageDialogNS
     const unsigned int MARGIN = 5;              // text margin from border
     const char FONT[] = "arial.ttf";        // font
     const int FONT_HEIGHT = 18;         // font height
-    const color_t FONT_COLOR = graphicsNS::WHITE;        // text color
-    const color_t BORDER_COLOR = SETCOLOR_ARGB(192, 192, 192, 192); // border color
-    const color_t BACK_COLOR = SETCOLOR_ARGB(255, 100, 100, 192);   // backdrop color
+    const vector4_t FONT_COLOR = graphicsNS::WHITE;        // text color
+    const vector4_t BORDER_COLOR = SETCOLOR_ARGB(192, 192, 192, 192); // border color
+    const vector4_t BACK_COLOR = SETCOLOR_ARGB(255, 100, 100, 192);   // backdrop color
     const unsigned int BUTTON_WIDTH = (unsigned int)(FONT_HEIGHT * 4.5);
     const unsigned int BUTTON_HEIGHT = FONT_HEIGHT + 4;
     const int MAX_TYPE = 2;
@@ -25,8 +25,8 @@ namespace messageDialogNS
     static const char* BUTTON1_TEXT[MAX_TYPE] = { "OK", "YES" };
     static const char* BUTTON2_TEXT[MAX_TYPE] = { "CANCEL", "NO" };
     const unsigned char DIALOG_CLOSE_KEY = ENTER_KEY;    // Enter key
-    const color_t BUTTON_COLOR = graphicsNS::GRAY;       // button background
-    const color_t BUTTON_FONT_COLOR = graphicsNS::WHITE; // button text color
+    const vector4_t BUTTON_COLOR = graphicsNS::GRAY;       // button background
+    const vector4_t BUTTON_FONT_COLOR = graphicsNS::WHITE; // button text color
 }
 
 // Message Dialog
@@ -50,11 +50,11 @@ protected:
     rect_t      textRect;           // text rectangle
     rect_t      button1Rect;            // button rectangle
     rect_t      button2Rect;            // button2 rectangle
-    color_t     fontColor;          // font color (a,r,g,b)
-    color_t     borderColor;            // border color (a,r,g,b)
-    color_t     backColor;          // background color (a,r,g,b)
-    color_t     buttonColor;            // button color
-    color_t     buttonFontColor;            // button font color
+    vector4_t     fontColor;          // font color (a,r,g,b)
+    vector4_t     borderColor;            // border color (a,r,g,b)
+    vector4_t     backColor;          // background color (a,r,g,b)
+    vector4_t     buttonColor;            // button color
+    vector4_t     buttonFontColor;            // button font color
     vector4_t   dialogVerts[4];         // dialog vertex buffer
     vector4_t   borderVerts[4];         // border vertex buffer
     vector4_t   button1Verts[4];            // button vertex buffer
@@ -93,19 +93,19 @@ public:
     bool getVisible() const;
 
     // Set font color
-    void setFontColor(color_t fc);
+    void setFontColor(vector4_t fc);
 
     // Set border color
-    void setBorderColor(color_t bc);
+    void setBorderColor(vector4_t bc);
 
     // Set background color
-    void setBackColor(color_t bc);
+    void setBackColor(vector4_t bc);
 
     // Set button color
-    void setButtonColor(color_t bc);
+    void setButtonColor(vector4_t bc);
 
     // Set buitton font color
-    void setButtonFontColor(color_t bfc);
+    void setButtonFontColor(vector4_t bfc);
 
     // Set visible;
     void setVisible(bool v);

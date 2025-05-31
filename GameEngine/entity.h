@@ -12,7 +12,7 @@ namespace entityNS
     enum COLLISION_TYPE { NONE, CIRCLE, BOX, ROTATED_BOX, PIXEL_PERFECT };
     const float COLLISION_RADIUS = W / 2.0f;            // for circular collision
     const float GRAVITY = 6.67428e-11f;         // gravitational constant
-    const float ROTATION_RATE = (float)M_PI / 3;            // radians per second
+    const float ROTATION_RATE = (float)G_PI / 3;            // radians per second
     const float SPEED = 100.0f;         // 100 pixels per second
     const float MASS = 1.0f;            // mass
 }

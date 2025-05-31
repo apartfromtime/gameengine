@@ -16,7 +16,7 @@ namespace gameNS
 {
     const char FONT[] = "cour.ttf";
     const int POINT_SIZE = 14;
-    const color_t FONT_COLOR = graphicsNS::WHITE;
+    const vector4_t FONT_COLOR = graphicsNS::WHITE;
     const int BUF_SIZE = 32;
 }
 
@@ -137,8 +137,8 @@ public:
         currentTime += frameTime;
 
         r = (float)(0.5f + 0.5f * SDL_sin(currentTime));
-        g = (float)(0.5f + 0.5f * SDL_sin(currentTime + M_PI * 2 / 3));
-        b = (float)(0.5f + 0.5f * SDL_sin(currentTime + M_PI * 4 / 3));
+        g = (float)(0.5f + 0.5f * SDL_sin(currentTime + G_PI * 2 / 3));
+        b = (float)(0.5f + 0.5f * SDL_sin(currentTime + G_PI * 4 / 3));
         a = 1.0f;
 
         graphics->setBackColor(Color(r, g, b, a));

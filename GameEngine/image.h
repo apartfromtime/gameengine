@@ -22,7 +22,7 @@ protected:
     TextureManager* textureM;   // pointer to texture manager
     // spriteData contains the data required to draw the image by Graphics::drawSprite()
     SpriteData spriteData;  // SpriteData is defined in "sdlgraphics.h"
-    color_t colorFilter;    // applied as a color filter (use WHITE for no change)
+    vector4_t colorFilter;    // applied as a color filter (use WHITE for no change)
     int     cols;           // number of cols (1 to n) in multi-frame sprite
     int     rows;           // number of rows (1 to n) in multi-frame sprite
     bool    visible;        // true when visible
@@ -95,7 +95,7 @@ public:
     bool getAnimationComplete() const;
 
     // Return colorFilter.
-    color_t getColorFilter() const;
+    vector4_t getColorFilter() const;
 
     // Set textureNumber
     TextureManager* getTextureManager();
@@ -164,7 +164,7 @@ public:
     void setAnimationComplete(bool a);
 
     // Set color filter. (use WHITE for no change)
-    void setColorFilter(color_t color);
+    void setColorFilter(vector4_t color);
 
     // Set TextureManager
     void setTextureManager(TextureManager* textureM);
