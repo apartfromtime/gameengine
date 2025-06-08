@@ -343,11 +343,10 @@ bool Graphics::loadTexture(const char* filename, COLOR_ARGB transcolor,
     unsigned int& width, unsigned int& height, LP_TEXTURE& texture)
 {
     // create surface
-    image_info_t info = {};
     image_t image = {};
     bool result = false;
 
-    result = GetImageInfoFromFile(&info, filename);
+    result = GetImageInfoFromFile(&image, filename);
 
     if (result == false)
     {
@@ -355,36 +354,64 @@ bool Graphics::loadTexture(const char* filename, COLOR_ARGB transcolor,
         return false;
     }
 
-    width = info.xsize;
-    height = info.ysize;
+    width = image.width;
+    height = image.height;
 
-    const rgba_t colorkey = {
+    uint8_t colorkey[4] = {
         (uint8_t)(transcolor.b * 255.0f),
         (uint8_t)(transcolor.g * 255.0f),
         (uint8_t)(transcolor.r * 255.0f),
         (uint8_t)(transcolor.a * 255.0f)
     };
 
-    result = LoadImageFromFile(&image,
-        NULL,
-        NULL,
-        filename,
-        PIXELTYPE_UNKNOWN,
-        NULL,
-        FILTER_NONE,
-        colorkey,
-        &info);
-
+    result = LoadImageFromFile(&image, NULL, colorkey, filename);
     if (result == false)
     {
         texture = NULL;
         return false;
     }
 
-    // create the new texture
-    texture = SDL_CreateTexture(renderer2d, SDL_PIXELFORMAT_ABGR8888,
-        SDL_TEXTUREACCESS_STATIC, width, height);
+    SDL_PixelFormat pixelformat = SDL_PIXELFORMAT_UNKNOWN;
+    switch (image.format)
+    {
+    case GEUL_COLOUR_INDEX:
+    {
+        pixelformat = SDL_PIXELFORMAT_INDEX8;
+    } break;
+    case GEUL_RGB:
+    {
+        pixelformat = SDL_PIXELFORMAT_RGB24;
+    } break;
+    case GEUL_RGBA:
+    {
+        pixelformat = SDL_PIXELFORMAT_RGBA32;
+    } break;
+    case GEUL_BGR:
+    {
+        pixelformat = SDL_PIXELFORMAT_BGR24;
+    } break;
+    case GEUL_BGRA:
+    {
+        pixelformat = SDL_PIXELFORMAT_BGRA32;
+    } break;
+    case GEUL_LUMINANCE:
+    {
+        // TODO:
+    } break;
+    case GEUL_LUMINANCE_ALPHA:
+    {
+        // TODO:
+    } break;
+    default:
+    {
+        free(image.pixels);
+        return false;
+    } break;
+    }
 
+    // create the new texture
+    texture = SDL_CreateTexture(renderer2d, pixelformat, SDL_TEXTUREACCESS_STATIC,
+        width, height);
     if (texture == NULL)
     {
         return false;
@@ -392,8 +419,8 @@ bool Graphics::loadTexture(const char* filename, COLOR_ARGB transcolor,
 
     LOCKED_RECT pLockedRect = {};
 
-    pLockedRect.pBits = image.data;
-    pLockedRect.pitch = image.xsize * 4;
+    pLockedRect.pBits = image.pixels;
+    pLockedRect.pitch = image.width * (image.depth >> 3);
 
     if (SDL_UpdateTexture(texture, NULL, pLockedRect.pBits, pLockedRect.pitch) ==
         false)
@@ -415,11 +442,10 @@ bool Graphics::loadTextureSystemMem(const char* filename, COLOR_ARGB transcolor,
     unsigned int& width, unsigned int& height, LP_TEXTURE& texture)
 {
     // create surface
-    image_info_t info = {};
     image_t image = {};
     bool result = false;
 
-    result = GetImageInfoFromFile(&info, filename);
+    result = GetImageInfoFromFile(&image, filename);
 
     if (result == false)
     {
@@ -427,35 +453,64 @@ bool Graphics::loadTextureSystemMem(const char* filename, COLOR_ARGB transcolor,
         return false;
     }
 
-    width = info.xsize;
-    height = info.ysize;
+    width = image.width;
+    height = image.height;
 
-    const rgba_t colorkey = {
+    uint8_t colorkey[4] = {
         (uint8_t)(transcolor.b * 255.0f),
         (uint8_t)(transcolor.g * 255.0f),
         (uint8_t)(transcolor.r * 255.0f),
         (uint8_t)(transcolor.a * 255.0f)
     };
 
-    result = LoadImageFromFile(&image,
-        NULL,
-        NULL,
-        filename,
-        PIXELTYPE_UNKNOWN,
-        NULL,
-        FILTER_NONE,
-        colorkey,
-        &info);
-
+    result = LoadImageFromFile(&image, NULL, colorkey, filename);
     if (result == false)
     {
         texture = NULL;
         return false;
     }
 
+    SDL_PixelFormat pixelformat = SDL_PIXELFORMAT_UNKNOWN;
+    switch (image.format)
+    {
+    case GEUL_COLOUR_INDEX:
+    {
+        pixelformat = SDL_PIXELFORMAT_INDEX8;
+    } break;
+    case GEUL_RGB:
+    {
+        pixelformat = SDL_PIXELFORMAT_RGB24;
+    } break;
+    case GEUL_RGBA:
+    {
+        pixelformat = SDL_PIXELFORMAT_RGBA32;
+    } break;
+    case GEUL_BGR:
+    {
+        pixelformat = SDL_PIXELFORMAT_BGR24;
+    } break;
+    case GEUL_BGRA:
+    {
+        pixelformat = SDL_PIXELFORMAT_BGRA32;
+    } break;
+    case GEUL_LUMINANCE:
+    {
+        // TODO:
+    } break;
+    case GEUL_LUMINANCE_ALPHA:
+    {
+        // TODO:
+    } break;
+    default:
+    {
+        free(image.pixels);
+        return false;
+    } break;
+    }
+
     // create the new texture
-    texture = SDL_CreateTexture(renderer2d, SDL_PIXELFORMAT_ABGR8888,
-        SDL_TEXTUREACCESS_STREAMING, width, height);
+    texture = SDL_CreateTexture(renderer2d, pixelformat, SDL_TEXTUREACCESS_STREAMING,
+        width, height);
 
     if (texture == NULL)
     {
@@ -464,8 +519,8 @@ bool Graphics::loadTextureSystemMem(const char* filename, COLOR_ARGB transcolor,
 
     LOCKED_RECT pLockedRect = {};
 
-    pLockedRect.pBits = image.data;
-    pLockedRect.pitch = image.xsize * 4;
+    pLockedRect.pBits = image.pixels;
+    pLockedRect.pitch = image.width * (image.depth >> 3);
 
     if (SDL_UpdateTexture(texture, NULL, pLockedRect.pBits, pLockedRect.pitch) ==
         false)
