@@ -3,6 +3,7 @@
 #include <GEUL\g_geul.h>
 #include "constants.h"
 #include "gameError.h"
+#include "sprite.h"
 
 //-----------------------------------------------------------------------------
 //
@@ -70,17 +71,6 @@ typedef struct _VERTEX
     vector4_t     color;            // Vertex color
 } VERTEX;
 
-//-----------------------------------------------------------------------------
-//
-// SPRITE
-//
-//-----------------------------------------------------------------------------
-
-#define SPRITE_DONOTSAVESTATE               (1 << 0)
-#define SPRITE_DONOTMODIFY_RENDERSTATE      (1 << 1)
-#define SPRITE_OBJECTSPACE                  (1 << 2)
-#define SPRITE_ALPHABLEND                   (1 << 3)
-
 typedef enum
 {
     SPRITEEFFECT_NONE       = 0x00,
@@ -125,8 +115,7 @@ private:
     bool stencilSupport;
     SDL_Rect windowRect;
     SDL_Rect viewport2d;
-    SDL_BlendMode prevBlendMode;
-    long flags;
+    LP_SPRITE sprite;
 
     // Presentation parameters
     int backBufferWidth;
@@ -230,11 +219,6 @@ public:
     void drawQuad(const vector4_t* quadList[4], uint32_t quadListCount,
         COLOR_ARGB color = graphicsNS::WHITE);
 
-    // Display a quad (rectangle) textured.
-    bool drawTetxuredQuad(SDL_Texture* pTexture, const rect_t* pSrcRect,
-        const vector3_t* pCenter, const vector3_t* pPosition,
-        COLOR_ARGB Color = graphicsNS::WHITE);
-
     // Draw the sprite described in SpriteData structure. (SDL_RenderGeometry)
     // color is optional, it is applied as a filter, WHITE is default (no change).
     void drawSprite(const SpriteData& spriteData,
@@ -243,12 +227,6 @@ public:
     // Draw sprites from sprite list.
     void drawSprite(const SpriteData* spriteList, unsigned long spriteListCount,
         COLOR_ARGB color = graphicsNS::WHITE);
-
-    // Sprite Begin
-    bool spriteBegin(long Flags);
-    
-    // Sprite End
-    bool spriteEnd();
 
     // Return the number of pixels colliding between the two sprites.
     // Pre: The device supports a stencil buffer and pOcclusionQuery points to
@@ -273,6 +251,9 @@ public:
 
     // Return renderer3d.
     SDL_Renderer* get2DRenderer();
+
+    // Return sprite
+    LP_SPRITE getSprite() const;
 
     // Test for lost device
     bool getDeviceState();
@@ -302,10 +283,13 @@ public:
     // Clear backbuffer and BeginScene()
     bool beginScene();
 
-    // Forces all batched vertices to be submitted to the device.
-    bool flush();
-
     // EndScene()
     bool endScene();
+
+    // Sprite Begin
+    void spriteBegin();
+
+    // Sprite End
+    void spriteEnd();
 };
 

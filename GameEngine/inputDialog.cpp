@@ -79,7 +79,7 @@ const void InputDialog::draw()
     graphics->drawQuad(inTextVerts[0], inTextVerts[1], inTextVerts[2], inTextVerts[3],
         textBackColor);         // input text area
 
-    graphics->spriteBegin(SPRITE_ALPHABLEND);
+    graphics->spriteBegin();
 
     if (text.size() == 0)
     {

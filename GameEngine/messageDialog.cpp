@@ -174,7 +174,7 @@ const void MessageDialog::draw()
     graphics->drawQuad(button2Verts[0], button2Verts[1], button2Verts[2],
         button2Verts[3], buttonColor);          // draw button2
 
-    graphics->spriteBegin(SPRITE_ALPHABLEND);
+    graphics->spriteBegin();
 
     if (text.size() == 0)
     {

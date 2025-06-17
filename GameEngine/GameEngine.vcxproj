@@ -164,6 +164,7 @@
     <ClCompile Include="messageDialog.cpp" />
     <ClCompile Include="net.cpp" />
     <ClCompile Include="sdlmain.cpp" />
+    <ClCompile Include="sprite.cpp" />
     <ClCompile Include="textSDL.cpp" />
     <ClCompile Include="font.cpp" />
     <ClCompile Include="textureManager.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="input.h" />
     <ClInclude Include="messageDialog.h" />
     <ClInclude Include="net.h" />
+    <ClInclude Include="sprite.h" />
     <ClInclude Include="textSDL.h" />
     <ClInclude Include="font.h" />
     <ClInclude Include="textureManager.h" />

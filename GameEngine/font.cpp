@@ -16,7 +16,7 @@ public:
         SDL_Rect* pMetrics, int* pAdvance, int cellWidth, int cellHeight,
         unsigned int tabSize, bool proportional) noexcept;
     ~FontBase();
-    int DrawText(Graphics* pGraphics, const char* pString, int Count,
+    int DrawText(LP_SPRITE pSprite, const char* pString, int Count,
         rect_t* pRect, unsigned int Format, COLOR_ARGB Color);
     void SetTabSize(unsigned int Size);
 
@@ -275,10 +275,10 @@ void FontBase::SetTabSize(unsigned int Size)
     tabSize = Size;
 }
 
-int FontBase::DrawText(Graphics* pGraphics, const char* pString, int Count,
+int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
     rect_t* pRect, unsigned int Format, COLOR_ARGB Color)
 {
-    if (pGraphics == NULL || pString[0] == '\0' || Count == 0)
+    if (pSprite == NULL || pString[0] == '\0' || Count == 0)
     {
         return 0;
     }
@@ -773,7 +773,7 @@ int FontBase::DrawText(Graphics* pGraphics, const char* pString, int Count,
                 if (l + x >= pRect->min.x && l + x < pRect->max.x &&
                     t + y >= pRect->min.y && t + y < pRect->max.y)
                 {
-                    pGraphics->drawTetxuredQuad(texture, &sprRect, NULL,
+                    pSprite->Draw(texture, &sprRect, NULL,
                         &Vector3(l + x, t + y, 1.0f), Color);
                 }
 

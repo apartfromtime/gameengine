@@ -37,7 +37,7 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
 
 struct Font
 {
-    virtual int DrawText(Graphics* pGraphics, const char* pString, int Count,
+    virtual int DrawText(LP_SPRITE pSprite, const char* pString, int Count,
         rect_t* pRect, unsigned int Format, COLOR_ARGB Color) = 0;
     virtual void SetTabSize(unsigned int Size) = 0;
 };
