@@ -1,5 +1,5 @@
 # gameengine
- Programming 2D Games - Game Engine
+ 2D Game Engine
 
 ## requirements
  - SDL3
