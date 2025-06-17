@@ -33,15 +33,13 @@ bool TextureManager::getLine(SDL_IOStream* iostream, std::string& str)
     }
 
     unsigned char c = 0;
-
+    SDL_ReadU8(iostream, &c);
+    while (c == '\n' || c == '\r') { SDL_ReadU8(iostream, &c); };
     do {
+        str += c;
         SDL_ReadU8(iostream, &c);
-        if (c != '\n' || c != '\r')
-        {
-            str += c;
-        }
     } while (SDL_GetIOStatus(iostream) == SDL_IO_STATUS_READY &&
-        (c != '\n' || c != '\r'));
+        (c != '\n' && c != '\r'));
 
     return true;
 }
@@ -115,6 +113,7 @@ bool TextureManager::initialize(Graphics* pGraphics, std::string file)
             width.push_back(0);
             height.push_back(0);
             texture.push_back(NULL);
+            name.clear();
         }
         SDL_CloseIO(infile);
     }
