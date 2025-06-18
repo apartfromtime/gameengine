@@ -3,7 +3,6 @@
 #include <GEUL\g_geul.h>
 #include "constants.h"
 #include "gameError.h"
-#include "sprite.h"
 
 //-----------------------------------------------------------------------------
 //
@@ -71,12 +70,18 @@ typedef struct _VERTEX
     vector4_t     color;            // Vertex color
 } VERTEX;
 
-typedef enum
-{
-    SPRITEEFFECT_NONE       = 0x00,
-    SPRITEEFFECT_FLIPH      = 0x01,
-    SPRITEEFFECT_FLIPV      = 0x02
-} SPRITEEFFECT;
+//-----------------------------------------------------------------------------
+//
+// SPRITE
+//
+//-----------------------------------------------------------------------------
+
+#define SPRITE_DONOTSAVESTATE               (1 << 0)
+#define SPRITE_DONOTMODIFY_RENDERSTATE      (1 << 1)
+#define SPRITE_OBJECTSPACE                  (1 << 2)
+#define SPRITE_ALPHABLEND                   (1 << 3)
+#define SPRITE_FLIPH                        (1 << 4)
+#define SPRITE_FLIPV                        (1 << 5)
 
 // SpriteData: The properties required by Graphics::drawSprite to draw a sprite
 struct SpriteData
@@ -115,7 +120,16 @@ private:
     bool stencilSupport;
     SDL_Rect windowRect;
     SDL_Rect viewport2d;
-    LP_SPRITE sprite;
+    // Sprite
+    SDL_BlendMode prevBlendMode;
+    long flags;
+    static vector3_t vertex0;
+    static vector3_t vertex1;
+    static vector3_t vertex2;
+    static vector3_t vertex3;
+    static SDL_FColor colour0;
+    static const int ibuffer[6];
+    static SDL_Vertex vbuffer[4];
 
     // Presentation parameters
     int backBufferWidth;
@@ -191,7 +205,7 @@ public:
 
     // Draw pixel at (x, y). 
     //      color defaults to graphicsNS::WHITE.
-    void drawPoint(int16_t x, int16_t y, uint8_t width = 1,
+    void drawPoint(float x, float y, uint8_t width = 1,
         COLOR_ARGB color = graphicsNS::WHITE);
 
     // Draw pixels from list
@@ -202,7 +216,7 @@ public:
     // Draw line from (x1, y1) to (x2, y2). 
     //      width defauts to 1. 
     //      color defaults to graphicsNS::WHITE.
-    void drawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t width = 1,
+    void drawLine(float x1, float y1, float x2, float y2, uint8_t width = 1,
         COLOR_ARGB color = graphicsNS::WHITE);
 
     // Draw lines, from vertex list
@@ -212,21 +226,24 @@ public:
         uint8_t width = 1, COLOR_ARGB color = graphicsNS::WHITE);
 
     // Display quad (rectangle) with alpha transparency.
-    void drawQuad(const vector4_t v0, const vector4_t v1, const vector4_t v2,
-        const vector4_t v3, COLOR_ARGB color = graphicsNS::WHITE);
+    void drawQuad(const vector3_t p0, const vector3_t p1, const vector3_t p2,
+        const vector3_t p3, COLOR_ARGB color = graphicsNS::WHITE);
 
     // Display quads (rectangle) from quad list with alpha transparency.
-    void drawQuad(const vector4_t* quadList[4], uint32_t quadListCount,
+    void drawQuad(const vector3_t* quadList[4], unsigned long quadListCount,
         COLOR_ARGB color = graphicsNS::WHITE);
 
     // Draw the sprite described in SpriteData structure. (SDL_RenderGeometry)
     // color is optional, it is applied as a filter, WHITE is default (no change).
-    void drawSprite(const SpriteData& spriteData,
+    void drawSprite(LP_TEXTURE texture, const rect_t* srcrect,
+        const vector3_t p0, const vector3_t p1,
+        const vector3_t p2, const vector3_t p3,
         COLOR_ARGB color = graphicsNS::WHITE);
 
     // Draw sprites from sprite list.
-    void drawSprite(const SpriteData* spriteList, unsigned long spriteListCount,
-        COLOR_ARGB color = graphicsNS::WHITE);
+    void drawSprite(LP_TEXTURE texture, const rect_t** psrcrect,
+        unsigned long rectListCount, const vector3_t* spriteList[4],
+        unsigned long spriteListCount, COLOR_ARGB color = graphicsNS::WHITE);
 
     // Return the number of pixels colliding between the two sprites.
     // Pre: The device supports a stencil buffer and pOcclusionQuery points to
@@ -251,9 +268,6 @@ public:
 
     // Return renderer3d.
     SDL_Renderer* get2DRenderer();
-
-    // Return sprite
-    LP_SPRITE getSprite() const;
 
     // Test for lost device
     bool getDeviceState();
@@ -287,9 +301,11 @@ public:
     bool endScene();
 
     // Sprite Begin
-    void spriteBegin();
+    bool spriteBegin(long Flags);
+
+    bool Flush();
 
     // Sprite End
-    void spriteEnd();
+    bool spriteEnd();
 };
 

@@ -1,5 +1,13 @@
 #include "graphics.h"
 
+vector3_t Graphics::vertex0 = { 0 };
+vector3_t Graphics::vertex1 = { 0 };
+vector3_t Graphics::vertex2 = { 0 };
+vector3_t Graphics::vertex3 = { 0 };
+SDL_FColor Graphics::colour0 = { 1, 1, 1, 1 };
+const int Graphics::ibuffer[6] = { 0, 1, 2, 2, 3, 0 };
+SDL_Vertex Graphics::vbuffer[4] = { 0 };
+
 //=============================================================================
 // Constructor
 //=============================================================================
@@ -20,7 +28,6 @@ Graphics::Graphics()
     viewport2d.y = 0;
     viewport2d.w = 0;
     viewport2d.h = 0;
-    sprite = NULL;
     // Presentation parameters
     backBufferWidth = 0;
     backBufferHeight = 0;
@@ -57,8 +64,6 @@ Graphics::~Graphics()
 //=============================================================================
 void Graphics::releaseAll()
 {
-    safeDelete(sprite);
-
     if (depthStencilBuffer != NULL)
     {
         SDL_DestroyTexture(depthStencilBuffer);
@@ -150,7 +155,9 @@ bool Graphics::initialize(SDL_Window* phwnd, int w, int h, bool full, bool vsync
     matrix3d[2] = Matrix4();
     transform3d = Matrix4();
 
-    Create(renderer2d, &sprite);
+    // Sprite
+    prevBlendMode = SDL_BLENDMODE_NONE;
+    flags = 0;
 
     return true;
 }
@@ -346,7 +353,7 @@ bool Graphics::loadTexture(const char* filename, COLOR_ARGB transcolor,
     unsigned int& width, unsigned int& height, LP_TEXTURE& texture)
 {
     // create surface
-    image_t image = {};
+    image_t image = { 0 };
     bool result = false;
 
     result = GetImageInfoFromFile(&image, filename);
@@ -420,7 +427,7 @@ bool Graphics::loadTexture(const char* filename, COLOR_ARGB transcolor,
         return false;
     }
 
-    LOCKED_RECT pLockedRect = {};
+    LOCKED_RECT pLockedRect = { 0 };
 
     pLockedRect.pBits = image.pixels;
     pLockedRect.pitch = image.width * (image.depth >> 3);
@@ -445,7 +452,7 @@ bool Graphics::loadTextureSystemMem(const char* filename, COLOR_ARGB transcolor,
     unsigned int& width, unsigned int& height, LP_TEXTURE& texture)
 {
     // create surface
-    image_t image = {};
+    image_t image = { 0 };
     bool result = false;
 
     result = GetImageInfoFromFile(&image, filename);
@@ -520,7 +527,7 @@ bool Graphics::loadTextureSystemMem(const char* filename, COLOR_ARGB transcolor,
         return false;
     }
 
-    LOCKED_RECT pLockedRect = {};
+    LOCKED_RECT pLockedRect = { 0 };
 
     pLockedRect.pBits = image.pixels;
     pLockedRect.pitch = image.width * (image.depth >> 3);
@@ -574,135 +581,67 @@ bool Graphics::unlockRect(LP_TEXTURE& texture)
 //=============================================================================
 // Draw pixel at X,Y
 //=============================================================================
-void Graphics::drawPoint(int16_t x, int16_t y, uint8_t width, COLOR_ARGB color)
+void Graphics::drawPoint(float x, float y, uint8_t width, COLOR_ARGB color)
 {
-    x -= width >> 1;
-    y -= width >> 1;
-
-    SDL_SetRenderDrawColorFloat(renderer2d, color.r, color.g, color.b, color.a);
-
-    for (size_t i = 0; i < width; i++)
-    {
-        for (size_t j = 0; j < width; j++)
-        {
-            SDL_RenderPoint(renderer2d, (float)x + i, (float)y + j);
-        }
-    }
-
-    SDL_SetRenderDrawColorFloat(renderer2d, 1.0f, 1.0f, 1.0f, 1.0f);
+    const vector3_t p0 = { x - (width >> 1), y - (width >> 1), 1 };
+    const vector3_t p1 = { x + (width >> 1), y - (width >> 1), 1 };
+    const vector3_t p2 = { x + (width >> 1), y + (width >> 1), 1 };
+    const vector3_t p3 = { x - (width >> 1), y + (width >> 1), 1 };
+    drawSprite(NULL, NULL, p0, p1, p2, p3, color);
 }
 
 //=============================================================================
 // Draw pixels from list
 //=============================================================================
-void Graphics::drawPoint(const vector2_t* pointList,
-    unsigned long pointListCount, uint8_t width, COLOR_ARGB color)
+void Graphics::drawPoint(const vector2_t* pointList, unsigned long pointListCount,
+    uint8_t width, COLOR_ARGB color)
 {
     if (pointList == NULL || pointListCount == 0)
     {
         return;
     }
-
-    int16_t x = 0;
-    int16_t y = 0;
-
-    SDL_SetRenderDrawColorFloat(renderer2d, color.r, color.g, color.b, color.a);
-
     for (unsigned long i = 0; i < pointListCount - 1; i++)
     {
-        x = (int16_t)pointList[i + 0].x - (width >> 1);
-        y = (int16_t)pointList[i + 0].y - (width >> 1);
-
-        for (size_t j = 0; j < width; j++)
-        {
-            for (size_t k = 0; k < width; k++)
-            {
-                SDL_RenderPoint(renderer2d, (float)x + j, (float)y + k);
-            }
-        }
+        drawPoint(pointList[i].x, pointList[i].y, width, color);
     }
-
-    SDL_SetRenderDrawColorFloat(renderer2d, 1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 //=============================================================================
 // Draw line from X1,Y1 to X2,Y2.
 //=============================================================================
-void Graphics::drawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
-    uint8_t width, COLOR_ARGB color)
+void Graphics::drawLine(float x1, float y1, float x2, float y2, uint8_t width,
+    COLOR_ARGB color)
 {
-    const float dy = (float)(y2 - y1);
-    const float dx = (float)(x2 - x1);
     const float hw = width / 2.0f;
-    const vector2_t wn = NormalizeVector2(Vector2(dy, dx));
-
-    // world, view and projection transform
-    vector3_t p1 = TransformVector3Coord(Vector3(x1, y1, 1.0f), transform3d);
-    vector3_t p2 = TransformVector3Coord(Vector3(x2, y2, 1.0f), transform3d);
-
-    vector3_t v0 = Vector3(p1.x - (hw * wn.x), p1.y + (hw * wn.y), p1.z);
-    vector3_t v1 = Vector3(p2.x - (hw * wn.x), p2.y + (hw * wn.y), p2.z);
-    vector3_t v2 = Vector3(p2.x + (hw * wn.x), p2.y - (hw * wn.y), p2.z);
-    vector3_t v3 = Vector3(p1.x + (hw * wn.x), p1.y - (hw * wn.y), p1.z);
-
-    SDL_FColor c = {
-        color.r,
-        color.g,
-        color.b,
-        color.a
-    };
-
-    SDL_Vertex vertex0 = {
-        { v0.x, v0.y },
-        { c }
-    };
-
-    SDL_Vertex vertex1 = {
-        { v1.x, v1.y },
-        { c }
-    };
-
-    SDL_Vertex vertex2 = {
-        { v2.x, v2.y },
-        { c }
-    };
-
-    SDL_Vertex vertex3 = {
-        { v3.x, v3.y },
-        { c }
-    };
-
-    const SDL_Vertex vertice[4] = { vertex0, vertex1, vertex2, vertex3 };
-    static const int indices[6] = { 0, 1, 2, 2, 3, 0 };
-    
-    SDL_RenderGeometry(renderer2d, NULL,
-        vertice, sizeof(vertice) / sizeof(vertice[0]),
-        indices, sizeof(indices) / sizeof(indices[0]));
+    const vector2_t dt = Vector2(y2 - y1, x2 - x1);
+    const vector2_t dn = NormalizeVector2(dt);
+    const vector3_t p0 = Vector3(x1 - (hw * dn.x), y1 + (hw * dn.y), 1);
+    const vector3_t p1 = Vector3(x2 - (hw * dn.x), y2 + (hw * dn.y), 1);
+    const vector3_t p2 = Vector3(x2 + (hw * dn.x), y2 - (hw * dn.y), 1);
+    const vector3_t p3 = Vector3(x1 + (hw * dn.x), y1 - (hw * dn.y), 1);
+    drawSprite(NULL, NULL, p0, p1, p2, p3, color);
 }
 
 //=============================================================================
 // Draw lines, from vertex list
 //=============================================================================
-void Graphics::drawLine(const vector2_t* vertexList,
-    unsigned long vertexListCount, uint8_t width, COLOR_ARGB color)
+void Graphics::drawLine(const vector2_t* vertexList, unsigned long vertexListCount,
+    uint8_t width, COLOR_ARGB color)
 {
     if (vertexList == NULL || vertexListCount == 0)
     {
         return;
     }
-
-    int16_t x1 = 0;
-    int16_t y1 = 0;
-    int16_t x2 = 0;
-    int16_t y2 = 0;
-
+    float x1 = 0;
+    float y1 = 0;
+    float x2 = 0;
+    float y2 = 0;
     for (unsigned long i = 0; i < vertexListCount - 1; i++)
     {
-        x1 = (int16_t)vertexList[i + 0].x;
-        y1 = (int16_t)vertexList[i + 0].y;
-        x2 = (int16_t)vertexList[i + 1].x;
-        y2 = (int16_t)vertexList[i + 1].y;
-
+        x1 = vertexList[i+0].x;
+        y1 = vertexList[i+0].y;
+        x2 = vertexList[i+1].x;
+        y2 = vertexList[i+1].y;
         drawLine(x1, y1, x2, y2, width, color);
     }
 }
@@ -710,62 +649,23 @@ void Graphics::drawLine(const vector2_t* vertexList,
 //=============================================================================
 // Display a quad (rectangle) with alpha transparency.
 //=============================================================================
-void Graphics::drawQuad(const vector4_t v0, const vector4_t v1,
-    const vector4_t v2, const vector4_t v3, COLOR_ARGB color)
+void Graphics::drawQuad(const vector3_t p0, const vector3_t p1,
+    const vector3_t p2, const vector3_t p3, COLOR_ARGB color)
 {
-    // world, view and projection transform
-    vector4_t p0 = TransformVector4(v0, transform3d);
-    vector4_t p1 = TransformVector4(v1, transform3d);
-    vector4_t p2 = TransformVector4(v2, transform3d);
-    vector4_t p3 = TransformVector4(v3, transform3d);
-
-    SDL_FColor c = {
-        color.r,
-        color.g,
-        color.b,
-        color.a
-    };
-
-    SDL_Vertex vertex0 = {
-        { p0.x, p0.y },
-        { c }
-    };
-
-    SDL_Vertex vertex1 = {
-        { p1.x, p1.y },
-        { c }
-    };
-
-    SDL_Vertex vertex2 = {
-        { p2.x, p2.y },
-        { c }
-    };
-
-    SDL_Vertex vertex3 = {
-        { p3.x, p3.y },
-        { c }
-    };
-
-    const SDL_Vertex vertice[4] = { vertex0, vertex1, vertex2, vertex3 };
-    static const int indices[6] = { 0, 1, 2, 2, 3, 0 };
-    
-    SDL_RenderGeometry(renderer2d, NULL,
-        vertice, sizeof(vertice) / sizeof(vertice[0]),
-        indices, sizeof(indices) / sizeof(indices[0]));
+    drawSprite(NULL, NULL, p0, p1, p2, p3, color);
 }
 
 //=============================================================================
 // Display a quads (rectangle) from quad list with alpha transparency.
 //=============================================================================
-void Graphics::drawQuad(const vector4_t* quadList[4], uint32_t quadListCount,
+void Graphics::drawQuad(const vector3_t* quadList[4], unsigned long quadListCount,
     COLOR_ARGB color)
 {
     if (quadList == NULL || quadListCount == 0)
     {
         return;
     }
-
-    for (size_t i = 0; i < quadListCount; i++)
+    for (unsigned long i = 0; i < quadListCount; i++)
     {
         drawQuad(quadList[i][0], quadList[i][1], quadList[i][2], quadList[i][3],
             color);
@@ -773,74 +673,87 @@ void Graphics::drawQuad(const vector4_t* quadList[4], uint32_t quadListCount,
 }
 
 //=============================================================================
-// Draw the sprite described in SpriteData structure
-// Color is optional, it is applied like a filter, WHITE is default (no change)
+// Display a sprite textured (rectangle) with alpha transparency.
 //=============================================================================
-void Graphics::drawSprite(const SpriteData& spriteData, COLOR_ARGB color)
+void Graphics::drawSprite(LP_TEXTURE texture, const rect_t* psrcrect,
+    const vector3_t p0, const vector3_t p1,
+    const vector3_t p2, const vector3_t p3,
+    COLOR_ARGB color)
 {
-    if (spriteData.texture == NULL)
-    {
-        return;
+    rect_t rect = { 0 };
+    float width = 1.0f;
+    float height = 1.0f;
+    if (texture != NULL) {
+        SDL_GetTextureSize(texture, &width, &height);
     }
-
-    // Find center of sprite
-    vector2_t spriteCenter = Vector2(
-        ((float)(spriteData.w) / 2.0f) * spriteData.scale,
-        ((float)(spriteData.h) / 2.0f) * spriteData.scale
+    if (psrcrect != NULL) {
+        rect = {
+            psrcrect->min.x, psrcrect->min.y,
+            psrcrect->max.x, psrcrect->max.y
+        };
+    } else {
+        rect = { 0, 0, width, height };
+    }
+    const float s = 1.0f / width;
+    const float t = 1.0f / height;
+    const float s0 = s * rect.min.x;
+    const float t0 = t * rect.min.y;
+    const float s1 = s * rect.max.x;
+    const float t1 = t * rect.max.y;
+    vertex0 = TransformVector3Coord(p0, transform3d);
+    vertex1 = TransformVector3Coord(p1, transform3d);
+    vertex2 = TransformVector3Coord(p2, transform3d);
+    vertex3 = TransformVector3Coord(p3, transform3d);
+    colour0 = {
+        color.r,
+        color.g,
+        color.b,
+        color.a
+    };
+    vbuffer[0] = {
+        { vertex0.x, vertex0.y },
+        { colour0 },
+        { s0, t0  }
+    };
+    vbuffer[1] = {
+        { vertex1.x, vertex1.y },
+        { colour0 },
+        { s1, t0  }
+    };
+    vbuffer[2] = {
+        { vertex2.x, vertex2.y },
+        { colour0 },
+        { s1, t1  }
+    };
+    vbuffer[3] = {
+        { vertex3.x, vertex3.y },
+        { colour0 },
+        { s0, t1  }
+    };
+    SDL_RenderGeometry(renderer2d, texture,
+        vbuffer, sizeof(vbuffer) / sizeof(vbuffer[0]),
+        ibuffer, sizeof(ibuffer) / sizeof(ibuffer[0])
     );
-
-    // Screen position of the sprite
-    vector2_t translate = Vector2(spriteData.x, spriteData.y);
-    
-    // Scaling X,Y
-    vector2_t scaling = Vector2(spriteData.scale, spriteData.scale);
-
-    if ((spriteData.effect & SPRITEEFFECT_FLIPH) == SPRITEEFFECT_FLIPH)
-    {
-        scaling.x *= -1;            // negative X scale to flip
-        // Get center of flipped image.
-        spriteCenter.x -= (float)(spriteData.w * spriteData.scale);
-        // Flip occurs around left edge, translate right to put
-        // Flipped image in same location as original.
-        translate.x += (float)(spriteData.w * spriteData.scale);
-    }
-
-    if ((spriteData.effect & SPRITEEFFECT_FLIPV) == SPRITEEFFECT_FLIPV)
-    {
-        scaling.y *= -1;            // negative Y scale to flip
-        // Get center of flipped image
-        spriteCenter.y -= (float)(spriteData.h * spriteData.scale);
-        // Flip occurs around top edge, translate down to put
-        // Flipped image in same location as original.
-        translate.y += (float)(spriteData.h * spriteData.scale);
-    }
-
-    // Create a matrix to rotate, scale and position our sprite
-    matrix4_t matrix = Transformation2DMatrix4(
-        Vector2(),          // keep origin at top left when scaling
-        scaling,            // scale amount
-        spriteCenter,           // rotation center
-        spriteData.angle,           // rotation angle
-        translate);         // X,Y location
-
-    sprite->SetTransform(&matrix);
-    sprite->Draw(spriteData.texture, &spriteData.rect, NULL, NULL, color);
 }
 
 //=============================================================================
-// Draw sprites from sprite list.
+// Draw the sprite described in SpriteData structure
+// Color is optional, it is applied like a filter, WHITE is default (no change)
 //=============================================================================
-void Graphics::drawSprite(const SpriteData* spriteList,
+void Graphics::drawSprite(LP_TEXTURE texture, const rect_t** psrcrect,
+    unsigned long rectListCount, const vector3_t* spriteList[4],
     unsigned long spriteListCount, COLOR_ARGB color)
 {
     if (spriteList == NULL || spriteListCount == 0)
     {
         return;
     }
-
-    for (size_t i = 0; i < spriteListCount; i++)
+    for (unsigned long i = 0; i < spriteListCount; i++)
     {
-        drawSprite(spriteList[i], color);
+        drawSprite(texture, psrcrect[i],
+            spriteList[i][0], spriteList[i][1],
+            spriteList[i][2], spriteList[i][3],
+            color);
     }
 }
 
@@ -901,14 +814,6 @@ viewport_t Graphics::get3DViewport() const
 SDL_Renderer* Graphics::get2DRenderer()
 {
     return renderer2d;
-}
-
-//=============================================================================
-// Return sprite.
-//=============================================================================
-LP_SPRITE Graphics::getSprite() const
-{
-    return sprite;
 }
 
 //=============================================================================
@@ -1046,15 +951,48 @@ void Graphics::setTransform(const matrix4_t& matrix, TRANSFORMTYPE type)
 //=============================================================================
 // Sprite Begin
 //=============================================================================
-void Graphics::spriteBegin()
+bool Graphics::spriteBegin(long Flags)
 {
-    sprite->Begin(SPRITE_ALPHABLEND);
+    setTransform(Matrix4(), TRANSFORMTYPE_TRANSFORM);
+
+    if ((Flags & SPRITE_DONOTSAVESTATE) != SPRITE_DONOTSAVESTATE)
+    {
+        SDL_GetRenderDrawBlendMode(renderer2d, &prevBlendMode);
+    }
+
+    if ((Flags & SPRITE_DONOTMODIFY_RENDERSTATE) !=
+        SPRITE_DONOTMODIFY_RENDERSTATE)
+    {
+        if ((Flags & SPRITE_ALPHABLEND) == SPRITE_ALPHABLEND)
+        {
+            SDL_SetRenderDrawBlendMode(renderer2d, SDL_BLENDMODE_BLEND);
+        }
+    }
+
+    flags = Flags;
+
+    return true;
 }
 
 //=============================================================================
 // Sprite End
 //=============================================================================
-void Graphics::spriteEnd()
+bool Graphics::spriteEnd()
 {
-    sprite->End();
+    bool result = Flush();
+
+    if ((flags & SPRITE_DONOTSAVESTATE) != SPRITE_DONOTSAVESTATE)
+    {
+        SDL_SetRenderDrawBlendMode(renderer2d, prevBlendMode);
+    }
+
+    return result;
+}
+
+//=============================================================================
+// Flush renderer
+//=============================================================================
+bool Graphics::Flush()
+{
+    return SDL_FlushRenderer(renderer2d);
 }

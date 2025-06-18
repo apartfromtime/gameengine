@@ -40,7 +40,7 @@ private:
     rect_t      textRect;           // text rectangle
     vector4_t   fontColor;          // font color (a,r,g,b)
     vector4_t   backColor;          // background color (a,r,g,b)
-    vector4_t   vtx[4];         // buffer to hold vertex data
+    vector3_t   vtx[4];         // buffer to hold vertex data
     int         scrollAmount;           // number of lines to scroll the display up
     bool        initialized;            // true when initialized successfully
     bool        visible;            // true to display

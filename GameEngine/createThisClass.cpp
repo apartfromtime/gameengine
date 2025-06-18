@@ -131,8 +131,7 @@ void CreateThis::collisions(float frameTime)
 //=============================================================================
 void CreateThis::render()
 {
-    graphics->spriteBegin();                // begin drawing sprites
-
+    graphics->spriteBegin(SPRITE_ALPHABLEND);                // begin drawing sprites
     background.draw(graphicsNS::ALPHA50);
     menu.draw();
     sdlFont->setFontColor(graphicsNS::ORANGE);

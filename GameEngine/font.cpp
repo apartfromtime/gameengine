@@ -8,34 +8,12 @@ static const int MIN_CHAR = 0x0020;            // minimum character code
 static const int MAX_CHAR = 0x00FF;            // maximum character code
 static const int TAB_SIZE = 8;
 
-struct FontBase : public Font
-{
-public:
-    FontBase() noexcept;
-    FontBase(SDL_Renderer* pRenderer, SDL_Surface* pSurface, SDL_Texture* pTexture,
-        SDL_Rect* pMetrics, int* pAdvance, int cellWidth, int cellHeight,
-        unsigned int tabSize, bool proportional) noexcept;
-    ~FontBase();
-    int DrawText(LP_SPRITE pSprite, const char* pString, int Count,
-        rect_t* pRect, unsigned int Format, COLOR_ARGB Color);
-    void SetTabSize(unsigned int Size);
 
-private:
-    SDL_Renderer* renderer2d;
-    SDL_Surface* surface;
-    SDL_Texture* texture;
-    SDL_Rect* metrics;
-    int* advance;
-    int cellW;
-    int cellH;
-    unsigned int tabSize;
-    bool proportional;
-};
 
-bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
+bool Create(Graphics* pGraphics, int Height, bool Bold,
     bool Italic, long Quality, const char* pFaceName, Font** ppFont)
 {
-    if (pRenderer2d == NULL || Height > MAX_FONT_HEIGHT ||
+    if (pGraphics == NULL || Height > MAX_FONT_HEIGHT ||
         pFaceName == "" || ppFont == NULL)
     {
         return false;
@@ -202,7 +180,7 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
 
     TTF_Quit();         // Free the TTF library
 
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(pRenderer2d, surface);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(pGraphics->get2DRenderer(), surface);
 
     if (texture == NULL)
     {
@@ -218,14 +196,14 @@ bool Create(SDL_Renderer* pRenderer2d, int Height, bool Bold,
         return false;
     }
 
-    FontBase* pFont = new FontBase(pRenderer2d, surface, texture, metrics,
+    Font* pFont = new Font(pGraphics->get2DRenderer(), surface, texture, metrics,
         advance, cellW, cellH, TAB_SIZE, proportional);
     *ppFont = pFont;
 
     return true;
 }
 
-FontBase::FontBase() noexcept
+Font::Font() noexcept
 {
     renderer2d = NULL;
     surface = NULL;
@@ -238,7 +216,7 @@ FontBase::FontBase() noexcept
     tabSize = TAB_SIZE;
 }
 
-FontBase::FontBase(SDL_Renderer* pRenderer2d, SDL_Surface* pSurface,
+Font::Font(SDL_Renderer* pRenderer2d, SDL_Surface* pSurface,
     SDL_Texture* pTexture, SDL_Rect* pMetrics, int* pAdvance, int cellWidth,
     int cellHeight, unsigned int tabSize, bool proportional) noexcept
     : renderer2d(pRenderer2d), surface(pSurface), texture(pTexture),
@@ -247,7 +225,7 @@ FontBase::FontBase(SDL_Renderer* pRenderer2d, SDL_Surface* pSurface,
 {
 }
 
-FontBase::~FontBase()
+Font::~Font()
 {
     if (texture != NULL)
     {
@@ -265,7 +243,7 @@ FontBase::~FontBase()
     SDL_free(advance);
 }
 
-void FontBase::SetTabSize(unsigned int Size)
+void Font::SetTabSize(unsigned int Size)
 {
     if (Size == 0)
     {
@@ -275,17 +253,17 @@ void FontBase::SetTabSize(unsigned int Size)
     tabSize = Size;
 }
 
-int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
+int Font::DrawText(Graphics* pGraphics, const char* pString, int Count,
     rect_t* pRect, unsigned int Format, COLOR_ARGB Color)
 {
-    if (pSprite == NULL || pString[0] == '\0' || Count == 0)
+    if (pGraphics == NULL || pString[0] == '\0' || Count == 0)
     {
         return 0;
     }
 
     std::string str2 = "";
     std::string str = std::string(pString, Count);
-    rect_t sprRect = {};
+    rect_t sprRect = { 0 };
     int offset = 0;
     int extent = 0;
     int lineNum = (str != "") ? 1 : 0;
@@ -305,8 +283,6 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
     float y = 0.0f;
     unsigned char ch = 0, chN = 0;
     unsigned char spaceW = 0;
-
-    // TODO: RTLREADING
 
     if (proportional)
     {
@@ -773,8 +749,15 @@ int FontBase::DrawText(LP_SPRITE pSprite, const char* pString, int Count,
                 if (l + x >= pRect->min.x && l + x < pRect->max.x &&
                     t + y >= pRect->min.y && t + y < pRect->max.y)
                 {
-                    pSprite->Draw(texture, &sprRect, NULL,
-                        &Vector3(l + x, t + y, 1.0f), Color);
+                    float x0 = l + x;
+                    float y0 = t + y;
+                    float x1 = x0 + (sprRect.max.x - sprRect.min.x);
+                    float y1 = y0 + (sprRect.max.y - sprRect.min.y);
+                    const vector3_t p0 = { x0, y0, 1 };
+                    const vector3_t p1 = { x1, y0, 1 };
+                    const vector3_t p2 = { x1, y1, 1 };
+                    const vector3_t p3 = { x0, y1, 1 };
+                    pGraphics->drawSprite(texture, &sprRect, p0, p1, p2, p3, Color);
                 }
 
                 x += charW;

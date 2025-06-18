@@ -266,7 +266,7 @@ void Game::renderGame()
     {
         render();           // call render() in derived object
 
-        graphics->spriteBegin();
+        graphics->spriteBegin(SPRITE_ALPHABLEND);
 
         if (fpsOn == true)          // fps display requested
         {

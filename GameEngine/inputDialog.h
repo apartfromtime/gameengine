@@ -15,7 +15,7 @@ class InputDialog : public MessageDialog
 private:
     // Dialog
     std::string textIn;         // input text
-    vector4_t   inTextVerts[4];         // text area vertex buffer
+    vector3_t   inTextVerts[4];         // text area vertex buffer
     vector4_t textBackColor;          // text area background color
     vector4_t textFontColor;          // text area font color
     rect_t  inTextRect;

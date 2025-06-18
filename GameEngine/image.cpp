@@ -19,7 +19,7 @@ Image::Image()
     // Image
     textureM = NULL;
     initialized = false;
-    spriteData.effect = SPRITEEFFECT_NONE;
+    spriteData.effect = 0;
     spriteData.w = 2;
     spriteData.h = 2;
     spriteData.x = 0.0f;
@@ -455,11 +455,11 @@ void Image::flipHorizontal(bool flip)
 {
     if (flip == false)
     {
-        spriteData.effect &= ~SPRITEEFFECT_FLIPH;
+        spriteData.effect &= ~SPRITE_FLIPH;
     }
     else
     {
-        spriteData.effect |= SPRITEEFFECT_FLIPH;
+        spriteData.effect |= SPRITE_FLIPH;
     }
 }
 
@@ -470,11 +470,11 @@ void Image::flipVertical(bool flip)
 {
     if (flip == false)
     {
-        spriteData.effect &= ~SPRITEEFFECT_FLIPV;
+        spriteData.effect &= ~SPRITE_FLIPV;
     }
     else
     {
-        spriteData.effect |= SPRITEEFFECT_FLIPV;
+        spriteData.effect |= SPRITE_FLIPV;
     }
 }
 
@@ -490,17 +490,67 @@ void Image::draw(COLOR_ARGB color, unsigned int textureN)
 
     // set texture to draw
     spriteData.texture = textureM->getTexture(textureN);
+
+    // Find center of sprite
+    vector2_t spriteCenter = Vector2(
+        ((float)(spriteData.w) / 2.0f) * spriteData.scale,
+        ((float)(spriteData.h) / 2.0f) * spriteData.scale
+    );
+
+    // Screen position of the sprite
+    vector2_t translate = Vector2(spriteData.x, spriteData.y);
+
+    // Scaling X,Y
+    vector2_t scaling = Vector2(spriteData.scale, spriteData.scale);
+
+    if ((spriteData.effect & SPRITE_FLIPH) == SPRITE_FLIPH)
+    {
+        scaling.x *= -1;            // negative X scale to flip
+        // Get center of flipped image.
+        spriteCenter.x -= (float)(spriteData.w * spriteData.scale);
+        // Flip occurs around left edge, translate right to put
+        // Flipped image in same location as original.
+        translate.x += (float)(spriteData.w * spriteData.scale);
+    }
+
+    if ((spriteData.effect & SPRITE_FLIPV) == SPRITE_FLIPV)
+    {
+        scaling.y *= -1;            // negative Y scale to flip
+        // Get center of flipped image
+        spriteCenter.y -= (float)(spriteData.h * spriteData.scale);
+        // Flip occurs around top edge, translate down to put
+        // Flipped image in same location as original.
+        translate.y += (float)(spriteData.h * spriteData.scale);
+    }
+
+    // Create a matrix to rotate, scale and position our sprite
+    matrix4_t matrix = Transformation2DMatrix4(
+        Vector2(),          // keep origin at top left when scaling
+        scaling,            // scale amount
+        spriteCenter,           // rotation center
+        spriteData.angle,           // rotation angle
+        translate);         // X,Y location
+
+    graphics->setTransform(matrix, TRANSFORMTYPE_TRANSFORM);
+    float w = (float)(spriteData.w) * spriteData.scale;
+    float h = (float)(spriteData.h) * spriteData.scale;
+    const vector3_t p0 = { 0, 0, spriteData.z };
+    const vector3_t p1 = { w, 0, spriteData.z };
+    const vector3_t p2 = { w, h, spriteData.z };
+    const vector3_t p3 = { 0, h, spriteData.z };
     
     if (color.r == graphicsNS::FILTER.r &&
         color.g == graphicsNS::FILTER.g &&
         color.b == graphicsNS::FILTER.b &&
         color.a == graphicsNS::FILTER.a)
     {
-        graphics->drawSprite(spriteData, colorFilter);
+        graphics->drawSprite(spriteData.texture, &spriteData.rect, p0, p1, p2, p3,
+            colorFilter);
     }
     else
     {
-        graphics->drawSprite(spriteData, color);
+        graphics->drawSprite(spriteData.texture, &spriteData.rect, p0, p1, p2, p3,
+            color);
     }
 }
 
@@ -534,16 +584,69 @@ void Image::draw(SpriteData sd, COLOR_ARGB color, unsigned int textureN)
     sd.texture = textureM->getTexture(textureN);
     sd.rect = spriteData.rect;          // use this Images rect to select texture
 
+    // set texture to draw
+    spriteData.texture = textureM->getTexture(textureN);
+
+    // Find center of sprite
+    vector2_t spriteCenter = Vector2(
+        ((float)(sd.w) / 2.0f) * sd.scale,
+        ((float)(sd.h) / 2.0f) * sd.scale
+    );
+
+    // Screen position of the sprite
+    vector2_t translate = Vector2(sd.x, sd.y);
+
+    // Scaling X,Y
+    vector2_t scaling = Vector2(sd.scale, sd.scale);
+
+    if ((sd.effect & SPRITE_FLIPH) == SPRITE_FLIPH)
+    {
+        scaling.x *= -1;            // negative X scale to flip
+        // Get center of flipped image.
+        spriteCenter.x -= (float)(sd.w * sd.scale);
+        // Flip occurs around left edge, translate right to put
+        // Flipped image in same location as original.
+        translate.x += (float)(sd.w * sd.scale);
+    }
+
+    if ((sd.effect & SPRITE_FLIPV) == SPRITE_FLIPV)
+    {
+        scaling.y *= -1;            // negative Y scale to flip
+        // Get center of flipped image
+        spriteCenter.y -= (float)(sd.h * sd.scale);
+        // Flip occurs around top edge, translate down to put
+        // Flipped image in same location as original.
+        translate.y += (float)(sd.h * sd.scale);
+    }
+
+    // Create a matrix to rotate, scale and position our sprite
+    matrix4_t matrix = Transformation2DMatrix4(
+        Vector2(),          // keep origin at top left when scaling
+        scaling,            // scale amount
+        spriteCenter,           // rotation center
+        sd.angle,           // rotation angle
+        translate);         // X,Y location
+
+    graphics->setTransform(matrix, TRANSFORMTYPE_TRANSFORM);
+    float w = (float)(spriteData.w) * spriteData.scale;
+    float h = (float)(spriteData.h) * spriteData.scale;
+    const vector3_t p0 = { 0, 0, spriteData.z };
+    const vector3_t p1 = { w, 0, spriteData.z };
+    const vector3_t p2 = { w, h, spriteData.z };
+    const vector3_t p3 = { 0, h, spriteData.z };
+
     if (color.r == graphicsNS::FILTER.r &&
         color.g == graphicsNS::FILTER.g &&
         color.b == graphicsNS::FILTER.b &&
         color.a == graphicsNS::FILTER.a)
     {
-        graphics->drawSprite(sd, colorFilter);
+        graphics->drawSprite(sd.texture, &sd.rect, p0, p1, p2, p3,
+            colorFilter);
     }
     else
     {
-        graphics->drawSprite(sd, color);
+        graphics->drawSprite(sd.texture, &sd.rect, p0, p1, p2, p3,
+            color);
     }
 }
 
