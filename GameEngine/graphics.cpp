@@ -8,6 +8,62 @@ SDL_FColor Graphics::colour0 = { 1, 1, 1, 1 };
 const int Graphics::ibuffer[6] = { 0, 1, 2, 2, 3, 0 };
 SDL_Vertex Graphics::vbuffer[4] = { 0 };
 
+static bool BlitBW(image_t* tex) noexcept
+{
+    void* pixels = NULL;
+    uint8_t* dst = NULL;
+    int src, src_pitch, dst_pitch, dst_bytes, src_bytes;
+    if (tex == NULL) {
+        return false;
+    }
+    if (tex->format != GEUL_LUMINANCE || tex->format != GEUL_LUMINANCE_ALPHA) {
+        return false;
+    }
+    src_bytes = (tex->format == GEUL_LUMINANCE ? 1 : 2);
+    dst_bytes = (tex->format == GEUL_LUMINANCE ? 3 : 4);
+    src_pitch = (tex->width * src_bytes);
+    dst_pitch = (tex->width * dst_bytes);
+    pixels = malloc(tex->height * dst_pitch);
+    if (pixels == NULL) {
+        return false;
+    }
+    switch (dst_bytes)
+    {
+    case 3:
+    {
+        for (uint32_t y = 0; y < tex->height; y++) {
+            src = y * src_pitch;
+            dst = ((uint8_t*)pixels + (y * dst_pitch));
+            for (uint32_t x = 0; x < tex->width; x++) {
+                dst[x*3+0] = tex->pixels[src];
+                dst[x*3+1] = tex->pixels[src];
+                dst[x*3+2] = tex->pixels[src];
+                src += src_bytes;
+            }
+        }
+    } break;
+    case 4:
+    {
+        for (uint32_t y = 0; y < tex->height; y++) {
+            src = y * src_pitch;
+            dst = ((uint8_t*)pixels + (y * dst_pitch));
+            for (uint32_t x = 0; x < tex->width; x++) {
+                dst[x*4+0] = tex->pixels[src+0];
+                dst[x*4+1] = tex->pixels[src+0];
+                dst[x*4+2] = tex->pixels[src+0];
+                dst[x*4+3] = tex->pixels[src+1];
+                src += src_bytes;
+            }
+        }
+    } break;
+    }
+    free(tex->pixels);
+    tex->pixels = (uint8_t*)pixels;
+    tex->depth = dst_bytes * 8;
+    tex->format = (tex->format == GEUL_LUMINANCE) ? GEUL_RGB : GEUL_RGBA;
+    return true;
+}
+
 //=============================================================================
 // Constructor
 //=============================================================================
@@ -406,11 +462,19 @@ bool Graphics::loadTexture(const char* filename, COLOR_ARGB transcolor,
     } break;
     case GEUL_LUMINANCE:
     {
-        // TODO:
+        if (BlitBW(&image) == false) {
+            free(image.pixels);
+            return false;
+        }
+        pixelformat = SDL_PIXELFORMAT_RGB24;
     } break;
     case GEUL_LUMINANCE_ALPHA:
     {
-        // TODO:
+        if (BlitBW(&image) == false) {
+            free(image.pixels);
+            return false;
+        }
+        pixelformat = SDL_PIXELFORMAT_RGBA32;
     } break;
     default:
     {
@@ -439,6 +503,8 @@ bool Graphics::loadTexture(const char* filename, COLOR_ARGB transcolor,
 
         return false;
     }
+
+    free(image.pixels);
 
     return true;
 }
@@ -505,11 +571,19 @@ bool Graphics::loadTextureSystemMem(const char* filename, COLOR_ARGB transcolor,
     } break;
     case GEUL_LUMINANCE:
     {
-        // TODO:
+        if (BlitBW(&image) == false) {
+            free(image.pixels);
+            return false;
+        }
+        pixelformat = SDL_PIXELFORMAT_RGB24;
     } break;
     case GEUL_LUMINANCE_ALPHA:
     {
-        // TODO:
+        if (BlitBW(&image) == false) {
+            free(image.pixels);
+            return false;
+        }
+        pixelformat = SDL_PIXELFORMAT_RGBA32;
     } break;
     default:
     {
